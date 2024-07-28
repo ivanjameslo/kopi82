@@ -6,3 +6,133 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
+//INVENTORY
+
+model back_inventory {
+  bd_id Int @id @default(autoincrement())
+  name String
+  item_stocks Int
+  category String
+  location_shelf String
+  stock_in_date DateTime
+  expiry_date DateTime
+  stock_damaged Int
+  // purchase_order purchase_order[]
+  front_inventory front_inventory?
+}
+
+model front_inventory {
+  fd_id Int @id @default(autoincrement())
+  bd_id Int @unique
+  stock_used Int
+  stock_damaged Int
+  product_id Int
+  back_inventory back_inventory @relation(fields: [bd_id], references: [bd_id])
+  product product @relation(fields: [product_id], references: [product_id])
+  //product product[]
+}
+
+model purchase_order {
+  po_id Int @id @default(autoincrement())
+  receipt_no Int
+  purchase_date DateTime
+  purchase_details purchase_details[]
+}
+
+model purchase_details {
+  pd_id Int @id @default(autoincrement())
+  po_id Int
+  quantity Int
+  price Decimal
+  purchase_order purchase_order @relation(fields: [po_id], references: [po_id])
+}
+
+//PRODUCT
+
+model product {
+  product_id Int @id @default(autoincrement())
+  category String
+  product_name String
+  type String
+  price Float
+  status String
+  //fd_id Int @unique
+  //front_inventory front_inventory @relation(fields: [fd_id], references: [fd_id])
+  front_inventory front_inventory[]
+  order_details order_details[]
+  // ProductOrderDetails ProductOrderDetails[] (!!!!for many-to-many relation)
+}
+
+//ORDER
+
+model order {
+  order_id Int @id @default(autoincrement())
+  customer_name String
+  service_type String
+  date DateTime @default(now())
+  order_details order_details[]
+  payment payment?
+}
+
+model order_details {
+  orderDetails_id Int @id @default(autoincrement())
+  order_id Int
+  product_id Int
+  quantity Int
+  order order @relation(fields: [order_id], references: [order_id])
+  product product @relation(fields: [product_id], references: [product_id])
+  // ProductOrderDetails ProductOrderDetails[] (!!!!for many-to-many relation)
+}
+
+// model ProductOrderDetails {
+//   product_id Int
+//   orderDetails_id Int
+//   product product @relation(fields: [product_id], references: [product_id])
+//   order_details order_details @relation(fields: [orderDetails_id], references: [orderDetails_id])
+
+//   @@id([product_id, orderDetails_id])
+// } (!!!!for many-to-many relation)
+
+//PAYMENT
+
+model payment {
+  payment_id Int @id @default(autoincrement())
+  order_id Int @unique
+  discount_id Int
+  p_method_id Int
+  date DateTime @default(now())
+  order order @relation(fields: [order_id], references: [order_id])
+  discount discount? @relation(fields: [discount_id], references: [discount_id])
+}
+
+model discount {
+  discount_id Int @id @default(autoincrement())
+  discount_name String
+  discount_rate Float
+  status String
+  payment payment[]
+}
+
+model payment_method_eWallet {
+  p_method_id Int @id @default(autoincrement())
+  mode String
+  reference_no String
+}
+
+model payment_method_otc {
+  p_method_id Int @id @default(autoincrement())
+  mode String
+  amount Float
+  change Float
+}
+
+//SALES
+
+model product_sales {
+  sales_id Int @id @default(autoincrement())
+  orderDetails_id Int @unique
+  product_sold Int
+  total_sales Float
+  date DateTime
+}
