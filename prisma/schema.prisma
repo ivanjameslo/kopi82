@@ -98,12 +98,15 @@ model order_details {
 
 model payment {
   payment_id Int @id @default(autoincrement())
-  order_id Int @unique
-  discount_id Int
-  p_method_id Int
+  order_id Int? @unique
+  discount_id Int?
+  p_method_eWallet_id Int? @unique
+  p_method_otc_id Int? @unique
   date DateTime @default(now())
-  order order @relation(fields: [order_id], references: [order_id])
+  order order? @relation(fields: [order_id], references: [order_id])
   discount discount? @relation(fields: [discount_id], references: [discount_id])
+  eWallet payment_method_eWallet? @relation(fields: [p_method_eWallet_id], references: [p_method_id])
+  otc payment_method_otc? @relation(fields: [p_method_otc_id], references: [p_method_id])
 }
 
 model discount {
@@ -118,6 +121,7 @@ model payment_method_eWallet {
   p_method_id Int @id @default(autoincrement())
   mode String
   reference_no String
+  payment payment?
 }
 
 model payment_method_otc {
@@ -125,6 +129,7 @@ model payment_method_otc {
   mode String
   amount Float
   change Float
+  payment payment?
 }
 
 //SALES

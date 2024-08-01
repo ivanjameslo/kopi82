@@ -1,0 +1,12 @@
+SAD Issues (July 28, 2024)
+- unsure of purchase_order FK in back_inventory
+- the relationship between product and front_inventory
+- the relationship between product and order_details
+- Variables of Sales
+
+
+SAD Issues (August 1, 2024)
+- no relation between purchase and back inventory
+- no relation for product sales
+- unclear relation for product and order details
+- relationship created in prisma does not correctly reflect in mysql workbench (1-to-1 relationship will be reflected as 1-to-many in workbench)
