@@ -18,8 +18,10 @@ model back_inventory {
   stock_in_date DateTime
   expiry_date DateTime
   stock_damaged Int
+  po_id Int
   // purchase_order purchase_order[]
   front_inventory front_inventory?
+  purchase_order purchase_order @relation(fields: [po_id], references: [po_id])
 }
 
 model front_inventory {
@@ -38,11 +40,13 @@ model purchase_order {
   receipt_no Int
   purchase_date DateTime
   purchase_details purchase_details[]
+  back_inventory back_inventory[]
 }
 
 model purchase_details {
   pd_id Int @id @default(autoincrement())
   po_id Int
+  item_name String
   quantity Int
   price Decimal
   purchase_order purchase_order @relation(fields: [po_id], references: [po_id])
