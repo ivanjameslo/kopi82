@@ -38,7 +38,7 @@ model front_inventory {
 model purchase_order {
   po_id Int @id @default(autoincrement())
   receipt_no Int
-  purchase_date DateTime
+  purchase_date DateTime @default(now())
   purchase_details purchase_details[]
   back_inventory back_inventory[]
 }
@@ -48,7 +48,7 @@ model purchase_details {
   po_id Int
   item_name String
   quantity Int
-  price Decimal
+  price Float
   purchase_order purchase_order @relation(fields: [po_id], references: [po_id])
 }
 
