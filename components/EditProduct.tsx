@@ -11,12 +11,15 @@ import {
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
+
 const EditProduct = () => {
   return (
     <Dialog>
       <div className="flex justify-end w-full">
-        <DialogTrigger>
-          <Button variant="ghost">...</Button>
+        <DialogTrigger asChild>
+          <div className="mt-1 mr-1">
+            <Button variant="ghost">...</Button>
+          </div>
         </DialogTrigger>
       </div>
 
