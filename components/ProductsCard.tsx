@@ -1,5 +1,4 @@
 import Image from "next/image";
-
 import EditProduct from "./EditProduct";
 
 type ProductProps = {
@@ -7,6 +6,7 @@ type ProductProps = {
   productPrice: string;
   productImage: string;
 };
+
 const ProductCard = ({
   productName,
   productPrice,
@@ -14,7 +14,7 @@ const ProductCard = ({
 }: ProductProps) => {
   return (
     <>
-      <div className="border border-black flex flex-col justify-center items-center w-[300px] h-[300px] rounded-xl">
+      <div className="border border-black flex flex-col justify-center items-center w-[300px] h-[330px] rounded-xl">
         <EditProduct />
         <div className="flex justify-center items-center h-2/3 w-full">
           <Image
@@ -26,9 +26,9 @@ const ProductCard = ({
             sizes="100vw"
           />
         </div>
-        <div className="flex flex-col items-center h-/3 w-full">
-          <span className="text-xl font-medium mb-0">{productName}</span>
-          <span className="text-sm mt-0">{productPrice}</span>
+        <div className="flex flex-col justify-evenly items-center h-1/3 w-full">
+          <span className="text-xl font-medium">{productName}</span>
+          <span className="text-xl font-medium">{productPrice}</span>
         </div>
       </div>
     </>
