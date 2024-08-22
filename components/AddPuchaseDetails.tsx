@@ -32,7 +32,7 @@ const AddPurchaseDetails = () => {
   return (
     <div className="mt-24 ml-40 mr-40">
       <p className="flex text-3xl text-[#483C32] font-bold justify-center mb-2">
-        Purchase Order Page
+        Purchase Details
       </p>
       <Table>
         <TableHeader>
