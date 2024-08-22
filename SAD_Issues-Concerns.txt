@@ -10,3 +10,11 @@ SAD Issues (August 1, 2024)
 - no relation for product sales
 - unclear relation for product and order details
 - relationship created in prisma does not correctly reflect in mysql workbench (1-to-1 relationship will be reflected as 1-to-many in workbench)
+
+
+SAD Issues (August 20, 2024)
+- unsure how to get the recent po_id for purchase_details
+- did not fix the sales yet
+- did not test backend connection
+- no design on puchase order and purchase details pages
+- no api for pictures 

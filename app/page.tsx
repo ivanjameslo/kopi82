@@ -5,7 +5,7 @@ import AddPurchaseDetails from './Add-PurchaseDetails/page'; // Adjust the path 
 export default function Home() {
   return (
     <main>
-      <AddPurchaseDetails />
+      <PurchaseOrder />
     </main>
   );
 }

@@ -13,6 +13,7 @@ model back_inventory {
   bd_id Int @id @default(autoincrement())
   name String
   item_stocks Int
+  unit String
   category String
   location_shelf String
   stock_in_date DateTime
@@ -29,6 +30,7 @@ model front_inventory {
   bd_id Int @unique
   stock_used Int
   stock_damaged Int
+  unit String
   product_id Int
   back_inventory back_inventory @relation(fields: [bd_id], references: [bd_id])
   product product @relation(fields: [product_id], references: [product_id])
@@ -48,6 +50,7 @@ model purchase_details {
   po_id Int
   item_name String
   quantity Int
+  unit String
   price Float
   purchase_order purchase_order @relation(fields: [po_id], references: [po_id])
 }

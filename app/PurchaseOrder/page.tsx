@@ -36,13 +36,15 @@ const purchaseOrder = () => {
                 })
             });
 
-            // const response = await fetch('/api/get_recent_po_id');
-            // const data = await response.json();
-            // const recentPoId = data.po_id;
+            //Fetch the most recent po_id
+            const response = await fetch('/api/get_recent_po_id');
+            const data = await response.json();
+            const recentPoId = data.po_id;
 
-            // router.push(`/add-purchase-details/${recentPoId}`);
+            //Redirect to the Add-PuchaseDetails page with the recent po_id
+            router.push(`/Add-PurchaseDetails/${recentPoId}`);
 
-            router.refresh();
+            // router.refresh();
         } catch(error){
             console.log(error);
         }
