@@ -4,34 +4,34 @@ import { NextResponse } from "next/server";
 
 export async function GET (request: Request, { params } : { params  : { id: string}} ){
     const id = params.id
-    const front_inventory = await prisma.front_inventory.findUnique({
+    const back_inventory = await prisma.back_inventory.findUnique({
         where: {
-            fd_id: parseInt(id, 10)
+            bd_id: parseInt(id, 10)
         }
     });
-    return NextResponse.json(front_inventory);
+    return NextResponse.json(back_inventory);
 }
 
 export async function PUT (request: Request, { params } : { params : {id: string}}) {
     const id = params.id;
     const json = await request.json();
-    const updatedFrontInventory = await prisma.front_inventory.update({
+    const updatedBackInventory = await prisma.back_inventory.update({
         where: {
-            fd_id: parseInt(id, 10)
+            bd_id: parseInt(id, 10)
         },
         data: json
     })
 
-    return NextResponse.json(updatedFrontInventory);
+    return NextResponse.json(updatedBackInventory);
 }
 
 export async function DELETE (request: Request, { params } : { params : { id: string}}){
     const id = params.id;
-    const deletedFrontInventory = await prisma.front_inventory.delete({
+    const deletedBackInventory = await prisma.back_inventory.delete({
         where: {
-            fd_id: parseInt(id, 10)
+            bd_id: parseInt(id, 10)
         }
     })
 
-    return NextResponse.json(deletedFrontInventory);
+    return NextResponse.json(deletedBackInventory);
 }

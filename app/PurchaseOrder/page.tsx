@@ -20,6 +20,15 @@ import {
     purchase_date: string;
 }
 
+interface PurchaseDetailsData {
+    pd_id: number;
+    po_id: number;
+    item_name: string;
+    quantity: number;
+    unit: string
+    price: number;
+}
+
 const purchaseOrder = () => {
 
     const router = useRouter();
@@ -81,6 +90,30 @@ const purchaseOrder = () => {
         fetchPurchaseOrder().catch(error => console.log(error));
     }, []);
 
+    //For displaying purchase details in modal
+    const [selectedPurchaseDetails, setSelectedPurchaseDetails] = useState<PurchaseDetailsData[]>([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const handleViewDetails = async (po_id: number) => {
+        try{
+            const response = await fetch(`/api/purchase_details/${po_id}`);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            } 
+            const data = await response.json();
+            setSelectedPurchaseDetails(data);
+            setIsModalOpen(true);
+            console.log(data);
+        }catch(error){
+            console.log(error);
+        };
+    }
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setSelectedPurchaseDetails([]);
+    };
+
     return (
         <div className="mt-24 ml-40 mr-40">
             <p className="flex text-3xl text-[#483C32] font-bold justify-center mb-2">
@@ -119,7 +152,8 @@ const purchaseOrder = () => {
                                 <TableCell>{purchaseOrder.receipt_no}</TableCell>
                                 <TableCell>{purchaseOrder.purchase_date}</TableCell>
                                 <TableCell>
-                                    <Button className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    <Button className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" 
+                                    onClick={() => handleViewDetails(purchaseOrder.po_id)}>
                                         View
                                     </Button>
                                 </TableCell>
@@ -128,6 +162,40 @@ const purchaseOrder = () => {
                     </TableBody>
                 </Table>
             </div>
+
+            {/* MODAL */}
+            {isModalOpen && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="bg-white p-8 rounded-md shadow-md">
+                        <h2 className="text-2xl font-bold mb-4">Purchase Details</h2>
+                        {selectedPurchaseDetails.length > 0 ? (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="text-center">Item Name</TableHead>
+                                        <TableHead className="text-center">Quantity</TableHead>
+                                        <TableHead className="text-center">Unit</TableHead>
+                                        <TableHead className="text-center">Price</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {selectedPurchaseDetails.map((detail, index) => (
+                                        <TableRow key={index}>
+                                            <TableCell>{detail.item_name}</TableCell>
+                                            <TableCell>{detail.quantity}</TableCell>
+                                            <TableCell>{detail.unit}</TableCell>
+                                            <TableCell>{detail.price}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        ) : (
+                            <p>No details available.</p>
+                        )}
+                        <Button onClick={handleCloseModal} className="mt-4">Close</Button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -9,7 +9,7 @@ import FrontInventory from './FrontInventory/page'; // Adjust the path as necess
 export default function Home() {
   return (
     <main>
-      <FrontInventory />
+      <BackInventory />
     </main>
   );
 }
