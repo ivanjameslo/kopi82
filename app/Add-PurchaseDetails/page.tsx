@@ -1,93 +1,157 @@
-'use client'
+"use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ChangeEvent } from 'react';
-import { set } from 'react-hook-form';
+import { v4 as uuidv4 } from 'uuid';
 
-const addPurchaseDetails = () => {
-    
-    const router = useRouter();
+const AddPurchaseDetails = () => {
 
-    const [formData, setFormData] = useState({
-        po_id: "",
-        item_name: "",
-        quantity: "",
-        price: "",
-    });
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const po_id = searchParams.get('po_id') || "";
 
-    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value});
-    };
+  const [formDataArray, setFormDataArray] = useState([{
+    pd_id: uuidv4(),
+    po_id: po_id,
+    item_name: "",
+    quantity: "",
+    unit: "",
+    price: "",
+  }]);
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        try{
-            await fetch('/api/purchase_details', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    po_id: formData.po_id,
-                    item_name: formData.item_name,
-                    quantity: formData.quantity,
-                    price: formData.price,
-                })
-            })
-            router.refresh();
-        }catch(error){
-            console.log(error);
-        }
-
-        setFormData({
-            po_id: "",
-            item_name: "",
-            quantity: "",
-            price: "",
-        });
-    };
-
-    return (
-        <div className="mt-20">
-            <div>
-                <h1 className="flex justify-center">Add Purchase Details</h1>
-            </div>
-            <form onSubmit={handleSubmit}>
-                <div className="mb-4 mt-5 flex flex-col items-center justify-center">
-
-                    <div className="flex flex-col mb-4 w-full max-w-md">
-                        <label className="mb-1">Purchase Order ID: </label>
-                            <input type="int" name="po_id" value={formData.po_id} onChange={handleChange} 
-                            className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"/>
-                    </div>
-
-                    <div className="flex flex-col mb-4 w-full max-w-md">
-                        <label className="mb-1">Item Name: </label>
-                            <input type="text" name="item_name" value={formData.item_name} onChange={handleChange} 
-                            className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"/>
-                    </div>
-
-                    <div className="flex flex-col mb-4 w-full max-w-md">
-                        <label className="mb-1">Quantity: </label>
-                            <input type="int" name="quantity" value={formData.quantity} onChange={handleChange} 
-                            className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"/>
-                    </div>
-
-                    <div className="flex flex-col mb-4 w-full max-w-md">
-                        <label className="mb-1">Price: </label>
-                            <input type="decimal" name="price" value={formData.price} onChange={handleChange} 
-                            className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"/>
-                    </div>
-
-                    <button type="submit" className="mt-1 px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Submit
-                    </button>
-                    
-                </div>
-            </form>
-        </div>
+  useEffect(() => {
+    setFormDataArray((prevFormDataArray) =>
+      prevFormDataArray.map((formData) => ({ ...formData, po_id: po_id }))
     );
-}
+  }, [po_id]);
 
-export default addPurchaseDetails;
+  const handleChange = (index: number, e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const newFormDataArray = [...formDataArray];
+   
+    newFormDataArray[index] = { ...newFormDataArray[index], [e.target.name]: e.target.value };
+    setFormDataArray(newFormDataArray);
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement | HTMLSelectElement>) => {
+    e.preventDefault();
+    try{
+      await fetch('/api/purchase_details', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formDataArray)
+      })
+      router.push('/PurchaseOrder');
+    } catch(error){
+      console.log(error);
+    }
+  };
+
+  const addNewRow = () => {
+    setFormDataArray([...formDataArray, {
+      pd_id: uuidv4(),
+      po_id: po_id,
+      item_name: "",
+      quantity: "",
+      unit: "",
+      price: "",
+    }]);
+  };
+
+  return (
+    <div className="mt-24 ml-40 mr-40">
+      <p className="flex text-3xl text-[#483C32] font-bold justify-center mb-2">
+        Purchase Details
+      </p>
+      <form onSubmit={handleSubmit}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[100px]">PO_ID</TableHead>
+              <TableHead>Item Name</TableHead>
+              <TableHead>Quantity</TableHead>
+              <TableHead>Unit</TableHead>
+              <TableHead className="text-right">Price</TableHead>
+            </TableRow>
+          </TableHeader>
+
+          <TableBody>
+            {formDataArray.map((formData, index) => (
+              <TableRow key={index}>
+                <TableCell className="font-medium">
+                  <input
+                    type="number"
+                    name="po_id"
+                    value={formData.po_id}
+                    onChange={(e) => handleChange(index, e)}
+                    readOnly
+                  />
+                </TableCell>
+                <TableCell>
+                  <input
+                    type="text"
+                    name="item_name"
+                    value={formData.item_name}
+                    onChange={(e) => handleChange(index, e)}
+                  />
+                </TableCell>
+                <TableCell>
+                  <input
+                    type="number"
+                    name="quantity"
+                    value={formData.quantity}
+                    onChange={(e) => handleChange(index, e)}
+                  />
+                </TableCell>
+                <TableCell>
+                  <select
+                    name="unit"
+                    value={formData.unit}
+                    onChange={(e) => handleChange(index, e)}
+                  >
+                    <option value="" disabled hidden> Select Unit of Measurement</option>
+                    <option value="bag">Bag</option>
+                    <option value="box">Box</option>
+                    <option value="bottle">Bottle</option>
+                    <option value="slice">Slice</option>
+                    <option value="pack">Pack</option>
+                  </select>
+                </TableCell>
+                <TableCell className="text-right">
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="price"
+                    value={formData.price}
+                    onChange={(e) => handleChange(index, e)}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+
+        <div className="flex flex-row gap-3 justify-end">
+          <Button variant="outline" onClick={addNewRow}>
+            Add Item
+          </Button>
+          <Button variant="outline" type="submit">Submit</Button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+export default AddPurchaseDetails;

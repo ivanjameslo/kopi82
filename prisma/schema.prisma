@@ -11,7 +11,7 @@ datasource db {
 
 model back_inventory {
   bd_id Int @id @default(autoincrement())
-  name String
+  item_name String
   item_stocks Int
   unit String
   category String
@@ -28,9 +28,10 @@ model back_inventory {
 model front_inventory {
   fd_id Int @id @default(autoincrement())
   bd_id Int @unique
+  in_stock Int
+  unit String
   stock_used Int
   stock_damaged Int
-  unit String
   product_id Int
   back_inventory back_inventory @relation(fields: [bd_id], references: [bd_id])
   product product @relation(fields: [product_id], references: [product_id])

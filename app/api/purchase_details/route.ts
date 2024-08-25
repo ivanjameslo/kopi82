@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const res = await request.json();
-    const { po_id, item_name, quantity, price } = res;
+    const { po_id, item_name, quantity, unit, price } = res;
     const created = await prisma.purchase_details.create({
       data: {
         purchase_order: {
@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
         },
         item_name,
         quantity: Number(quantity),
+        unit,
         price: Number(price),
       }
     });

@@ -13,12 +13,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const res = await request.json();
-    const { bd_id, stock_used, stock_damaged, product_id } = res;
+    const { bd_id, in_stock, unit, stock_used, stock_damaged, product_id } = res;
     const created = await prisma.front_inventory.create({
       data: {
         back_inventory: {
           connect: { bd_id: parseInt(bd_id) }
         },
+        in_stock: Number(in_stock),
+        unit,
         stock_used: Number(stock_used),
         stock_damaged: Number(stock_damaged),
         product: {
