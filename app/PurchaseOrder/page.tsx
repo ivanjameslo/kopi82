@@ -133,7 +133,10 @@ const purchaseOrder = () => {
             className="mt-1 w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none sm:text-sm"
           />
 
-          <Button type="submit" variant="outline">
+          <Button
+            type="submit"
+            className="bg-black text-white hover:bg-slate-900"
+          >
             Submit
           </Button>
         </div>
