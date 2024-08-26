@@ -12,21 +12,16 @@ export async function GET(request: NextRequest) {
 // POST function to create a new Front Inventory
 export async function POST(request: NextRequest) {
   try {
-    const res = await request.json();
-    const { bd_id, in_stock, unit, stock_used, stock_damaged, product_id } = res;
-    const created = await prisma.front_inventory.create({
-      data: {
-        back_inventory: {
-          connect: { bd_id: parseInt(bd_id) }
-        },
-        in_stock: Number(in_stock),
-        unit,
-        stock_used: Number(stock_used),
-        stock_damaged: Number(stock_damaged),
-        product: {
-          connect: { product_id: parseInt(product_id) }
-        },
-      }
+    const formDataArray = await request.json();
+    const created = await prisma.front_inventory.createMany({
+      data: formDataArray.map((formData: { bd_id: any; in_stock: any; unit: any; stock_used: any; stock_damaged: any; product_id: any; }) => ({
+        bd_id: parseInt(formData.bd_id),
+        in_stock: Number(formData.in_stock),
+        unit: formData.unit,
+        stock_used: Number(formData.stock_used),
+        stock_damaged: Number(formData.stock_damaged),
+        product_id: parseInt(formData.product_id)
+      }))
     });
     return NextResponse.json(created, { status: 201 });
   } catch (error) {

@@ -38,17 +38,21 @@ const frontInventory = () => {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement | HTMLSelectElement>) => {
         e.preventDefault();
-        try{
-            await fetch('/api/front_inventory', {
+        console.log('Form Data:', formDataArray); // Log form data
+        try {
+            const response = await fetch('/api/front_inventory', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(formDataArray)
-            })
-            router.refresh();
-        } catch(error){
-            console.error(error);
+            });
+            if (!response.ok) {
+                throw new Error('Failed to submit data');
+            }
+            router.push('/FrontInventory');
+        } catch (error) {
+            console.error('Error submitting data:', error);
         }
     };
 
@@ -110,21 +114,20 @@ const frontInventory = () => {
                                     <select name="bd_id" value={formData.bd_id} onChange={(e) => handleChange(index, e)}>
                                         <option value="" disabled hidden>Select Item</option>
                                         {bdItems.map((item: any) => (
-                                            <option key={item.bd_id}> value={item.bd_id}
+                                            <option key={item.bd_id} value={item.bd_id}>
                                                 {item.item_name}
                                             </option>
                                         ))}
-
                                     </select>
                                 </TableCell>
                                 <TableCell><input type="number" name="in_stock" value={formData.in_stock} onChange={(e) => handleChange(index, e)} /></TableCell>
                                 <TableCell><select name="unit" value={formData.unit} onChange={(e) => handleChange(index, e)}>
                                     <option value="" disabled hidden> Select Unit of Measurement</option>
-                                    <option value="bag">Bag</option>
-                                    <option value="box">Box</option>
-                                    <option value="bottle">Bottle</option>
-                                    <option value="slice">Slice</option>
-                                    <option value="pack">Pack</option>
+                                    <option value="Bag">Bag</option>
+                                    <option value="Box">Box</option>
+                                    <option value="Bottle">Bottle</option>
+                                    <option value="Slice">Slice</option>
+                                    <option value="Pack">Pack</option>
                                 </select></TableCell>
                                 <TableCell><input type="number" name="stock_used" value={formData.stock_used} onChange={(e) => handleChange(index, e)} /></TableCell>
                                 <TableCell><input type="number" name="stock_damaged" value={formData.stock_damaged} onChange={(e) => handleChange(index, e)} /></TableCell>

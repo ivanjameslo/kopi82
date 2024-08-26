@@ -46,6 +46,7 @@ const frontInventory = () => {
         }
         const data = await response.json();
         console.log(data);
+        setData(data);
     };
 
     useEffect(() => {
@@ -123,23 +124,20 @@ const frontInventory = () => {
                     <TableBody>
                         {data.map((item) => (
                             <TableRow key={item.fd_id}>
-                                <TableCell>{item.fd_id}</TableCell>
-                                <TableCell>{item.bd_id}</TableCell>
-                                <TableCell>{item.in_stock}</TableCell>
-                                <TableCell>{item.unit}</TableCell>
-                                {/* <TableCell>{data.stock_used}</TableCell>
-                                <TableCell>{data.stock_damaged}</TableCell>
-                                <TableCell>{data.product_id}</TableCell> */}
-                                <TableCell>
-                                    <Button className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                <TableCell className="text-center">{item.fd_id}</TableCell>
+                                <TableCell className="text-center">{item.bd_id}</TableCell>
+                                <TableCell className="text-center">{item.in_stock}</TableCell>
+                                <TableCell className="text-center">{item.unit}</TableCell>
+                                <TableCell className="text-center">
+                                    <Button className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mx-2"
                                     onClick={() => handleViewDetails(item)}>
                                         View
                                     </Button>
-                                    <Button className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                    <Button className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mx-2"
                                     onClick={() => handleEditDetails(item)}>
                                         Edit
                                     </Button>
-                                    <Button className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" 
+                                    <Button className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mx-2" 
                                     onClick={() => handleDeleteItem(item.fd_id)}>
                                         Delete
                                     </Button>
@@ -153,15 +151,40 @@ const frontInventory = () => {
             </div>
             {isModalOpen && selectedItem && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className="bg-white p-8 rounded-md shadow-md">
-                    <h2 className="text-2xl font-bold mb-4">Item Details</h2>
-                        <p><strong>ID:</strong> {selectedItem.fd_id}</p>
-                        <p><strong>Back Inventory ID:</strong> {selectedItem.bd_id}</p>
-                        <p><strong>In Stock:</strong> {selectedItem.in_stock}</p>
-                        <p><strong>Unit:</strong> {selectedItem.unit}</p>
-                        <p><strong>Stock Used:</strong> {selectedItem.stock_used}</p>
-                        <p><strong>Stock Damaged:</strong> {selectedItem.stock_damaged}</p>
-                        <p><strong>Product ID:</strong> {selectedItem.product_id}</p>
+                    <div className="bg-white p-8 rounded-md shadow-md min-h-[50vh] max-h-[80vh] overflow-y-auto">
+                        <h2 className="text-2xl font-bold mb-4">Item Details</h2>
+                        <table className="min-w-full divide-y divide-gray-200 text-sm">
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">ID:</td>
+                                    <td className="px-5 py-3 whitespace-nowrap">{selectedItem.fd_id}</td>
+                                </tr>
+                                <tr>
+                                    <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Back Inventory ID:</td>
+                                    <td className="px-5 py-3 whitespace-nowrap">{selectedItem.bd_id}</td>
+                                </tr>
+                                <tr>
+                                    <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">In Stock:</td>
+                                    <td className="px-5 py-3 whitespace-nowrap">{selectedItem.in_stock}</td>
+                                </tr>
+                                <tr>
+                                    <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Unit:</td>
+                                    <td className="px-5 py-3 whitespace-nowrap">{selectedItem.unit}</td>
+                                </tr>
+                                <tr>
+                                    <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Stock Used:</td>
+                                    <td className="px-5 py-3 whitespace-nowrap">{selectedItem.stock_used}</td>
+                                </tr>
+                                <tr>
+                                    <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Stock Damaged:</td>
+                                    <td className="px-5 py-3 whitespace-nowrap">{selectedItem.stock_damaged}</td>
+                                </tr>
+                                <tr>
+                                    <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Product ID:</td>
+                                    <td className="px-5 py-3 whitespace-nowrap">{selectedItem.product_id}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                         <Button onClick={handleCloseModal} className="mt-4">Close</Button>
                     </div>
                 </div>

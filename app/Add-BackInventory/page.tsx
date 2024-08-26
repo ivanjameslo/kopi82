@@ -146,38 +146,3 @@ const backInventory = () => {
   );
 }
 export default backInventory;
-
-
-// const handleSubmit = async (e: React.FormEvent<HTMLFormElement | HTMLSelectElement>) => {
-//   e.preventDefault();
-//   try{
-
-//     const formattedDataArray = formDataArray.map(formData => ({
-//       ...formData,
-//       stock_in_date: formData.stock_in_date ? formData.stock_in_date + 'T00:00:00Z' : '',
-//       expiry_date: formData.expiry_date ? formData.expiry_date + 'T00:00:00Z' : '',
-//     }));
-    
-//       await fetch('/api/back_inventory', {
-//           method: 'POST',
-//           headers: {
-//               'Content-Type': 'application/json'
-//           },
-//           body: JSON.stringify({
-//               item_name: formData.item_name,
-//               item_stocks: formData.item_stocks,
-//               unit: formData.unit,
-//               category: formData.category,
-//               location_shelf: formData.location_shelf,
-//               stock_in_date: formData.stock_in_date + 'T00:00:00Z',
-//               expiry_date: formData.expiry_date + 'T00:00:00Z',
-//               stock_damaged: formData.stock_damaged,
-//               po_id: formData.po_id,
-
-//           })
-//       })
-//       router.refresh();
-//   } catch(error){
-//       console.log(error);
-//   }
-// }
