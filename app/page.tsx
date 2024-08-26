@@ -14,7 +14,7 @@ export default function Home() {
         </p>
         <p className="text-sm text-muted mt-96">
           Kopi 82 <br />
-          &copy; {new Date().getFullYear()} All rights reserved
+          &copy; {new Date().getFullYear()} All rights reserved.
         </p>
       </div>
     </main>
