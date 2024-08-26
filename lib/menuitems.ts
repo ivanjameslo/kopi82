@@ -133,7 +133,7 @@ export const allDayBreakfast = [
   },
 ];
 
-export const riceMeal = [
+export const riceMeals = [
   {
     productName: "Chicken Ala King",
     productPrice: "220",
@@ -242,7 +242,7 @@ export const pizza = [
   },
 ];
 
-export const sandwich = [
+export const sandwiches = [
   {
     productName: "Kani Salad Roll",
     productPrice: "160",
@@ -317,13 +317,16 @@ export const beer = [
   {
     productName: "San Miguel Super Dry",
     productPrice: "105",
+    productImage: "/beers/heineken.png",
   },
   {
     productName: "San Miguel Premium",
     productPrice: "110",
+    productImage: "/beers/heineken.png",
   },
   {
     productName: "San Miguel Negra",
     productPrice: "95",
+    productImage: "/beers/heineken.png",
   },
 ];
