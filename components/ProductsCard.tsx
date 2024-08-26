@@ -14,7 +14,7 @@ const ProductCard = ({
 }: ProductProps) => {
   return (
     <>
-      <div className="border border-black flex flex-col justify-center items-center w-[300px] h-[330px] rounded-xl">
+      <div className="flex flex-col justify-center items-center w-[300px] h-[330px] rounded-xl">
         <EditProduct />
         <div className="flex justify-center items-center h-2/3 w-full">
           <Image
@@ -27,8 +27,8 @@ const ProductCard = ({
           />
         </div>
         <div className="flex flex-col justify-evenly items-center h-1/3 w-full">
-          <span className="text-xl font-medium">{productName}</span>
-          <span className="text-xl font-medium">{productPrice}</span>
+          <span className="text-xl font-bold">{productName}</span>
+          <span className="text-lg font-normal">{productPrice}</span>
         </div>
       </div>
     </>
