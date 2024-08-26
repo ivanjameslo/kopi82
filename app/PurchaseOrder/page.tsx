@@ -83,6 +83,7 @@ const purchaseOrder = () => {
     }
     const data = await response.json();
     console.log(data);
+    setData(data);
   };
   useEffect(() => {
     fetchPurchaseOrder().catch((error) => console.log(error));
@@ -154,9 +155,9 @@ const purchaseOrder = () => {
           <TableBody>
             {data.map((purchaseOrder) => (
               <TableRow key={purchaseOrder.po_id}>
-                <TableCell>{purchaseOrder.receipt_no}</TableCell>
-                <TableCell>{purchaseOrder.purchase_date}</TableCell>
-                <TableCell>
+                <TableCell className="text-center">{purchaseOrder.receipt_no}</TableCell>
+                <TableCell className="text-center">{purchaseOrder.purchase_date}</TableCell>
+                <TableCell className="text-center">
                   <Button
                     variant="outline"
                     onClick={() => handleViewDetails(purchaseOrder.po_id)}
