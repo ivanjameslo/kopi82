@@ -1,25 +1,23 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import { query } from '@/utils/prisma';
+import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 
-interface PurchaseOrder {
-    po_id: number;
-}
+const prisma = new PrismaClient();
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-    if (req.method === 'GET') {
-        try {
-            const results = await query(`
-                SELECT po_id FROM purchase_orders ORDER BY po_id DESC LIMIT 1
-            `) as PurchaseOrder[];
-            if (results.length > 0) {
-                res.status(200).json({ po_id: results[0].po_id });
-            } else {
-                res.status(404).json({ error: 'No purchase orders found' });
-            }
-        } catch (error) {
-            res.status(500).json({ error: 'Internal Server Error' });
+export async function GET(req: NextRequest) {
+    try {
+        const recentPurchaseOrder = await prisma.purchase_order.findFirst({
+            orderBy: {
+                po_id: 'desc',
+            },
+        });
+
+        if (!recentPurchaseOrder) {
+            return NextResponse.json({ error: 'No purchase orders found' }, { status: 404 });
         }
-    } else {
-        res.status(405).json({ error: 'Method not allowed' });
+
+        return NextResponse.json(recentPurchaseOrder, { status: 200 });
+    } catch (error) {
+        console.error(error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

@@ -32,11 +32,14 @@ const EditBackInventory: React.FC<EditBackInventoryProps> = ({ selectedItem, onC
                 body: JSON.stringify(formattedData),
             });
             if (!response.ok) {
-                throw new Error('Failed to update Front Inventory');
+                throw new Error('Failed to update Back Inventory');
             }
             const updatedItem = await response.json();
+            console.log('Updated item:', updatedItem);
+
             onSave(updatedItem);
             onClose();
+            window.location.reload();
         } catch (error) {
             console.error(error);
         }
@@ -44,7 +47,7 @@ const EditBackInventory: React.FC<EditBackInventoryProps> = ({ selectedItem, onC
 
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white p-8 rounded-md shadow-md">
+            <div className="bg-white p-8 rounded-md shadow-md max-h-[70vh] overflow-y-auto">
                 <h2 className="text-2xl font-bold mb-4">Edit Back Inventory</h2>
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
@@ -62,7 +65,7 @@ const EditBackInventory: React.FC<EditBackInventoryProps> = ({ selectedItem, onC
                         <input
                             type="number"
                             name="item_stocks"
-                            value={formData.stock_in_date}
+                            value={formData.item_stocks}
                             onChange={handleChange}
                             className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                         />
@@ -76,11 +79,11 @@ const EditBackInventory: React.FC<EditBackInventoryProps> = ({ selectedItem, onC
                             className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                         >
                             <option value="" disabled hidden> Select Unit of Measurement</option>
-                            <option value="bag">Bag</option>
-                            <option value="box">Box</option>
-                            <option value="bottle">Bottle</option>
-                            <option value="slice">Slice</option>
-                            <option value="pack">Pack</option>
+                            <option value="Bag">Bag</option>
+                            <option value="Box">Box</option>
+                            <option value="Bottle">Bottle</option>
+                            <option value="Slice">Slice</option>
+                            <option value="Pack">Pack</option>
                         </select>
                     </div>
                     <div className="mb-4">
@@ -92,17 +95,17 @@ const EditBackInventory: React.FC<EditBackInventoryProps> = ({ selectedItem, onC
                             className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                         >
                             <option value="" disabled hidden> Select Category</option>
-                            <option value="syrup">Syrup</option>
-                            <option value="pasta">Pasta</option>
-                            <option value="coffee beans">Coffee Beans</option>
-                            <option value="pastries">Pastries</option>
-                            <option value="alcohol">Alcohol</option>
+                            <option value="Poultry">Poultry</option>
+                            <option value="Meat">Meat</option>
+                            <option value="Vegetables">Vegetables</option>
+                            <option value="Condiments">Condiments</option>
+                            <option value="Seasoning">Seasoning</option>
                         </select>
                     </div>
                     <div className="mb-4">
                         <label>Shelf Location:</label>
                         <input
-                            type="date"
+                            type="text"
                             name="location_shelf"
                             value={formData.location_shelf}
                             onChange={handleChange}
@@ -122,7 +125,7 @@ const EditBackInventory: React.FC<EditBackInventoryProps> = ({ selectedItem, onC
                     <div className="mb-4">
                         <label>Expiry Date:</label>
                         <input
-                            type="text"
+                            type="date"
                             name="expiry_date"
                             value={formData.expiry_date}
                             onChange={handleChange}
@@ -142,7 +145,7 @@ const EditBackInventory: React.FC<EditBackInventoryProps> = ({ selectedItem, onC
                     <div className="mb-4">
                         <label>Recent PO ID:</label>
                         <input
-                            type="text"
+                            type="number"
                             name="po_id"
                             value={formData.po_id}
                             onChange={handleChange}

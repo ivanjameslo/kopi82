@@ -57,15 +57,21 @@ const purchaseOrder = () => {
                 },
                 body: JSON.stringify({
                     receipt_no: formData.receipt_no,
-                    purchase_date: formData.purchase_date,
+                    purchase_date: formData.purchase_date + 'T00:00:00Z',
                 })
             });
 
             //Fetch the most recent po_id
             const response = await fetch('/api/get_recent_po_id');
+            if (!response.ok) {
+                throw new Error('Failed to fetch recent po_id');
+            }
             const data = await response.json();
             const recentPoId = data.po_id;
 
+            if (!recentPoId) {
+                throw new Error('No recent po_id found');
+            }
             //Redirect to the Add-PuchaseDetails page with the recent po_id
             router.push(`/Add-PurchaseDetails/${recentPoId}`);
 
@@ -77,14 +83,28 @@ const purchaseOrder = () => {
     //For Displaying the table
     const [data, setData] = useState<PurchaseOrderData[]>([]);
     const fetchPurchaseOrder = async () => {
-        const response = await fetch('/api/purchase_order', {
-            method: 'GET',
-        });
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        } 
-        const data = await response.json();
-        console.log(data);
+        try {
+            const response = await fetch('/api/purchase_order', {
+                method: 'GET',
+            });
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            } 
+            const data = await response.json();
+            console.log('Fetched data:', data); // Log fetched data
+            // Split purchase_date into date and time
+            const formattedData = data.map((order: any) => {
+                const [date, time] = order.purchase_date.split('T');
+                return {
+                    ...order,
+                    purchase_date: date,
+                    purchase_time: time.split('Z')[0],
+                };
+            });
+            setData(formattedData);
+        } catch (error) {
+            console.log(error);
+        }
     }
     useEffect(() => {
         fetchPurchaseOrder().catch(error => console.log(error));
@@ -130,7 +150,7 @@ const purchaseOrder = () => {
                     onChange={handleChange} 
                     required 
                     className="mt-1 w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"/>
-                    
+                  
                     <Button type="submit" className="mt-1 px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Submit
                     </Button>
@@ -149,9 +169,9 @@ const purchaseOrder = () => {
                     <TableBody>
                         {data.map((purchaseOrder) => (
                             <TableRow key={purchaseOrder.po_id}>
-                                <TableCell>{purchaseOrder.receipt_no}</TableCell>
-                                <TableCell>{purchaseOrder.purchase_date}</TableCell>
-                                <TableCell>
+                                <TableCell className="text-center">{purchaseOrder.receipt_no}</TableCell>
+                                <TableCell className="text-center">{purchaseOrder.purchase_date}</TableCell>
+                                <TableCell className="text-center">
                                     <Button className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" 
                                     onClick={() => handleViewDetails(purchaseOrder.po_id)}>
                                         View

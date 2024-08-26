@@ -46,8 +46,8 @@ const AddPurchaseDetails = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement | HTMLSelectElement>) => {
     e.preventDefault();
     try{
-      await fetch('/api/purchase_details', {
-        method: 'POST',
+      await fetch(`/api/purchase_details/${po_id}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
@@ -144,7 +144,7 @@ const AddPurchaseDetails = () => {
         </Table>
 
         <div className="flex flex-row gap-3 justify-end">
-          <Button variant="outline" onClick={addNewRow}>
+          <Button variant="outline" type="button" onClick={addNewRow}>
             Add Item
           </Button>
           <Button variant="outline" type="submit">Submit</Button>

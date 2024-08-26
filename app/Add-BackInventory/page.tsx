@@ -14,10 +14,21 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { v4 as uuidv4 } from 'uuid';
+import { get } from 'http';
 
 const backInventory = () => {
 
   const router = useRouter();
+
+  const getstockInDate = () => {
+    const date = new Date();
+    return date.toISOString().split('T')[0];
+  }
+
+  const getExpiryDate = () => {
+    const date = new Date();
+    return date.toISOString().split('T')[0];
+  }
 
   const [formDataArray, setFormDataArray] = useState ([{
     bd_id: uuidv4(),
@@ -26,8 +37,8 @@ const backInventory = () => {
     unit: "",
     category: "",
     location_shelf: "",
-    stock_in_date: "",
-    expiry_date: "",
+    stock_in_date: getstockInDate(),
+    expiry_date: getExpiryDate(),
     stock_damaged: "",
     po_id: "",
   }]);
@@ -70,8 +81,8 @@ const backInventory = () => {
       unit: "",
       category: "",
       location_shelf: "",
-      stock_in_date: "",
-      expiry_date: "",
+      stock_in_date: getstockInDate(),
+      expiry_date: getExpiryDate(),
       stock_damaged: "",
       po_id: "",
     }]);
@@ -104,19 +115,19 @@ const backInventory = () => {
                     <TableCell><input type="number" name="item_stocks" value={formData.item_stocks} onChange={(e) => handleChange(index, e)} /></TableCell>
                     <TableCell><select name="unit" value={formData.unit} onChange={(e) => handleChange(index, e)}>
                         <option value="" disabled hidden> Select Unit of Measurement</option>
-                        <option value="bag">Bag</option>
-                        <option value="box">Box</option>
-                        <option value="bottle">Bottle</option>
-                        <option value="slice">Slice</option>
-                        <option value="pack">Pack</option>
+                        <option value="Bag">Bag</option>
+                        <option value="Box">Box</option>
+                        <option value="Bottle">Bottle</option>
+                        <option value="Slice">Slice</option>
+                        <option value="Pack">Pack</option>
                     </select></TableCell>
                     <TableCell><select name="category" value={formData.category} onChange={(e) => handleChange(index, e)}>
                         <option value="" disabled hidden> Select Category</option>
-                        <option value="syrup">Syrup</option>
-                        <option value="pasta">Pasta</option>
-                        <option value="coffee beans">Coffee Beans</option>
-                        <option value="pastries">Pastries</option>
-                        <option value="alcohol">Alcohol</option>
+                        <option value="Poultry">Poultry</option>
+                        <option value="Meat">Meat</option>
+                        <option value="Vegetables">Vegetables</option>
+                        <option value="Condiments">Condiments</option>
+                        <option value="Seasoning">Seasoning</option>
                     </select></TableCell>
                     <TableCell><input type="text" name="location_shelf" value={formData.location_shelf} onChange={(e) => handleChange(index, e)} /></TableCell>
                     <TableCell><input type="date" name="stock_in_date" value={formData.stock_in_date} onChange={(e) => handleChange(index, e)} /></TableCell>
@@ -127,7 +138,7 @@ const backInventory = () => {
             </TableBody>
         </Table>
         <div className="flex flex-row gap-3 justify-end">
-          <Button variant="outline" onClick={addNewRow}>Add Item</Button>
+          <Button variant="outline" type="button" onClick={addNewRow}>Add Item</Button>
           <Button variant="outline" type="submit">Submit</Button>
         </div>
       </form>

@@ -47,7 +47,21 @@ const backInventory = () => {
       throw new Error('Network response was not ok');
     } 
     const data = await response.json();
+    setData(data);
     console.log(data);
+
+    const formattedData = data.map((item: any) => {
+      const [stockInDate, stockInTime] = item.stock_in_date.split('T');
+      const [expiryDate, expiryTime] = item.expiry_date.split('T');
+      return {
+          ...item,
+          stock_in_date: stockInDate,
+          stock_in_time: stockInTime.split('Z')[0],
+          expiry_date: expiryDate,
+          expiry_time: expiryTime.split('Z')[0],
+      };
+  });
+  setData(formattedData);
   }
 
   useEffect(() => {
@@ -130,26 +144,23 @@ const backInventory = () => {
           <TableBody>
             {data.map((item) => (
               <TableRow key={item.bd_id}>
-                <TableCell>{item.bd_id}</TableCell>
-                <TableCell>{item.item_stocks}</TableCell>
-                <TableCell>{item.unit}</TableCell>
-                <TableCell>{item.item_name}</TableCell>
-                <TableCell>{item.category}</TableCell>
-                <TableCell>{item.location_shelf}</TableCell>
-                {/* <TableCell>{item.stock_in_date}</TableCell> */}
-                <TableCell>{item.expiry_date}</TableCell>
-                {/* <TableCell>{item.stock_damaged}</TableCell>
-                <TableCell>{item.po_id}</TableCell> */}
-                <TableCell>
-                  <Button className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                <TableCell className="text-center">{item.bd_id}</TableCell>
+                <TableCell className="text-center">{item.item_name}</TableCell>
+                <TableCell className="text-center">{item.item_stocks}</TableCell>
+                <TableCell className="text-center">{item.unit}</TableCell>
+                <TableCell className="text-center">{item.category}</TableCell>
+                <TableCell className="text-center">{item.location_shelf}</TableCell>
+                <TableCell className="text-center">{item.expiry_date}</TableCell>
+                <TableCell className="text-center">
+                  <Button className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mx-2"
                     onClick={() => handleViewDetails(item)}>
                     View
                   </Button>
-                  <Button className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" 
+                  <Button className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mx-2" 
                   onClick={() => handleEditDetails(item)}>
                     Edit
                   </Button>
-                  <Button className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" 
+                  <Button className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mx-2" 
                   onClick={() => handleDeleteItem(item.bd_id)}>
                     Delete
                   </Button>
@@ -163,19 +174,55 @@ const backInventory = () => {
       </div>
       {isModalOpen && selectedItem &&(
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-8 rounded-md shadow-md">
+        <div className="bg-white p-8 rounded-md shadow-md min-h-[50vh] max-h-[80vh] overflow-y-auto">
           <h2 className="text-2xl font-bold mb-4">Item Details</h2>
-              <p><strong>ID:</strong> {selectedItem.bd_id}</p>
-              <p><strong>Item Name:</strong> {selectedItem.item_name}</p>
-              <p><strong>Stocks:</strong> {selectedItem.item_stocks}</p>
-              <p><strong>Category:</strong> {selectedItem.category}</p>
-              <p><strong>Location Shelf:</strong> {selectedItem.location_shelf}</p>
-              <p><strong>Stock-In Date:</strong> {selectedItem.stock_in_date}</p>
-              <p><strong>Stock Damaged:</strong> {selectedItem.stock_damaged}</p>
-              <p><strong>Recent PO ID:</strong> {selectedItem.po_id}</p>
-              <Button onClick={handleCloseModal} className="mt-4">Close</Button>
-          </div>
+          <table className="min-w-full divide-y divide-gray-200 text-sm">
+            <tbody className="bg-white divide-y divide-gray-200">
+              <tr>
+                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">ID:</td>
+                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.bd_id}</td>
+              </tr>
+              <tr>
+                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Item Name:</td>
+                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.item_name}</td>
+              </tr>
+              <tr>
+                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Stocks:</td>
+                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.item_stocks}</td>
+              </tr>
+              <tr>
+                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Unit:</td>
+                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.unit}</td>
+              </tr>
+              <tr>
+                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Category:</td>
+                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.category}</td>
+              </tr>
+              <tr>
+                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Location Shelf:</td>
+                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.location_shelf}</td>
+              </tr>
+              <tr>
+                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Stock-In Date:</td>
+                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.stock_in_date}</td>
+              </tr>
+              <tr>
+                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Expiry Date:</td>
+                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.expiry_date}</td>
+              </tr>
+              <tr>
+                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Stock Damaged:</td>
+                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.stock_damaged}</td>
+              </tr>
+              <tr>
+                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Recent PO ID:</td>
+                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.po_id}</td>
+              </tr>
+            </tbody>
+          </table>
+          <Button onClick={handleCloseModal} className="mt-4">Close</Button>
         </div>
+      </div>
       )}
 
       {isEditModalOpen && selectedItem && (
