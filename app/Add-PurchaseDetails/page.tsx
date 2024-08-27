@@ -16,8 +16,6 @@ import { v4 as uuidv4 } from 'uuid';
 
 const AddPurchaseDetails = () => {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const po_id = searchParams.get('po_id') || "";
 
   const [formDataArray, setFormDataArray] = useState([{
     pd_id: uuidv4(),
@@ -28,13 +26,31 @@ const AddPurchaseDetails = () => {
     price: "",
   }]);
 
+  const [recentPoId, setRecentPoId] = useState<number | null>(null);
   useEffect(() => {
-    if (po_id) {
-      setFormDataArray((prevFormDataArray) =>
-        prevFormDataArray.map((formData) => ({ ...formData, po_id: po_id }))
-      );
-    }
-  }, [po_id]);
+    const fetchRecentPoId = async () => {
+      try {
+        const response = await fetch("/api/get_recent_po_id");
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        const data = await response.json();
+        setRecentPoId(data.po_id);
+        setFormDataArray([{
+            pd_id: uuidv4(),
+            po_id: data.po_id,
+            item_name: "",
+            quantity: "",
+            unit: "",
+            price: "",
+          }]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchRecentPoId();
+  }, []);
 
   const handleChange = (index: number, e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const newFormDataArray = [...formDataArray];
@@ -46,7 +62,7 @@ const AddPurchaseDetails = () => {
     e.preventDefault();
     try {
       console.log('Submitting form data:', formDataArray);
-      await fetch(`/api/purchase_details/${po_id}`, {
+      await fetch(`/api/purchase_details`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -60,14 +76,18 @@ const AddPurchaseDetails = () => {
   };
 
   const addNewRow = () => {
-    setFormDataArray([...formDataArray, {
-      pd_id: uuidv4(),
-      po_id: po_id,
-      item_name: "",
-      quantity: "",
-      unit: "",
-      price: "",
-    }]);
+    if (recentPoId !== null) {
+      setFormDataArray([...formDataArray, {
+        pd_id: uuidv4(),
+        po_id: recentPoId.toString(),
+        item_name: "",
+        quantity: "",
+        unit: "",
+        price: "",
+      }]);
+    } else {
+      console.error('Recent PO ID is not available');
+    }
   };
 
   return (

@@ -47,7 +47,7 @@ const backInventory = () => {
       throw new Error('Network response was not ok');
     } 
     const data = await response.json();
-    setData(data);
+    // setData(data);
     console.log(data);
 
     const formattedData = data.map((item: any) => {

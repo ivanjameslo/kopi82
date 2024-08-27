@@ -48,6 +48,12 @@ const purchaseOrder = () => {
 
   const handleSubmit = async (e: ChangeEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // const formattedData = {
+    //   receipt_no: parseInt(formData.receipt_no),
+    //   purchase_date: formData.purchase_date + "T00:00:00Z",
+    // };
+
     try {
       await fetch("/api/purchase_order", {
         method: "POST",
@@ -56,7 +62,7 @@ const purchaseOrder = () => {
         },
         body: JSON.stringify({
           receipt_no: formData.receipt_no,
-          purchase_date: formData.purchase_date,
+          purchase_date: formData.purchase_date + "T00:00:00Z",
         }),
       });
 
@@ -66,7 +72,7 @@ const purchaseOrder = () => {
       const recentPoId = data.po_id;
 
       //Redirect to the Add-PuchaseDetails page with the recent po_id
-      router.push(`/Add-PurchaseDetails/${recentPoId}`);
+      router.push(`/Add-PurchaseDetails`);
     } catch (error) {
       console.log(error);
     }
@@ -83,7 +89,17 @@ const purchaseOrder = () => {
     }
     const data = await response.json();
     console.log(data);
-    setData(data);
+    // setData(data);
+
+    const formattedData = data.map((item: any) => {
+      const [purchaseDate, purchaseTime] = item.purchase_date.split("T");
+      return {
+        ...item,
+        purchase_date: purchaseDate,
+        purchase_time: purchaseTime.split("Z")[0],
+      };
+    });
+    setData(formattedData);
   };
   useEffect(() => {
     fetchPurchaseOrder().catch((error) => console.log(error));
