@@ -15,7 +15,7 @@ import Link from "next/link";
 <div></div>;
 const InventoryRoutes = () => {
   return (
-    <div className="bg-[url('/background.png')] bg-cover bg-center min-h-screen">
+    <div className="bg-[url('/darkbackground.png')] bg-cover bg-center min-h-screen">
       <div className="flex justify-center gap-3">
         <Card className="mt-96 bg-black border-none">
           <CardHeader>
