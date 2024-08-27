@@ -2,37 +2,37 @@ export const klassicKopi = [
   {
     productName: "Americano",
     productPrice: "Hot: 95 | Iced: 105",
-    productImage: "/picapica/calamares.png",
+    productImage: "/klassickopi/americano.png",
   },
   {
     productName: "Latte",
     productPrice: "Hot: 120 | Iced: 130",
-    productImage: "/picapica/calamares.png",
+    productImage: "/klassickopi/latte.png",
   },
   {
     productName: "Cappucino",
     productPrice: "Hot: 120 | Iced: 130",
-    productImage: "/picapica/calamares.png",
+    productImage: "/klassickopi/cappucino.png",
   },
   {
     productName: "Mocha",
     productPrice: "Hot: 140 | Iced: 170",
-    productImage: "/picapica/calamares.png",
+    productImage: "/klassickopi/mocha.png",
   },
   {
     productName: "Salted Caramel",
     productPrice: "Hot: 140 | Iced: 170",
-    productImage: "/picapica/calamares.png",
+    productImage: "/klassickopi/saltedcaramel.png",
   },
   {
     productName: "White Mocha Latte",
     productPrice: "Hot: 140 | Iced: 170",
-    productImage: "/picapica/calamares.png",
+    productImage: "/klassickopi/whitemocha.png",
   },
   {
     productName: "Love Latte",
     productPrice: "Iced: 170",
-    productImage: "/picapica/calamares.png",
+    productImage: "/klassickopi/lovelatte.png",
   },
 ];
 
@@ -40,17 +40,17 @@ export const koldBrew = [
   {
     productName: "White Eye",
     productPrice: "190",
-    productImage: "/picapica/calamares.png",
+    productImage: "/koldbrew/whiteeye.png",
   },
   {
     productName: "Black Eye",
     productPrice: "160",
-    productImage: "/picapica/calamares.png",
+    productImage: "/koldbrew/blackeye.png",
   },
   {
     productName: "Red Eye",
     productPrice: "190",
-    productImage: "/picapica/calamares.png",
+    productImage: "/koldbrew/redeye.png",
   },
 ];
 
@@ -58,27 +58,27 @@ export const nonKopi = [
   {
     productName: "Matcha Latte",
     productPrice: "Hot: 160 | Iced: 180",
-    productImage: "/picapica/calamares.png",
+    productImage: "/nonkopi/matcha.png",
   },
   {
     productName: "Bellagio Dark Choco",
     productPrice: "Hot: 130 | Iced: 160",
-    productImage: "/picapica/calamares.png",
+    productImage: "/nonkopi/darkchocolate.png",
   },
   {
     productName: "Cookies and Cream",
     productPrice: "195",
-    productImage: "/picapica/calamares.png",
+    productImage: "/nonkopi/cookiesandcream.png",
   },
   {
     productName: "Mango Cream",
     productPrice: "195",
-    productImage: "/picapica/calamares.png",
+    productImage: "/nonkopi/mangocream.png",
   },
   {
     productName: "Strawberry Cream",
     productPrice: "195",
-    productImage: "/picapica/calamares.png",
+    productImage: "/nonkopi/strawberrycream.png",
   },
 ];
 
@@ -86,27 +86,27 @@ export const fusionTeas = [
   {
     productName: "Passion Teajito",
     productPrice: "Hot: 110 | Iced: 120",
-    productImage: "/picapica/calamares.png",
+    productImage: "/fusionteas/passionteajito.png",
   },
   {
     productName: "Mango Tango",
     productPrice: "Hot: 110 | Iced: 120",
-    productImage: "/picapica/calamares.png",
+    productImage: "/fusionteas/mangotango.png",
   },
   {
     productName: "Menta Strawberry Lychee Tea",
     productPrice: "Hot: 110 | Iced: 120",
-    productImage: "/picapica/calamares.png",
+    productImage: "/fusionteas/mentastrawberry.png",
   },
   {
     productName: "Menta Mixed Berry Lychee Tea",
     productPrice: "Hot: 110 | Iced: 120",
-    productImage: "/picapica/calamares.png",
+    productImage: "/fusionteas/mentaberry.png",
   },
   {
     productName: "Frozen Lemonade",
     productPrice: "160",
-    productImage: "/picapica/calamares.png",
+    productImage: "/fusionteas/frozenlemonade.png",
   },
 ];
 
