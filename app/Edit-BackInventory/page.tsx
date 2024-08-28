@@ -11,7 +11,11 @@ const EditBackInventory: React.FC<EditBackInventoryProps> = ({ selectedItem, onC
     const [formData, setFormData] = useState(selectedItem);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData({
+            ...formData,
+            [name]: name === "item_stocks" || name === "stock_damaged" || name === "po_id" ? parseInt(value, 10) : value,
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {

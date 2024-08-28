@@ -129,16 +129,13 @@ const frontInventory = () => {
                                 <TableCell className="text-center">{item.in_stock}</TableCell>
                                 <TableCell className="text-center">{item.unit}</TableCell>
                                 <TableCell className="text-center">
-                                    <Button className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mx-2"
-                                    onClick={() => handleViewDetails(item)}>
+                                    <Button variant="outline" className="mx-1" onClick={() => handleViewDetails(item)}>
                                         View
                                     </Button>
-                                    <Button className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mx-2"
-                                    onClick={() => handleEditDetails(item)}>
+                                    <Button variant="outline" className="mx-1" onClick={() => handleEditDetails(item)}>
                                         Edit
                                     </Button>
-                                    <Button className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mx-2" 
-                                    onClick={() => handleDeleteItem(item.fd_id)}>
+                                    <Button variant="outline" className="mx-1" onClick={() => handleDeleteItem(item.fd_id)}>
                                         Delete
                                     </Button>
                                 </TableCell>

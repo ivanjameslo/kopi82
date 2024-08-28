@@ -49,11 +49,6 @@ const purchaseOrder = () => {
   const handleSubmit = async (e: ChangeEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // const formattedData = {
-    //   receipt_no: parseInt(formData.receipt_no),
-    //   purchase_date: formData.purchase_date + "T00:00:00Z",
-    // };
-
     try {
       await fetch("/api/purchase_order", {
         method: "POST",
@@ -130,6 +125,12 @@ const purchaseOrder = () => {
     setIsModalOpen(false);
     setSelectedPurchaseDetails([]);
   };
+
+  const phpFormatter = new Intl.NumberFormat('en-PH', {
+    style: 'currency',
+    currency: 'PHP',
+    minimumFractionDigits: 2,
+  });
 
   return (
     <div className="mt-24 ml-40 mr-40">
@@ -208,7 +209,7 @@ const purchaseOrder = () => {
                       <TableCell>{detail.item_name}</TableCell>
                       <TableCell>{detail.quantity}</TableCell>
                       <TableCell>{detail.unit}</TableCell>
-                      <TableCell>{detail.price}</TableCell>
+                      <TableCell>{phpFormatter.format(detail.price)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

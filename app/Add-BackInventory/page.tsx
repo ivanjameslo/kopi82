@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChangeEvent } from 'react';
 import {
@@ -87,6 +87,51 @@ const backInventory = () => {
       po_id: "",
     }]);
   }
+
+  //FETCHING ITEM NAMES FROM PURCHASE DETAILS
+    const [itemName, setItemName] = useState<string[]>([]);
+    const fetchItemName = async () => {
+      const response = await fetch('/api/purchase_details', {
+          method: 'GET',
+          headers: {
+              'Content-Type': 'application/json'
+          }
+      });
+      if (!response.ok) {
+          throw new Error('Something went wrong');
+      }
+      const data = await response.json();
+  
+      // Use a Set to filter out duplicate item names
+      const uniqueItemNames = Array.from(new Set(data.map((item: any) => item.item_name))) as string[];
+  
+      setItemName(uniqueItemNames);
+  }
+  
+  useEffect(() => {
+      fetchItemName().catch(error => console.log(error));
+  }, []);
+
+  //FETCHING PO_ID FROM PURCHASE ORDER
+  const [poItems, setpoItems] = useState([]);
+    const fetchPO_ID = async () => {
+        const response = await fetch('/api/purchase_order', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!response.ok) {
+            throw new Error('Something went wrong');
+        }
+        const data = await response.json();
+        setpoItems(data);
+    }
+
+    useEffect(() => {
+        fetchPO_ID().catch(error => console.log(error));
+    }, []);
+
   
   return (
     <div className="mt-24 ml-40 mr-40">
@@ -111,7 +156,16 @@ const backInventory = () => {
             <TableBody>
               {formDataArray.map((formData, index) => (
                 <TableRow key={formData.bd_id}>
-                    <TableCell className="font-medium"><input type="text" name="item_name" value={formData.item_name} onChange={(e) => handleChange(index, e)} /></TableCell>
+                    <TableCell className="font-medium">
+                      <select name="item_name" value={formData.item_name} onChange={(e) => handleChange(index, e)}>
+                        <option value="" disabled hidden> Select Item</option>
+                        {itemName.map((item: string) => (
+                          <option key={item} value={item}>
+                            {item}
+                          </option>
+                        ))}
+                      </select>
+                    </TableCell>
                     <TableCell><input type="number" name="item_stocks" value={formData.item_stocks} onChange={(e) => handleChange(index, e)} /></TableCell>
                     <TableCell><select name="unit" value={formData.unit} onChange={(e) => handleChange(index, e)}>
                         <option value="" disabled hidden> Select Unit of Measurement</option>
@@ -132,7 +186,16 @@ const backInventory = () => {
                     <TableCell><input type="text" name="location_shelf" value={formData.location_shelf} onChange={(e) => handleChange(index, e)} /></TableCell>
                     <TableCell><input type="date" name="stock_in_date" value={formData.stock_in_date} onChange={(e) => handleChange(index, e)} /></TableCell>
                     <TableCell><input type="date" name="expiry_date" value={formData.expiry_date} onChange={(e) => handleChange(index, e)} /></TableCell>
-                    <TableCell><input type="number" name="po_id" value={formData.po_id} onChange={(e) => handleChange(index, e)} /></TableCell>
+                    <TableCell>
+                    <select name="po_id" value={formData.po_id} onChange={(e) => handleChange(index, e)}>
+                        <option value="" disabled hidden>Select Item</option>
+                        {poItems.map((item: any) => (
+                            <option key={item.po_id} value={item.po_id}>
+                                {item.po_id}
+                            </option>
+                        ))}
+                    </select>
+                    </TableCell>
                 </TableRow>
               ))}
             </TableBody>
