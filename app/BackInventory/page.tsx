@@ -134,10 +134,7 @@ const backInventory = () => {
               <TableHead className="text-center">Unit</TableHead>
               <TableHead className="text-center">Category</TableHead>
               <TableHead className="text-center">Location Shelf</TableHead>
-              {/* <TableHead className="text-center">Stock In Date</TableHead> */}
               <TableHead className="text-center">Expiry Date</TableHead>
-              {/* <TableHead className="text-center">Stock Damaged</TableHead>
-              <TableHead className="text-center">PO ID</TableHead> */}
               <TableHead className="text-center">Action</TableHead>
             </TableRow>
           </TableHeader>

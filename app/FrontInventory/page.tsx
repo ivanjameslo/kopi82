@@ -27,6 +27,11 @@ interface FrontInventoryData {
     product_id: number;
 };
 
+interface BackInventoryData {
+    bd_id: number;
+    item_name: string;
+  }
+
 const frontInventory = () => {
     
     const router = useRouter();
@@ -35,6 +40,7 @@ const frontInventory = () => {
     const [selectedItem, setSelectedItem] = useState<FrontInventoryData | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [itemNameMap, setItemNameMap] = useState<{ [key: number]: string }>({});
 
     //READ FRONT INVENTORY DATA
     const fetchFrontInventoryData = async () => {
@@ -99,6 +105,31 @@ const frontInventory = () => {
         }
     };
 
+    // FETCH ITEM NAMES FROM BACK INVENTORY
+    const fetchItemNames = async () => {
+        const response = await fetch('/api/back_inventory', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        });
+        if (!response.ok) {
+        throw new Error('Something went wrong');
+        }
+        const data: BackInventoryData[] = await response.json();
+        const itemNameMap: { [key: number]: string } = {};
+        data.forEach(item => {
+        itemNameMap[item.bd_id] = item.item_name;
+        });
+        setItemNameMap(itemNameMap);
+    };
+
+    useEffect(() => {
+        fetchFrontInventoryData().catch(error => console.error(error));
+        fetchItemNames().catch(error => console.error(error));
+    }, []);
+
+
     return (
         <div className="mt-24 ml-40 mr-40">
             <p className="flex text-3xl text-[#483C32] font-bold justify-center mb-2">
@@ -113,11 +144,9 @@ const frontInventory = () => {
                         <TableRow>
                             <TableHead className="text-center">ID</TableHead>
                             <TableHead className="text-center">Back Inventory ID</TableHead>
+                            <TableHead className="text-center">Item Name</TableHead>
                             <TableHead className="text-center">In Stock</TableHead>
                             <TableHead className="text-center">Unit</TableHead>
-                            {/* <TableHead className="text-center">Stock Used</TableHead>
-                            <TableHead className="text-center">Stock Damaged</TableHead>
-                            <TableHead className="text-center">Product ID</TableHead> */}
                             <TableHead className="text-center">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -126,6 +155,7 @@ const frontInventory = () => {
                             <TableRow key={item.fd_id}>
                                 <TableCell className="text-center">{item.fd_id}</TableCell>
                                 <TableCell className="text-center">{item.bd_id}</TableCell>
+                                <TableCell className="text-center">{itemNameMap[item.bd_id]}</TableCell>
                                 <TableCell className="text-center">{item.in_stock}</TableCell>
                                 <TableCell className="text-center">{item.unit}</TableCell>
                                 <TableCell className="text-center">
