@@ -12,7 +12,7 @@ import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 
-const EditProduct = () => {
+const UpdateProduct = () => {
   return (
     <Dialog>
       <div className="flex justify-end w-full">
@@ -60,4 +60,4 @@ const EditProduct = () => {
   );
 };
 
-export default EditProduct;
+export default UpdateProduct;
