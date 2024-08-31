@@ -38,12 +38,17 @@ const EditBackInventory: React.FC<EditBackInventoryProps> = ({ selectedItem, onC
             if (!response.ok) {
                 throw new Error('Failed to update Back Inventory');
             }
-            const updatedItem = await response.json();
+            let updatedItem = await response.json();
             console.log('Updated item:', updatedItem);
+
+            updatedItem = {
+                ...updatedItem,
+                stock_in_date: updatedItem.stock_in_date ? updatedItem.stock_in_date.split('T')[0] : '',
+                expiry_date: updatedItem.expiry_date ? updatedItem.expiry_date.split('T')[0] : '',
+            };
 
             onSave(updatedItem);
             onClose();
-            window.location.reload();
         } catch (error) {
             console.error(error);
         }
