@@ -23,27 +23,18 @@ import {
 import { useRouter } from "next/navigation";
 
 export default function Component() {
-<<<<<<< HEAD:components/Add-Product.tsx
   
   const router = useRouter();
-=======
-  const [image, setImage] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState("");
-  const [hotPrice, setHotPrice] = useState("");
-  const [icedPrice, setIcedPrice] = useState("");
-  const [frappePrice, setFrappePrice] = useState("");
-  const [singlePrice, setSinglePrice] = useState("");
-  const [description, setDescription] = useState("");
-  const [availability, setAvailability] = useState("widely-available");
->>>>>>> 179c0ab421df72113067d929a85d833c1db08b29:components/AddProduct.tsx
 
   const [formData, setFormData] = useState({
     image: "",
     category: "",
     product_name: "",
     type: "",
-    price: "",
+    hotPrice: "",
+    icedPrice: "",
+    frappePrice: "",
+    singlePrice: "",
     status: "",
     description: "",
   });
@@ -62,7 +53,7 @@ export default function Component() {
   const handleSelectChange = (value: string) => {
     setFormData({
       ...formData,
-      category: value,
+      status: value,
     });
   };
   
@@ -77,60 +68,61 @@ export default function Component() {
     }
   };
 
-<<<<<<< HEAD:components/Add-Product.tsx
-  const handleSubmit = async (e: FormEvent<HTMLFormElement | HTMLSelectElement>) => {
+  const handleCategoryChange = (value: string) => {
+
+    const isNoHotPrice = ["kold-brew"].includes(value);
+    const isNoIcedPrice = ["beer", "all-day-breakfast", "rice-meals", "pasta", "pizza", "pica-pica", "sandwiches"].includes(value);
+    const isNoFrappePrice = ["kold-brew", "beer", "fusion-teas", "all-day-breakfast", "rice-meals", "pasta", "pizza", "pica-pica", "sandwiches"].includes(value);
+    const isNoSinglePrice = ["klassic-kopi", "kold-brew", "non-kopi", "fusion-teas"].includes(value)
+
+    setFormData({
+      ...formData,
+      category: value,
+      hotPrice: isNoHotPrice ? "0" : "",
+      icedPrice: isNoIcedPrice ? "0" : "",
+      frappePrice: isNoFrappePrice ? "0" : "",
+      singlePrice: isNoSinglePrice ? "0" : "",
+    });
+
+    // setFormData({
+    //   ...formData,
+    //   category: value,
+    //   hotPrice: value === "kold-brew" || value === "beers-(local)" || value === "beers-(imported)" || value === "draft-beer" || value === "all-day-breakfast" || value === "rice-meals" || value === "pasta" || value === "pizza" || value === "pica-pica" || value === "sandwiches" ? "0" : "",
+    //   icedPrice: value === "beers-(local)" || value === "beers-(imported)" || value === "draft-beer" || value === "all-day-breakfast" || value === "rice-meals" || value === "pasta" || value === "pizza" || value === "pica-pica" || value === "sandwiches" ? "0" : "",
+    //   frappePrice:value === "kold-brew" || value === "beers-(local)" || value === "draft-beer" || value === "fusion-tees" || value === "all-day-breakfast" || value === "rice-meals" || value === "pasta" || value === "pizza" || value === "pica-pica" || value === "sandwiches" ? "0" : "" ,
+    //   singlePrice: value === "klassic-kopi" || value === "kold-brew" || value === "non-kopi" || value === "fusion-tees" ? "0" : "",
+    // });
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    try{
-      await fetch('/api/product', {
+    try {
+      await fetch('/api/products',{
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          image,
+          category: formData.category,
+          product_name: formData.product_name,
+          type: formData.type,
+          hotPrice: Number(formData.hotPrice),
+          icedPrice: Number(formData.icedPrice),
+          frappePrice: Number(formData.frappePrice),
+          singlePrice: Number(formData.singlePrice),
+          status: formData.status,  
+          description: formData.description,
+        }),
       })
-      router.push('/menu');
+      router.push('/menu'); //Routing
     } catch (error) {
       console.error(error);
     }
-=======
-  const handleCategoryChange = (value: string) => {
-    setCategory(value);
-    setHotPrice("");
-    setIcedPrice("");
-    setFrappePrice("");
-    setSinglePrice("");
-  };
-
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    const priceData = ["klassic-kopi", "non-kopi"].includes(category)
-      ? { hotPrice, icedPrice, frappePrice }
-      : category === "fusion-teas"
-      ? { hotPrice, icedPrice }
-      : { price: singlePrice };
-    console.log({
-      image,
-      name,
-      category,
-      ...priceData,
-      description,
-      availability,
-    });
-    // Reset form after submission
-    setImage(null);
-    setName("");
-    setCategory("");
-    setHotPrice("");
-    setIcedPrice("");
-    setFrappePrice("");
-    setSinglePrice("");
-    setDescription("");
-    setAvailability("widely-available");
->>>>>>> 179c0ab421df72113067d929a85d833c1db08b29:components/AddProduct.tsx
   };
 
   const renderPriceInputs = () => {
-    switch (category) {
+    switch (formData.category) {
       case "klassic-kopi":
       case "non-kopi":
         return (
@@ -142,8 +134,8 @@ export default function Component() {
               <Input
                 id="hot-price"
                 type="number"
-                value={hotPrice}
-                onChange={(e) => setHotPrice(e.target.value)}
+                value={formData.hotPrice}
+                onChange={handleChange}
                 placeholder="Hot price"
                 required
               />
@@ -156,8 +148,8 @@ export default function Component() {
               <Input
                 id="iced-price"
                 type="number"
-                value={icedPrice}
-                onChange={(e) => setIcedPrice(e.target.value)}
+                value={formData.icedPrice}
+                onChange={handleChange}
                 placeholder="Iced price"
                 required
               />
@@ -169,24 +161,13 @@ export default function Component() {
               <Input
                 id="frappe-price"
                 type="number"
-                value={frappePrice}
-                onChange={(e) => setFrappePrice(e.target.value)}
+                value={formData.frappePrice}
+                onChange={handleChange}
                 placeholder="Frappe price"
                 required
               />
             </div>
           </div>
-<<<<<<< HEAD:components/Add-Product.tsx
-          <div className="space-y-2">
-            <Label htmlFor="name">Product Name</Label>
-            <Input
-              id="product_name"
-              value={formData.product_name}
-              onChange={handleChange}
-              placeholder="Enter product name"
-              required
-            />
-=======
         );
       case "fusion-teas":
         return (
@@ -198,8 +179,8 @@ export default function Component() {
               <Input
                 id="hot-price"
                 type="number"
-                value={hotPrice}
-                onChange={(e) => setHotPrice(e.target.value)}
+                value={formData.hotPrice}
+                onChange={handleChange}
                 placeholder="Hot price"
                 required
               />
@@ -211,13 +192,12 @@ export default function Component() {
               <Input
                 id="iced-price"
                 type="number"
-                value={icedPrice}
-                onChange={(e) => setIcedPrice(e.target.value)}
+                value={formData.icedPrice}
+                onChange={handleChange}
                 placeholder="Iced price"
                 required
               />
             </div>
->>>>>>> 179c0ab421df72113067d929a85d833c1db08b29:components/AddProduct.tsx
           </div>
         );
       default:
@@ -229,40 +209,12 @@ export default function Component() {
             <Input
               id="single-price"
               type="number"
-<<<<<<< HEAD:components/Add-Product.tsx
-              value={formData.price}
+              value={formData.singlePrice}
               onChange={handleChange}
-=======
-              value={singlePrice}
-              onChange={(e) => setSinglePrice(e.target.value)}
->>>>>>> 179c0ab421df72113067d929a85d833c1db08b29:components/AddProduct.tsx
               placeholder="Enter price"
               required
             />
           </div>
-<<<<<<< HEAD:components/Add-Product.tsx
-          <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Select value={formData.category} onValueChange={handleSelectChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="klassic-kopi">Klassic Kopi</SelectItem>
-                <SelectItem value="kold-brew">Kold Brew</SelectItem>
-                <SelectItem value="non-kopi">Non-Kopi</SelectItem>
-                <SelectItem value="fusion-teas">Fusion Teas</SelectItem>
-                <SelectItem value="all-day-breakfast">
-                  All Day Breakfast
-                </SelectItem>
-                <SelectItem value="rice-meals">Rice Meals</SelectItem>
-                <SelectItem value="pasta">Pasta</SelectItem>
-                <SelectItem value="pizza">Pizza</SelectItem>
-                <SelectItem value="pica-pica">Pica Pica</SelectItem>
-                <SelectItem value="beers">Beers</SelectItem>
-              </SelectContent>
-            </Select>
-=======
         );
     }
   };
@@ -319,8 +271,8 @@ export default function Component() {
                 </Label>
                 <Input
                   id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={formData.product_name}
+                  onChange={handleChange}
                   placeholder="Enter product name"
                   required
                 />
@@ -329,7 +281,7 @@ export default function Component() {
                 <Label htmlFor="category" className="text-white">
                   Category
                 </Label>
-                <Select value={category} onValueChange={handleCategoryChange}>
+                <Select value={formData.category} onValueChange={handleCategoryChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
@@ -351,10 +303,10 @@ export default function Component() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="availability" className="text-white">
-                  Availability
+                <Label htmlFor="status" className="text-white">
+                  Status
                 </Label>
-                <Select value={availability} onValueChange={setAvailability}>
+                <Select value={formData.status} onValueChange={handleSelectChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select availability" />
                   </SelectTrigger>
@@ -368,9 +320,8 @@ export default function Component() {
                 </Select>
               </div>
             </div>
->>>>>>> 179c0ab421df72113067d929a85d833c1db08b29:components/AddProduct.tsx
           </div>
-          {category && renderPriceInputs()}
+          {formData.category && renderPriceInputs()}
           <div className="space-y-2">
             <Label htmlFor="description" className="text-white">
               Description
@@ -388,14 +339,6 @@ export default function Component() {
             </Button>
         </form>
       </CardContent>
-<<<<<<< HEAD:components/Add-Product.tsx
-=======
-      <CardFooter>
-        <Button variant="outline" onClick={handleSubmit} className="w-full">
-          Add Product
-        </Button>
-      </CardFooter>
->>>>>>> 179c0ab421df72113067d929a85d833c1db08b29:components/AddProduct.tsx
     </Card>
   );
 }

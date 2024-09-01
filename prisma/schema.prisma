@@ -63,7 +63,10 @@ model product {
   category        String
   product_name    String
   type            String
-  price           Float
+  hotPrice        Float
+  icedPrice       Float
+  frappePrice     Float
+  singlePrice     Float
   status          String
   description     String
   //fd_id Int @unique

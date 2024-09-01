@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 import UpdateProduct from "@/components/Update-Product";
-=======
->>>>>>> 179c0ab421df72113067d929a85d833c1db08b29
 import MenuRow from "@/components/MenuRow";
 
 import {
