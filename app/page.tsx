@@ -7,16 +7,18 @@ import FrontInventory from "./FrontInventory/page"; // Adjust the path as necess
 
 export default function Home() {
   return (
-    <main className="bg-[url('/darkbackground.png')] bg-cover bg-center min-h-screen flex justify-center items-center">
-      <div className="text-center">
-        <p className="text-white text-7xl font-extrabold drop-shadow-2xl mt-96">
+    <main className="bg-[url('/darkbackground.png')] bg-cover bg-fixed min-h-screen flex flex-col justify-between">
+      <div className="flex-grow flex items-center justify-center">
+        <p className="text-white text-7xl font-extrabold drop-shadow-2xl">
           Welcome, Admin!
         </p>
-        <p className="text-sm text-muted mt-96">
+      </div>
+      <footer className="p-4">
+        <p className="text-sm text-muted text-center">
           Kopi 82 <br />
           &copy; {new Date().getFullYear()} All rights reserved.
         </p>
-      </div>
+      </footer>
     </main>
   );
 }
