@@ -65,6 +65,7 @@ model product {
   type            String
   price           Float
   status          String
+  description     String
   //fd_id Int @unique
   //front_inventory front_inventory @relation(fields: [fd_id], references: [fd_id])
   front_inventory front_inventory[]

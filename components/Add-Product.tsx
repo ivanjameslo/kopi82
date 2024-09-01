@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ChangeEvent, FormEvent } from "react";
+import { useState, ChangeEvent, FormEvent, TextareaHTMLAttributes } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,15 +19,42 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
+import { useRouter } from "next/navigation";
 
 export default function Component() {
-  const [image, setImage] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
+  
+  const router = useRouter();
 
+  const [formData, setFormData] = useState({
+    image: "",
+    category: "",
+    product_name: "",
+    type: "",
+    price: "",
+    status: "",
+    description: "",
+  });
+  
+  //ERASE 
+  const [image, setImage] = useState<string | null>(null);
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
+
+  const handleSelectChange = (value: string) => {
+    setFormData({
+      ...formData,
+      category: value,
+    });
+  };
+  
+  //CHECK
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const reader = new FileReader();
@@ -38,16 +65,20 @@ export default function Component() {
     }
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement | HTMLSelectElement>) => {
     e.preventDefault();
-    // Here you would typically send the data to your backend
-    console.log({ image, name, price, description, category });
-    // Reset form after submission
-    setImage(null);
-    setName("");
-    setPrice("");
-    setDescription("");
-    setCategory("");
+    try{
+      await fetch('/api/product', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+      router.push('/menu');
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
@@ -95,9 +126,9 @@ export default function Component() {
           <div className="space-y-2">
             <Label htmlFor="name">Product Name</Label>
             <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              id="product_name"
+              value={formData.product_name}
+              onChange={handleChange}
               placeholder="Enter product name"
               required
             />
@@ -107,15 +138,15 @@ export default function Component() {
             <Input
               id="price"
               type="number"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
+              value={formData.price}
+              onChange={handleChange}
               placeholder="Enter price"
               required
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
-            <Select value={category} onValueChange={setCategory}>
+            <Select value={formData.category} onValueChange={handleSelectChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
@@ -139,19 +170,17 @@ export default function Component() {
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={formData.description}
+              onChange={handleChange}
               placeholder="Enter product description"
               required
             />
           </div>
+            <Button type="submit" className="w-full">
+              Add Product
+            </Button>
         </form>
       </CardContent>
-      <CardFooter>
-        <Button onClick={handleSubmit} className="w-full">
-          Add Product
-        </Button>
-      </CardFooter>
     </Card>
   );
 }
