@@ -1,4 +1,3 @@
-import EditProduct from "@/components/EditProduct";
 import MenuRow from "@/components/MenuRow";
 
 import {
@@ -27,6 +26,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import EditProduct from "@/components/EditProduct";
 
 const MenuPage = () => {
   return (
