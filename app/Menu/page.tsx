@@ -1,6 +1,6 @@
 import EditProduct from "@/components/EditProduct";
 import MenuRow from "@/components/MenuRow";
-import ProductsCard from "@/components/ProductsCard";
+
 import {
   Carousel,
   CarouselContent,
@@ -8,6 +8,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+
 import {
   klassicKopi,
   koldBrew,
@@ -21,96 +22,21 @@ import {
   picaPica,
   beer,
 } from "@/lib/menuitems";
+
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 const MenuPage = () => {
-  const renderKlassicKopi = klassicKopi.map((link) => (
-    <ProductsCard
-      productName={link.productName}
-      productPrice={link.productPrice}
-      productImage={link.productImage}
-    />
-  ));
-
-  const renderKoldBrew = koldBrew.map((link) => (
-    <ProductsCard
-      productName={link.productName}
-      productPrice={link.productPrice}
-      productImage={link.productImage}
-    />
-  ));
-
-  const renderNonKopi = nonKopi.map((link) => (
-    <ProductsCard
-      productName={link.productName}
-      productPrice={link.productPrice}
-      productImage={link.productImage}
-    />
-  ));
-
-  const renderFusionTeas = fusionTeas.map((link) => (
-    <ProductsCard
-      productName={link.productName}
-      productPrice={link.productPrice}
-      productImage={link.productImage}
-    />
-  ));
-  const renderAllDayBreakfast = allDayBreakfast.map((link) => (
-    <ProductsCard
-      productName={link.productName}
-      productPrice={link.productPrice}
-      productImage={link.productImage}
-    />
-  ));
-  const renderRiceMeals = riceMeals.map((link) => (
-    <ProductsCard
-      productName={link.productName}
-      productPrice={link.productPrice}
-      productImage={link.productImage}
-    />
-  ));
-  const renderPasta = pasta.map((link) => (
-    <ProductsCard
-      productName={link.productName}
-      productPrice={link.productPrice}
-      productImage={link.productImage}
-    />
-  ));
-  const renderPizza = pizza.map((link) => (
-    <ProductsCard
-      productName={link.productName}
-      productPrice={link.productPrice}
-      productImage={link.productImage}
-    />
-  ));
-  const renderSandwiches = sandwiches.map((link) => (
-    <ProductsCard
-      productName={link.productName}
-      productPrice={link.productPrice}
-      productImage={link.productImage}
-    />
-  ));
-
-  const renderPicaPica = picaPica.map((link) => (
-    <ProductsCard
-      productName={link.productName}
-      productPrice={link.productPrice}
-      productImage={link.productImage}
-    />
-  ));
-
-  const renderBeer = beer.map((link) => (
-    <ProductsCard
-      productName={link.productName}
-      productPrice={link.productPrice}
-      productImage={link.productImage}
-    />
-  ));
-
   return (
     <>
-      <div className="mt-20 ml-10 mr-10">
+      <div className="ml-10 mr-10">
+        <div className="mt-20 flex justify-end ">
+          <Button variant="outline">
+            <Link href="/Menu/AddProducts">Add Product</Link>
+          </Button>
+        </div>
         <MenuRow label="Klassic Kopi"></MenuRow>
         <div className="flex justify-center relative w-full max-w-8xl mx-auto">
           {" "}

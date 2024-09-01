@@ -1,4 +1,5 @@
-import { prisma } from "@/utils/prisma";
+// import { prisma } from "@/utils/prisma";
+import prisma from "@/lib/db";
 import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -12,22 +13,19 @@ export async function GET(request: NextRequest) {
 // POST function to create a new Purchase Details
 export async function POST(request: NextRequest) {
   try {
-    const res = await request.json();
-    const { po_id, item_name, quantity, unit, price } = res;
-    const created = await prisma.purchase_details.create({
-      data: {
-        purchase_order: {
-            connect: { po_id: Number(po_id) }
-        },
-        item_name,
-        quantity: Number(quantity),
-        unit,
-        price: Number(price),
-      }
+    const formDataArray = await request.json();
+    const created = await prisma.purchase_details.createMany({
+        data: formDataArray.map((formData: { po_id: any; item_name: any; quantity: any; unit: any; price: any; }) => ({
+            po_id: parseInt(formData.po_id),
+            item_name: formData.item_name,
+            quantity: Number(formData.quantity),
+            unit: formData.unit,
+            price: Number(formData.price),
+        }))
     });
     return NextResponse.json(created, { status: 201 });
-  } catch (error) {
-    console.log("Error creating Purchase Order", error);
-    return NextResponse.json(error, {status: 500});
+} catch (error) {
+    console.error('Error creating purchase details:', error);
+    return NextResponse.json({ error: 'Internal Server Error', details: (error as any).message }, { status: 500 });
 }
 }

@@ -1,4 +1,4 @@
-import AddPuchaseDetails from "@/components/AddPuchaseDetails";
+import AddPuchaseDetails from "@/components/Add-PuchaseDetails";
 import React from "react";
 
 const page = () => {

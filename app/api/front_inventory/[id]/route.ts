@@ -1,4 +1,5 @@
-import { prisma } from "@/utils/prisma";
+// import { prisma } from "@/utils/prisma";
+import prisma from "@/lib/db";
 import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -19,7 +20,15 @@ export async function PUT (request: Request, { params } : { params : {id: string
         where: {
             fd_id: parseInt(id, 10)
         },
-        data: json
+        data: {
+            in_stock: parseInt(json.in_stock),
+            unit: json.unit,
+            stock_used: parseInt(json.stock_used),
+            stock_damaged: parseInt(json.stock_damaged),
+            product: {
+                connect: { product_id: parseInt(json.product_id) }
+            }
+        }
     })
 
     return NextResponse.json(updatedFrontInventory);

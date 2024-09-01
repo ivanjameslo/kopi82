@@ -1,13 +1,18 @@
-import { prisma } from "@/utils/prisma";
+// import { prisma } from "@/utils/prisma";
+import prisma from "@/lib/db";
 import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 export async function GET (request: Request, { params } : { params  : { id: string}} ){
     const id = params.id
-    const purchase_order = await prisma.purchase_order.findUnique({
+    const purchase_order = await prisma.purchase_order.findMany({
         where: {
             po_id: parseInt(id, 10)
+        }, 
+        include: {
+            purchase_details: true
         }
+
     });
     return NextResponse.json(purchase_order);
 }
