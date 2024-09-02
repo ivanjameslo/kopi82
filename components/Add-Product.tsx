@@ -83,15 +83,6 @@ export default function Component() {
       frappePrice: isNoFrappePrice ? "0" : "",
       singlePrice: isNoSinglePrice ? "0" : "",
     });
-
-    // setFormData({
-    //   ...formData,
-    //   category: value,
-    //   hotPrice: value === "kold-brew" || value === "beers-(local)" || value === "beers-(imported)" || value === "draft-beer" || value === "all-day-breakfast" || value === "rice-meals" || value === "pasta" || value === "pizza" || value === "pica-pica" || value === "sandwiches" ? "0" : "",
-    //   icedPrice: value === "beers-(local)" || value === "beers-(imported)" || value === "draft-beer" || value === "all-day-breakfast" || value === "rice-meals" || value === "pasta" || value === "pizza" || value === "pica-pica" || value === "sandwiches" ? "0" : "",
-    //   frappePrice:value === "kold-brew" || value === "beers-(local)" || value === "draft-beer" || value === "fusion-tees" || value === "all-day-breakfast" || value === "rice-meals" || value === "pasta" || value === "pizza" || value === "pica-pica" || value === "sandwiches" ? "0" : "" ,
-    //   singlePrice: value === "klassic-kopi" || value === "kold-brew" || value === "non-kopi" || value === "fusion-tees" ? "0" : "",
-    // });
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
