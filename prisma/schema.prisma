@@ -56,6 +56,35 @@ model purchase_details {
   purchase_order purchase_order @relation(fields: [po_id], references: [po_id])
 }
 
+model unit {
+  unit_id Int @id @default(autoincrement())
+  unit_name String
+  item item[]
+}
+
+model category {
+  category_id Int @id @default(autoincrement())
+  category_name String
+  item item[]
+}
+
+model location_shelf {
+  ls_id Int @id @default(autoincrement())
+  ls_name String
+  item item[]
+}
+
+model item {
+  item_id Int @id @default(autoincrement())
+  item_name String
+  unit_id Int
+  category_id Int
+  ls_id Int
+  unit unit @relation(fields: [unit_id], references: [unit_id])
+  category category @relation(fields: [category_id], references: [category_id])
+  location_shelf location_shelf @relation(fields: [ls_id], references: [ls_id])
+}
+
 //PRODUCT
 
 model product {
