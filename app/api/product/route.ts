@@ -14,14 +14,18 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const res = await request.json();
-    const { category, product_name, type, price, status } = res;
+    const { category, product_name, type, hotPrice, icedPrice, frappePrice, singlePrice, status, description } = res;
     const created = await prisma.product.create({
       data: {
         category,
         product_name,
         type,
-        price: Number(price),
+        hotPrice: Number(hotPrice),
+        icedPrice: Number(icedPrice),
+        frappePrice: Number(frappePrice),
+        singlePrice: Number(singlePrice),
         status,
+        description
       }
     });
     return NextResponse.json(created, { status: 201 });

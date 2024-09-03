@@ -11,16 +11,14 @@ datasource db {
 
 model back_inventory {
   bd_id           Int              @id @default(autoincrement())
-  item_name       String
+  item_id         Int
   item_stocks     Int
-  unit            String
-  category        String
-  location_shelf  String
   stock_in_date   DateTime
   expiry_date     DateTime
   stock_damaged   Int
   po_id           Int
   // purchase_order purchase_order[]
+  item            item             @relation(fields: [item_id], references: [item_id])
   front_inventory front_inventory?
   purchase_order  purchase_order   @relation(fields: [po_id], references: [po_id])
 }
@@ -29,7 +27,6 @@ model front_inventory {
   fd_id          Int            @id @default(autoincrement())
   bd_id          Int            @unique
   in_stock       Int
-  unit           String
   stock_used     Int
   stock_damaged  Int
   product_id     Int
@@ -49,40 +46,42 @@ model purchase_order {
 model purchase_details {
   pd_id          Int            @id @default(autoincrement())
   po_id          Int
-  item_name      String
+  item_id        Int
   quantity       Int
-  unit           String
   price          Float
   purchase_order purchase_order @relation(fields: [po_id], references: [po_id])
+  item           item           @relation(fields: [item_id], references: [item_id])
 }
 
 model unit {
-  unit_id Int @id @default(autoincrement())
+  unit_id   Int    @id @default(autoincrement())
   unit_name String
-  item item[]
+  item      item?
 }
 
 model category {
-  category_id Int @id @default(autoincrement())
+  category_id   Int    @id @default(autoincrement())
   category_name String
-  item item[]
+  item          item?
 }
 
 model location_shelf {
-  ls_id Int @id @default(autoincrement())
+  ls_id   Int    @id @default(autoincrement())
   ls_name String
-  item item[]
+  item    item?
 }
 
 model item {
-  item_id Int @id @default(autoincrement())
-  item_name String
-  unit_id Int
-  category_id Int
-  ls_id Int
-  unit unit @relation(fields: [unit_id], references: [unit_id])
-  category category @relation(fields: [category_id], references: [category_id])
-  location_shelf location_shelf @relation(fields: [ls_id], references: [ls_id])
+  item_id          Int                @id @default(autoincrement())
+  item_name        String
+  unit_id          Int                @unique
+  category_id      Int                @unique
+  ls_id            Int                @unique
+  unit             unit               @relation(fields: [unit_id], references: [unit_id])
+  category         category           @relation(fields: [category_id], references: [category_id])
+  location_shelf   location_shelf     @relation(fields: [ls_id], references: [ls_id])
+  back_inventory   back_inventory[]
+  purchase_details purchase_details[]
 }
 
 //PRODUCT
