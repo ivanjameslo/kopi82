@@ -100,6 +100,9 @@ const ViewItem = () => {
             </p>
 
             <div className="flex justify-end mt-10 space-x-4">
+                <link href="./Item/Add-Item">
+                    <Button>Add New Item</Button>
+                </link>
                 <link href="./Item/Add-Unit">
                     <Button>Add New Unit</Button>
                 </link>
