@@ -14,7 +14,6 @@ model back_inventory {
   item_id         Int
   item_stocks     Int
   stock_in_date   DateTime
-  expiry_date     DateTime
   stock_damaged   Int
   po_id           Int
   // purchase_order purchase_order[]
@@ -48,15 +47,19 @@ model purchase_details {
   po_id          Int
   item_id        Int
   quantity       Int
+  unit_id        Int
   price          Float
+  expiry_date    DateTime
   purchase_order purchase_order @relation(fields: [po_id], references: [po_id])
   item           item           @relation(fields: [item_id], references: [item_id])
+  unit           unit           @relation(fields: [unit_id], references: [unit_id])
 }
 
 model unit {
   unit_id   Int    @id @default(autoincrement())
   unit_name String @unique
   item      item?
+  purchase_details purchase_details[]
 }
 
 model category {

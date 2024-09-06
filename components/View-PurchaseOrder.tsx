@@ -21,10 +21,21 @@ interface PurchaseOrderData {
 interface PurchaseDetailsData {
   pd_id: number;
   po_id: number;
-  item_name: string;
+  item_id: number;
   quantity: number;
-  unit: string;
+  unit_id: number;
   price: number;
+  expiry_date: string;
+}
+
+interface ItemDate {
+  item_id: number;
+  item_name: string;
+}
+
+interface UnitData {
+  unit_id: number;
+  unit_name: string;
 }
 
 const ViewPurchaseOrder = () => {
@@ -32,6 +43,9 @@ const ViewPurchaseOrder = () => {
 
   // For Displaying the table
   const [data, setData] = useState<PurchaseOrderData[]>([]);
+  const [items, setItems] = useState<ItemDate[]>([]);
+  const [units, setUnits] = useState<UnitData[]>([]);
+
   const fetchPurchaseOrder = async () => {
     try {
       const response = await fetch("/api/purchase_order", {
@@ -57,8 +71,30 @@ const ViewPurchaseOrder = () => {
     }
   };
 
+  const fetchItemsAndUnits = async () => {
+    try {
+      const [itemsResponse, unitsResponse] = await Promise.all([
+        fetch("/api/item"),
+        fetch("/api/unit"),
+      ]);
+
+      if (!itemsResponse.ok || !unitsResponse.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const itemsData = await itemsResponse.json();
+      const unitsData = await unitsResponse.json();
+
+      setItems(itemsData);
+      setUnits(unitsData);
+    } catch (error) {
+      console.error("Error fetching items and units:", error);
+    }
+  };
+
   useEffect(() => {
     fetchPurchaseOrder();
+    fetchItemsAndUnits();
   }, []);
 
   // For displaying purchase details in modal
@@ -91,6 +127,25 @@ const ViewPurchaseOrder = () => {
     minimumFractionDigits: 2,
   });
 
+  const getItemName = (item_id: number) => {
+    const item = items.find((item) => item.item_id === item_id);
+    return item ? item.item_name : "Unknown Item";
+  };
+
+  const getUnitName = (unit_id: number) => {
+    const unit = units.find((unit) => unit.unit_id === unit_id);
+    return unit ? unit.unit_name : "Unknown Unit";
+  };
+
+  const formatDateTime = (dateTimeString: string) => {
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    };
+    return new Date(dateTimeString).toLocaleString('en-US', options);
+  };
+
   return (
     <div className="mt-24 ml-40 mr-40">
 
@@ -107,7 +162,7 @@ const ViewPurchaseOrder = () => {
             {data.map((purchaseOrder) => (
               <TableRow key={purchaseOrder.po_id}>
                 <TableCell className="text-center">{purchaseOrder.receipt_no}</TableCell>
-                <TableCell className="text-center">{purchaseOrder.purchase_date}</TableCell>
+                <TableCell className="text-center">{formatDateTime(purchaseOrder.purchase_date)}</TableCell>
                 <TableCell className="text-center">
                   <Button
                     variant="outline"
@@ -131,21 +186,36 @@ const ViewPurchaseOrder = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-center">Item Name</TableHead>
-                    <TableHead className="text-center">Quantity</TableHead>
-                    <TableHead className="text-center">Unit</TableHead>
-                    <TableHead className="text-center">Price</TableHead>
+                    <TableHead className="text-center w-32">Item Name</TableHead>
+                    <TableHead className="text-center w-32">Expiry Date</TableHead>
+                    <TableHead className="text-center w-32">Quantity</TableHead>
+                    <TableHead className="text-center w-32">Unit</TableHead>
+                    <TableHead className="text-center w-32">Price</TableHead>
+                    <TableHead className="text-center w-32">Subtotal</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {selectedPurchaseDetails.map((detail, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{detail.item_name}</TableCell>
-                      <TableCell>{detail.quantity}</TableCell>
-                      <TableCell>{detail.unit}</TableCell>
-                      <TableCell>{phpFormatter.format(detail.price)}</TableCell>
-                    </TableRow>
-                  ))}
+                  {selectedPurchaseDetails.map((detail, index) => {
+                    const total = detail.quantity * detail.price;
+                    return (
+                      <TableRow key={index}>
+                        <TableCell className="text-center">{getItemName(detail.item_id)}</TableCell>
+                        <TableCell className="text-center whitespace-nowrap">{formatDateTime(detail.expiry_date)}</TableCell>
+                        <TableCell className="text-center">{detail.quantity}</TableCell>
+                        <TableCell className="text-center">{getUnitName(detail.unit_id)}</TableCell>
+                        <TableCell className="text-center">{phpFormatter.format(detail.price)}</TableCell>
+                        <TableCell className="text-center">{phpFormatter.format(total)}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-right font-bold">Grand Total</TableCell>
+                    <TableCell className="font-bold text-center">
+                      {phpFormatter.format(
+                        selectedPurchaseDetails.reduce((acc, detail) => acc + detail.quantity * detail.price, 0)
+                      )}
+                    </TableCell>
+                  </TableRow>
                 </TableBody>
               </Table>
             ) : (
