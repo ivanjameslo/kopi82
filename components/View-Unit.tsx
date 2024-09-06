@@ -84,22 +84,21 @@ const ViewUnit = () => {
     }
 
     return (
-        <div className="mt-10">
+        <div className="mt-10 mx-auto max-w-7xl px-4">
             <div>
             <Table>
-                <TableCaption>Unit</TableCaption>
-                <TableHead>
+                <TableHeader>
                     <TableRow>
-                        <TableHeader>Unit ID</TableHeader>
-                        <TableHeader>Unit Name</TableHeader>
-                        <TableHeader>Action</TableHeader>
+                        <TableHead className="text-center">Unit ID</TableHead>
+                        <TableHead className="text-center">Unit Name</TableHead>
+                        <TableHead className="text-center">Action</TableHead>
                     </TableRow>
-                </TableHead>
+                </TableHeader>
                 <TableBody>
                     {data.map((unit) => (
                         <TableRow key={unit.unit_id}>
-                            <TableCell>{unit.unit_id}</TableCell>
-                            <TableCell>{unit.unit_name}</TableCell>
+                            <TableCell className="text-center">{unit.unit_id}</TableCell>
+                            <TableCell className="text-center">{unit.unit_name}</TableCell>
                             <TableCell className="text-center">
                                 <Button variant="outline" className="mx-1" onClick={() => handleEdit(unit)}>
                                     Edit
