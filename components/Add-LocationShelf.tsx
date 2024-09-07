@@ -1,32 +1,60 @@
 'use client'
 
-import { useState, ChangeEvent, FormEvent, TextareaHTMLAttributes } from "react";
+import { useState, ChangeEvent, FormEvent, TextareaHTMLAttributes, use } from "react";
 import React from 'react'
 import { Button } from "@/components/ui/button";
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Modal from './Modal';
 
 const AddLocationShelf = () => {
 
+    const router = useRouter();
+
     const [lsName, setLsName] = useState<string>("");
+    const [error, setError] = useState<string>("");
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         setLsName(e.target.value);
+        setError("");
     }
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
-            await fetch('/api/location_shelf', {
+            const checkResponse = await fetch(`/api/location_shelf?ls_name=${lsName}`);
+            const checkData = await checkResponse.json();
+
+            if (checkData.exists) {
+                setIsModalOpen(true);
+                return;
+            }
+
+            const response = await fetch('/api/location_shelf', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    lsName
+                    ls_name: lsName
                 }),
             })
-        } catch (error) {
-            console.log("Error creating Unit", error);
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Shelf Location name already exists.');
+            }
+
+            window.location.reload();
+        } catch (error: any) {
+            setError(error.message);
+            setIsModalOpen(true);
         }
+    }
+
+    const closeModal = () => {
+        setIsModalOpen(false);
     }
 
     return (
@@ -36,9 +64,9 @@ const AddLocationShelf = () => {
             </p>
 
             <div className="flex justify-end mt-10">
-                <link href="./Item">
+                <Link href="/Item">
                     <Button>Back</Button>
-                </link>
+                </Link>
             </div>
 
             <form onSubmit={handleSubmit}>
@@ -50,6 +78,9 @@ const AddLocationShelf = () => {
                     </Button>
                 </div>
             </form>
+            <Modal isOpen={isModalOpen} onClose={closeModal} title="Error">
+                <p>{error}</p>
+            </Modal>
         </div>
     )
 

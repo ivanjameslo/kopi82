@@ -22,8 +22,6 @@ interface LocationShelfData {
 
 const ViewLocationShelf = () => {
 
-    const router = useRouter();
-
     const [data, setData] = useState<LocationShelfData[]>([]);
     const [selectedItem, setSelectedItem] = useState<LocationShelfData | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -84,22 +82,21 @@ const ViewLocationShelf = () => {
     }
 
     return (
-        <div className="mt-10">
+        <div className="mt-10 mx-auto max-w-7xl px-4">
             <div>
             <Table>
-                <TableCaption>Unit</TableCaption>
-                <TableHead>
+                <TableHeader>
                     <TableRow>
-                        <TableHeader>ID</TableHeader>
-                        <TableHeader>Location Name</TableHeader>
-                        <TableHeader>Action</TableHeader>
+                        <TableHead className="text-center">ID</TableHead>
+                        <TableHead className="text-center">Location Name</TableHead>
+                        <TableHead className="text-center">Action</TableHead>
                     </TableRow>
-                </TableHead>
+                </TableHeader>
                 <TableBody>
                     {data.map((ls) => (
                         <TableRow key={ls.ls_id}>
-                            <TableCell>{ls.ls_id}</TableCell>
-                            <TableCell>{ls.ls_name}</TableCell>
+                            <TableCell className="text-center">{ls.ls_id}</TableCell>
+                            <TableCell className="text-center">{ls.ls_name}</TableCell>
                             <TableCell className="text-center">
                                 <Button variant="outline" className="mx-1" onClick={() => handleEdit(ls)}>
                                     Edit

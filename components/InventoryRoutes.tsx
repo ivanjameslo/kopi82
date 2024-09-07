@@ -70,6 +70,24 @@ const InventoryRoutes = () => {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="mt-96 bg-black border-none">
+          <CardHeader>
+            <CardTitle className="text-white">Item</CardTitle>
+            <CardDescription className="text-white font-light">
+              View your Item archive.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-center gap-5">
+              <Link href="/Item">
+                <Button variant="outline" className="pl-28 pr-28">
+                  View
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

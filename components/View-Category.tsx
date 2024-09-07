@@ -84,22 +84,21 @@ const ViewCategory = () => {
     }
 
     return (
-        <div className="mt-10">
+        <div className="mt-10 mx-auto max-w-7xl px-4">
             <div>
             <Table>
-                <TableCaption>Unit</TableCaption>
-                <TableHead>
+                <TableHeader>
                     <TableRow>
-                        <TableHeader>ID</TableHeader>
-                        <TableHeader>Category Name</TableHeader>
-                        <TableHeader>Action</TableHeader>
+                        <TableHead className="text-center">ID</TableHead>
+                        <TableHead className="text-center">Category Name</TableHead>
+                        <TableHead className="text-center">Action</TableHead>
                     </TableRow>
-                </TableHead>
+                </TableHeader>
                 <TableBody>
                     {data.map((category) => (
                         <TableRow key={category.category_id}>
-                            <TableCell>{category.category_id}</TableCell>
-                            <TableCell>{category.category_name}</TableCell>
+                            <TableCell className="text-center">{category.category_id}</TableCell>
+                            <TableCell className="text-center">{category.category_name}</TableCell>
                             <TableCell className="text-center">
                                 <Button variant="outline" className="mx-1" onClick={() => handleEdit(category)}>
                                     Edit

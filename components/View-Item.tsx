@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { set } from 'react-hook-form';
 import UpdateItem from './Update-Item';
+import Link from 'next/link';
 
 interface ItemData {
     item_id: number;
@@ -59,7 +60,7 @@ const ViewItem = () => {
 
     useEffect(() => {
         fetchItemData().catch(error => console.error(error));
-    });
+    }, []);
 
     //UPDATE
     const handleEdit = (item: ItemData) => {
@@ -89,7 +90,7 @@ const ViewItem = () => {
 
             setData(data.filter(item => item.item_id !== item_id));
         } catch (error) {
-            console.error('Fsiled to delete item', error);
+            console.error('Failed to delete item', error);
         };
     }
 
@@ -100,18 +101,18 @@ const ViewItem = () => {
             </p>
 
             <div className="flex justify-end mt-10 space-x-4">
-                <link href="./Item/Add-Item">
+                <Link href="./Item/Add-Item">
                     <Button>Add New Item</Button>
-                </link>
-                <link href="./Item/Add-Unit">
+                </Link>
+                <Link href="./Item/Add-Unit">
                     <Button>Add New Unit</Button>
-                </link>
-                <link href="./Item/Add-Category">
+                </Link>
+                <Link href="./Item/Add-Category">
                     <Button>Add New Category</Button>
-                </link>
-                <link href="./Item/Add-Location-Shelf">
+                </Link>
+                <Link href="./Item/Add-Location-Shelf">
                     <Button>Add New Location Shelf</Button>
-                </link>
+                </Link>
             </div>
 
             <div className="mt-10">
@@ -155,7 +156,7 @@ const ViewItem = () => {
                 onClose={handleCloseEdit}
                 />
             )}
-    </div>
+        </div>
     )
 };
 

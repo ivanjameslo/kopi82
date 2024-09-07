@@ -15,12 +15,13 @@ export async function POST(request: NextRequest) {
   try {
     const formDataArray = await request.json();
     const created = await prisma.purchase_details.createMany({
-        data: formDataArray.map((formData: { po_id: any; item_name: any; quantity: any; unit: any; price: any; }) => ({
+        data: formDataArray.map((formData: { po_id: any; item_id: any; quantity: any; unit_id: any; price: any; expiry_date: any; }) => ({
             po_id: parseInt(formData.po_id),
-            item_name: formData.item_name,
+            item_id: parseInt(formData.item_id),
             quantity: Number(formData.quantity),
-            unit: formData.unit,
+            unit_id: parseInt(formData.unit_id),
             price: Number(formData.price),
+            expiry_date: formData.expiry_date,
         }))
     });
     return NextResponse.json(created, { status: 201 });

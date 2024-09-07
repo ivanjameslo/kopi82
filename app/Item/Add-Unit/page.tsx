@@ -3,13 +3,9 @@ import ViewUnit from "@/components/View-Unit";
 
 const page = () => {
   return (
-    <main className="bg-[url('/darkbackground.png')] bg-cover bg-fixed min-h-screen">
-      <div className="pt-20">
+    <main>
         <AddUnit />
-      </div>
-      <div className="pt-10">
         <ViewUnit />
-      </div>
     </main>
   );
 };
