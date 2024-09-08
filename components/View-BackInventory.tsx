@@ -15,62 +15,210 @@ import {
 import { Button } from "@/components/ui/button";
 import { error } from 'console';
 import UpdateBackInventory from "./Update-BackInventory";
+import { format } from 'path';
 
 interface BackInventoryData {
-  bd_id: number
-  item_name: string;
+  bd_id: number;
+  item_id: number;
   item_stocks: number;
-  unit: string;
-  category: string;
-  location_shelf: string;
+  unit_id: number;
+  category_id: number;
+  ls_id: number;
   stock_in_date: string;
-  expiry_date: string;
   stock_damaged: number;
-  po_id: number;
+  po_id: {
+      pd_id: number;
+  }
+  expiry_date: string | null;
 };
+
+interface ItemData {
+  item_id: number;
+  item_name: string;
+}
+
+interface UnitData {
+  unit_id: number;
+  unit_name: string;
+}
+
+interface CategoryData {
+  category_id: number;
+  category_name: string;
+}
+
+interface LocationShelfData {
+  ls_id: number;
+  ls_name: string;
+}
+
+interface PurchaseDetailsData {
+  pd_id: number;
+  item_id: number;
+  quantity: number;
+  expiry_date: string;
+  po_id: number;
+}
 
 const backInventory = () => {
 
   const router = useRouter();
 
   const [data, setData] = useState<BackInventoryData[]>([]);
+  const [items, setItems] = useState<ItemData[]>([]);
+  const [units, setUnits] = useState<UnitData[]>([]);
+  const [categories, setCategories] = useState<CategoryData[]>([]);
+  const [locationShelves, setLocationShelves] = useState<LocationShelfData[]>([]);
+
   const [selectedItem, setSelectedItem] = useState<BackInventoryData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  //READ BACK INVENTORY DATA
-  const fetchBackInventoryData = async () => {
-    const response = await fetch('/api/back_inventory', {
-      method: 'GET',
-    });
+  //READ DATA FROM VARIOUS ENDPOINTS
+  const fetchData = async (endpoint: string) => {
+    const response = await fetch(endpoint, { method: 'GET' });
     if (!response.ok) {
       throw new Error('Network response was not ok');
-    } 
-    const data = await response.json();
-    // setData(data);
-    console.log(data);
+    }
+    return response.json();
+  };
 
-    const formattedData = data.map((item: any) => {
-      const [stockInDate, stockInTime] = item.stock_in_date.split('T');
-      const [expiryDate, expiryTime] = item.expiry_date.split('T');
-      return {
-          ...item,
-          stock_in_date: stockInDate,
-          stock_in_time: stockInTime.split('Z')[0],
-          expiry_date: expiryDate,
-          expiry_time: expiryTime.split('Z')[0],
-      };
-  });
-  setData(formattedData);
+  const fetchAllData = async () => {
+    try {
+      const [backInventoryData, itemData, unitData, categoryData, locationShelfData] = await Promise.all([
+        fetchData('/api/back_inventory'),
+        fetchData('/api/item'),
+        fetchData('/api/unit'),
+        fetchData('/api/category'),
+        fetchData('/api/location_shelf'),
+      ]);
+      setData(backInventoryData);
+      setItems(itemData);
+      setUnits(unitData);
+      setCategories(categoryData);
+      setLocationShelves(locationShelfData);
+    } catch (error) {
+      console.error('Failed to fetch data: ', error);
+    }
   }
 
   useEffect(() => {
-    fetchBackInventoryData().catch(error => console.error(error));
+    fetchAllData().catch(error => console.error(error));
   }, []);
 
-  //ADD NEW BACK INVENTORY PAGE
-  const handleAddNewBackInventory = () => {
-    router.push(`./Add-BackInventory`);
+  //ADD NEW BACK INVENTORY
+  const handleAddNewBackInventory = async () => {
+    try {
+      const existingItemsIds = data.map(item => item.item_id);
+      const newItems = items.filter(item => !existingItemsIds.includes(item.item_id));
+
+      if (newItems.length === 0) {
+        console.error('No new items to add to back inventory');
+        return;
+      }
+
+      const newBackInventoryItems = newItems.map(item => ({
+        item_id: item.item_id,
+        stock_in_date: null,
+        expiry_date: null,
+        stock_damaged: 0,
+        po_id: null,
+      }));
+
+      const response = await fetch('/api/back_inventory', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newBackInventoryItems),
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const newBackInventory = await response.json();
+      setData([...data, ...newBackInventory]);
+      
+      router.push('/BackInventory');
+    } catch (error) {
+      console.error('Failed to add new back inventory: ', error);
+    }
+  };
+
+  //STOCK IN FEATURE
+  const handleStockIn = async (item_id: number) => {
+    try {
+      // Fetch the latest purchase details for the item
+      const response = await fetch(`/api/purchase_details/latest/${item_id}`, {
+        method: 'GET',
+      });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const purchaseDetails: PurchaseDetailsData[] = await response.json();
+  
+      // Fetch the existing back inventory to get the pd_id's that have already been added
+      const backInventoryResponse = await fetch('/api/back_inventory', {
+        method: 'GET',
+      });
+      if (!backInventoryResponse.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const backInventory: BackInventoryData[] = await backInventoryResponse.json();
+      const existingPdIds = backInventory.map(item => item.po_id.pd_id);
+  
+      // Filter out the purchase details that have already been added to the back inventory
+      const newPurchaseDetails = purchaseDetails.filter(pd => !existingPdIds.includes(pd.pd_id));
+  
+      // Get the current date in milliseconds
+      const now = new Date().getTime();
+  
+      // Finding the purchase detail with the nearest expiry date or the latest purchase detail ID
+      const latestPurchase = newPurchaseDetails.reduce((nearest, current) => {
+        const nearestExpiry = nearest.expiry_date ? new Date(nearest.expiry_date).getTime() : 0; // Convert nearest expiry date to milliseconds or 0 if 'N/A'
+        const currentExpiry = current.expiry_date ? new Date(current.expiry_date).getTime() : 0; // Convert current expiry date to milliseconds or 0 if 'N/A'
+        
+        // If both expiry dates are 'N/A', compare by purchase detail ID
+        if (nearestExpiry === 0 && currentExpiry === 0) {
+          return current.pd_id > nearest.pd_id ? current : nearest;
+        }
+        
+        // If one of the expiry dates is 'N/A', prefer the one with a valid expiry date
+        if (nearestExpiry === 0) return current;
+        if (currentExpiry === 0) return nearest;
+        
+        // Compare the absolute difference with the current date
+        return Math.abs(currentExpiry - now) < Math.abs(nearestExpiry - now) ? current : nearest;
+      });
+  
+      // Update the back inventory with the latest purchase details
+      const responseUpdate = await fetch('/api/back_inventory', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([
+          {
+            item_id: latestPurchase.item_id,
+            stock_in_date: new Date().toISOString(),
+            expiry_date: latestPurchase.expiry_date || null, // Use null if expiry date is 'N/A'
+            stock_damaged: 0,
+            po_id: latestPurchase.po_id,
+            item_stocks: latestPurchase.quantity,
+            pd_id: latestPurchase.pd_id, // Include pd_id to track it in the back inventory
+          },
+        ]),
+      });
+      if (!responseUpdate.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const updatedBackInventory = await responseUpdate.json();
+      setData([...data, ...updatedBackInventory]);
+      // window.location.reload();
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to stock in item: ', error);
+    }
   };
 
   //VIEW MODAL
@@ -114,6 +262,37 @@ const backInventory = () => {
     }
   };
 
+  // Helper functions to get names from IDs
+  const getItemName = (item_id: number) => {
+    const item = items.find(item => item.item_id === item_id);
+    return item ? item.item_name : 'Unknown Item';
+  };
+
+  const getUnitName = (unit_id: number) => {
+    const unit = units.find(unit => unit.unit_id === unit_id);
+    return unit ? unit.unit_name : 'Unknown Unit';
+  };
+
+  const getCategoryName = (category_id: number) => {
+    const category = categories.find(category => category.category_id === category_id);
+    return category ? category.category_name : 'Unknown Category';
+  };
+
+  const getLocationShelfName = (ls_id: number) => {
+    const locationShelf = locationShelves.find(ls => ls.ls_id === ls_id);
+    return locationShelf ? locationShelf.ls_name : 'Unknown Location Shelf';
+  };
+
+  //DATE FORMAT
+  const formatDateTime = (dateTimeString: string) => {
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    };
+    return new Date(dateTimeString).toLocaleString('en-US', options);
+  };
+
   return (
     <div className="mt-24 ml-40 mr-40">
       <p className="flex text-3xl text-[#483C32] font-bold justify-center mb-2">
@@ -121,7 +300,7 @@ const backInventory = () => {
       </p>
 
       <div className="flex justify-end mt-10">
-        <Button onClick={handleAddNewBackInventory}>Add New Back Inventory</Button>
+        <Button onClick={handleAddNewBackInventory}>Set Back Inventory</Button>
       </div>
 
       <div className="mt-10">
@@ -142,12 +321,12 @@ const backInventory = () => {
             {data.map((item) => (
               <TableRow key={item.bd_id}>
                 <TableCell className="text-center">{item.bd_id}</TableCell>
-                <TableCell className="text-center">{item.item_name}</TableCell>
+                <TableCell className="text-center">{getItemName(item.item_id)}</TableCell>
                 <TableCell className="text-center">{item.item_stocks}</TableCell>
-                <TableCell className="text-center">{item.unit}</TableCell>
-                <TableCell className="text-center">{item.category}</TableCell>
-                <TableCell className="text-center">{item.location_shelf}</TableCell>
-                <TableCell className="text-center">{item.expiry_date}</TableCell>
+                <TableCell className="text-center">{getUnitName(item.unit_id)}</TableCell>
+                <TableCell className="text-center">{getCategoryName(item.category_id)}</TableCell>
+                <TableCell className="text-center">{getLocationShelfName(item.ls_id)}</TableCell>
+                <TableCell className="text-center">{item.expiry_date ? formatDateTime(item.expiry_date) : 'N/A'}</TableCell>
                 <TableCell className="text-center">
                   <Button variant="outline" className="mx-1" onClick={() => handleViewDetails(item)}>
                     View
@@ -178,7 +357,7 @@ const backInventory = () => {
               </tr>
               <tr>
                 <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Item Name:</td>
-                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.item_name}</td>
+                <td className="px-5 py-3 whitespace-nowrap">{getItemName(selectedItem.item_id)}</td>
               </tr>
               <tr>
                 <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Stocks:</td>
@@ -186,31 +365,31 @@ const backInventory = () => {
               </tr>
               <tr>
                 <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Unit:</td>
-                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.unit}</td>
+                <td className="px-5 py-3 whitespace-nowrap">{getUnitName(selectedItem.unit_id)}</td>
               </tr>
               <tr>
                 <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Category:</td>
-                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.category}</td>
+                <td className="px-5 py-3 whitespace-nowrap">{getCategoryName(selectedItem.category_id)}</td>
               </tr>
               <tr>
                 <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Location Shelf:</td>
-                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.location_shelf}</td>
+                <td className="px-5 py-3 whitespace-nowrap">{getLocationShelfName(selectedItem.ls_id)}</td>
               </tr>
               <tr>
                 <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Stock-In Date:</td>
-                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.stock_in_date}</td>
+                <td className="px-5 py-3 whitespace-nowrap">{formatDateTime(selectedItem.stock_in_date)}</td>
               </tr>
               <tr>
                 <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Expiry Date:</td>
-                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.expiry_date}</td>
+                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.expiry_date ? formatDateTime(selectedItem.expiry_date) : 'N/A'}</td>
               </tr>
               <tr>
                 <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Stock Damaged:</td>
                 <td className="px-5 py-3 whitespace-nowrap">{selectedItem.stock_damaged}</td>
               </tr>
               <tr>
-                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Recent PO ID:</td>
-                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.po_id}</td>
+                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Recent PD ID:</td>
+                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.po_id.pd_id}</td>
               </tr>
             </tbody>
           </table>

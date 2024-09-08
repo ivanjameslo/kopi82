@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, ChangeEvent, FormEvent, TextareaHTMLAttributes, use } from "react";
+import { useState, ChangeEvent, FormEvent } from "react";
 import React from 'react'
 import { Button } from "@/components/ui/button";
 import { useRouter } from 'next/navigation';
@@ -14,23 +14,34 @@ const AddLocationShelf = () => {
     const [lsName, setLsName] = useState<string>("");
     const [error, setError] = useState<string>("");
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [isDuplicate, setIsDuplicate] = useState<boolean>(false);
 
-    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setLsName(e.target.value);
+    const handleChange = async (e: ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setLsName(value);
         setError("");
+
+        if (value) {
+            try {
+                const checkResponse = await fetch(`/api/location_shelf/check?ls_name=${value}`);
+                const checkData = await checkResponse.json();
+                setIsDuplicate(checkData.exists);
+            } catch (error) {
+                console.error('Error checking shelf location name:', error);
+            }
+        } else {
+            setIsDuplicate(false);
+        }
     }
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (isDuplicate) {
+            setError('Shelf Location name already exists.');
+            setIsModalOpen(true);
+            return;
+        }
         try {
-            const checkResponse = await fetch(`/api/location_shelf?ls_name=${lsName}`);
-            const checkData = await checkResponse.json();
-
-            if (checkData.exists) {
-                setIsModalOpen(true);
-                return;
-            }
-
             const response = await fetch('/api/location_shelf', {
                 method: 'POST',
                 headers: {
@@ -43,7 +54,7 @@ const AddLocationShelf = () => {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || 'Shelf Location name already exists.');
+                throw new Error(errorData.error || 'Failed to add new shelf location.');
             }
 
             window.location.reload();
@@ -73,10 +84,11 @@ const AddLocationShelf = () => {
                 <div className="mb-4 mt-5 flex items-center space-x-4 justify-center">
                     <label className="text-lg font-bold text-[#483C32] mb-2">Shelf Location</label>
                     <input type="text" name="ls_name" value={lsName} onChange={handleChange} className="border border-[#C4C4C4] rounded-lg h-10 pl-2" />
-                    <Button variant="outline" type="submit">
+                    <Button variant="outline" type="submit" disabled={isDuplicate}>
                         Add New Shelf Location
                     </Button>
                 </div>
+                {isDuplicate && <p className="text-red-500">Shelf Location name already exists.</p>}
             </form>
             <Modal isOpen={isModalOpen} onClose={closeModal} title="Error">
                 <p>{error}</p>
