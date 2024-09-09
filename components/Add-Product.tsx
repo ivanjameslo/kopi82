@@ -1,6 +1,11 @@
 "use client";
 
-import { useState, ChangeEvent, FormEvent, TextareaHTMLAttributes } from "react";
+import {
+  useState,
+  ChangeEvent,
+  FormEvent,
+  TextareaHTMLAttributes,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,11 +24,10 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 
 export default function Component() {
-  
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -38,11 +42,13 @@ export default function Component() {
     status: "",
     description: "",
   });
-  
-  //ERASE 
+
+  //ERASE
   const [image, setImage] = useState<string | null>(null);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -56,7 +62,7 @@ export default function Component() {
       status: value,
     });
   };
-  
+
   //CHECK
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -69,11 +75,33 @@ export default function Component() {
   };
 
   const handleCategoryChange = (value: string) => {
-
     const isNoHotPrice = ["kold-brew"].includes(value);
-    const isNoIcedPrice = ["beer", "all-day-breakfast", "rice-meals", "pasta", "pizza", "pica-pica", "sandwiches"].includes(value);
-    const isNoFrappePrice = ["kold-brew", "beer", "fusion-teas", "all-day-breakfast", "rice-meals", "pasta", "pizza", "pica-pica", "sandwiches"].includes(value);
-    const isNoSinglePrice = ["klassic-kopi", "kold-brew", "non-kopi", "fusion-teas"].includes(value)
+    const isNoIcedPrice = [
+      "beer",
+      "all-day-breakfast",
+      "rice-meals",
+      "pasta",
+      "pizza",
+      "pica-pica",
+      "sandwiches",
+    ].includes(value);
+    const isNoFrappePrice = [
+      "kold-brew",
+      "beer",
+      "fusion-teas",
+      "all-day-breakfast",
+      "rice-meals",
+      "pasta",
+      "pizza",
+      "pica-pica",
+      "sandwiches",
+    ].includes(value);
+    const isNoSinglePrice = [
+      "klassic-kopi",
+      "kold-brew",
+      "non-kopi",
+      "fusion-teas",
+    ].includes(value);
 
     setFormData({
       ...formData,
@@ -88,10 +116,10 @@ export default function Component() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      await fetch('/api/products',{
-        method: 'POST',
+      await fetch("/api/products", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           image,
@@ -102,11 +130,11 @@ export default function Component() {
           icedPrice: Number(formData.icedPrice),
           frappePrice: Number(formData.frappePrice),
           singlePrice: Number(formData.singlePrice),
-          status: formData.status,  
+          status: formData.status,
           description: formData.description,
         }),
-      })
-      router.push('/menu'); //Routing
+      });
+      router.push("/menu"); //Routing
     } catch (error) {
       console.error(error);
     }
@@ -272,7 +300,10 @@ export default function Component() {
                 <Label htmlFor="category" className="text-white">
                   Category
                 </Label>
-                <Select value={formData.category} onValueChange={handleCategoryChange}>
+                <Select
+                  value={formData.category}
+                  onValueChange={handleCategoryChange}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
@@ -297,7 +328,10 @@ export default function Component() {
                 <Label htmlFor="status" className="text-white">
                   Status
                 </Label>
-                <Select value={formData.status} onValueChange={handleSelectChange}>
+                <Select
+                  value={formData.status}
+                  onValueChange={handleSelectChange}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select availability" />
                   </SelectTrigger>
@@ -325,9 +359,9 @@ export default function Component() {
               required
             />
           </div>
-            <Button type="submit" className="w-full">
-              Add Product
-            </Button>
+          <Button type="submit" variant="outline" className="w-full">
+            Add Product
+          </Button>
         </form>
       </CardContent>
     </Card>
