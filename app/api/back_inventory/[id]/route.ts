@@ -1,39 +1,36 @@
-// import { prisma } from "@/utils/prisma";
 import prisma from "@/lib/db";
-import { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET (request: Request, { params } : { params  : { id: string}} ){
-    const id = params.id
+// GET function to fetch a single back inventory item
+export async function GET(request: Request, { params }: { params: { bd_id: string } }) {
+    const bd_id = params.bd_id;
     const back_inventory = await prisma.back_inventory.findUnique({
         where: {
-            bd_id: parseInt(id, 10)
+            bd_id: parseInt(bd_id, 10)
         }
     });
     return NextResponse.json(back_inventory);
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
-    const id = params.id;
+// PUT function to update the entire back inventory item
+export async function PUT(request: Request, { params }: { params: { bd_id: string } }) {
+    const bd_id = params.bd_id;
     const json = await request.json();
-    delete json.bd_id; // Ensure bd_id is not included in the data object
+    delete json.bd_id;
 
-    // Convert po_id to an integer if it exists
     if (json.po_id) {
         json.po_id = parseInt(json.po_id, 10);
     }
 
     try {
         const updatedBackInventory = await prisma.back_inventory.update({
-            where: {
-                bd_id: parseInt(id, 10)
-            },
+            where: { bd_id: parseInt(bd_id, 10) },
             data: {
-                item_name: json.item_name,
+                item_id: json.item_id,
                 item_stocks: json.item_stocks,
-                unit: json.unit,
-                category: json.category,
-                location_shelf: json.location_shelf,
+                unit_id: json.unit_id,
+                category_id: json.category_id,
+                ls_id: json.ls_id,
                 stock_in_date: json.stock_in_date,
                 expiry_date: json.expiry_date,
                 stock_damaged: json.stock_damaged,
@@ -42,7 +39,6 @@ export async function PUT(request: Request, { params }: { params: { id: string }
                 }
             }
         });
-
         return NextResponse.json(updatedBackInventory);
     } catch (error) {
         console.error('Error updating back_inventory:', error);
@@ -50,15 +46,30 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     }
 }
 
-export async function DELETE (request: Request, { params } : { params : { id: string}}){
-    const id = params.id;
+// PATCH function to update part of the back inventory item
+export async function PATCH(request: NextRequest) {
+    try {
+      const json = await request.json(); // Get the data from the request body
+  
+      const updatedBackInventory = await prisma.back_inventory.updateMany({
+        data: {
+          ...json, // Update all records with the data in the request body
+        },
+      });
+  
+      return NextResponse.json(updatedBackInventory);
+    } catch (error) {
+      console.error('Error patching back_inventory:', error);
+      return NextResponse.json({ error: 'Failed to patch back_inventory' }, { status: 500 });
+    }
+  }
+
+// DELETE function to delete a back inventory item
+export async function DELETE(request: Request, { params }: { params: { bd_id: string } }) {
+    const bd_id = params.bd_id;
     const deletedBackInventory = await prisma.back_inventory.delete({
-        where: {
-            bd_id: parseInt(id, 10)
-        }
-    })
+        where: { bd_id: parseInt(bd_id, 10) }
+    });
 
     return NextResponse.json(deletedBackInventory);
 }
-
-// Remove the duplicate function definition

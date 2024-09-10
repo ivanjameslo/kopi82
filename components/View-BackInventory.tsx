@@ -146,80 +146,80 @@ const backInventory = () => {
   };
 
   //STOCK IN FEATURE
-  const handleStockIn = async (item_id: number) => {
+  const handleStockIn = async () => {
     try {
-      // Fetch the latest purchase details for the item
-      const response = await fetch(`/api/purchase_details/latest/${item_id}`, {
-        method: 'GET',
-      });
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const purchaseDetails: PurchaseDetailsData[] = await response.json();
-  
-      // Fetch the existing back inventory to get the pd_id's that have already been added
-      const backInventoryResponse = await fetch('/api/back_inventory', {
-        method: 'GET',
-      });
-      if (!backInventoryResponse.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const backInventory: BackInventoryData[] = await backInventoryResponse.json();
-      const existingPdIds = backInventory.map(item => item.po_id.pd_id);
-  
-      // Filter out the purchase details that have already been added to the back inventory
-      const newPurchaseDetails = purchaseDetails.filter(pd => !existingPdIds.includes(pd.pd_id));
+      // Fetch the latest purchase details and the back inventory concurrently
+      const [purchaseDetails, backInventory] = await Promise.all([
+        fetch('/api/purchase_details/latest', {
+          method: 'GET',
+        }).then(response => {
+          if (!response.ok) throw new Error('Failed to fetch purchase details');
+          return response.json();
+        }),
+        fetch('/api/back_inventory', {
+          method: 'GET',
+        }).then(response => {
+          if (!response.ok) throw new Error('Failed to fetch back inventory');
+          return response.json();
+        }),
+      ]);
   
       // Get the current date in milliseconds
       const now = new Date().getTime();
   
-      // Finding the purchase detail with the nearest expiry date or the latest purchase detail ID
-      const latestPurchase = newPurchaseDetails.reduce((nearest, current) => {
-        const nearestExpiry = nearest.expiry_date ? new Date(nearest.expiry_date).getTime() : 0; // Convert nearest expiry date to milliseconds or 0 if 'N/A'
-        const currentExpiry = current.expiry_date ? new Date(current.expiry_date).getTime() : 0; // Convert current expiry date to milliseconds or 0 if 'N/A'
-        
-        // If both expiry dates are 'N/A', compare by purchase detail ID
-        if (nearestExpiry === 0 && currentExpiry === 0) {
-          return current.pd_id > nearest.pd_id ? current : nearest;
-        }
-        
-        // If one of the expiry dates is 'N/A', prefer the one with a valid expiry date
-        if (nearestExpiry === 0) return current;
-        if (currentExpiry === 0) return nearest;
-        
-        // Compare the absolute difference with the current date
-        return Math.abs(currentExpiry - now) < Math.abs(nearestExpiry - now) ? current : nearest;
+      // Prepare an array of promises for each item update
+      const updatePromises = backInventory.map(async (item: { item_id: any; bd_id: any; }) => {
+        // Find the latest purchase detail for the current back inventory item
+        const latestPurchase = purchaseDetails
+          .filter((pd: { item_id: any; }) => pd.item_id === item.item_id)
+          .reduce((nearest: { expiry_date: string | number | Date; pd_id: number; }, current: { expiry_date: string | number | Date; pd_id: number; }) => {
+            const nearestExpiry = nearest.expiry_date ? new Date(nearest.expiry_date).getTime() : 0;
+            const currentExpiry = current.expiry_date ? new Date(current.expiry_date).getTime() : 0;
+  
+            if (nearestExpiry === 0 && currentExpiry === 0) return current.pd_id > nearest.pd_id ? current : nearest;
+            if (nearestExpiry === 0) return current;
+            if (currentExpiry === 0) return nearest;
+  
+            return Math.abs(currentExpiry - now) < Math.abs(nearestExpiry - now) ? current : nearest;
+          }, purchaseDetails[0]);
+  
+        // Perform the PATCH request to update the back inventory item
+        return fetch(`/api/back_inventory/${item.bd_id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            stock_in_date: new Date().toISOString(),  // Set stock_in_date to the current date and time
+            expiry_date: latestPurchase.expiry_date || null,  // Use null if expiry date is 'N/A'
+            stock_damaged: 0,
+            po_id: latestPurchase.po_id || null,  // Ensure 'po_id' is passed correctly
+            item_stocks: latestPurchase.quantity,
+            pd_id: latestPurchase.pd_id,  // Include pd_id to track it in the back inventory
+          }),
+        });
       });
   
-      // Update the back inventory with the latest purchase details
-      const responseUpdate = await fetch('/api/back_inventory', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify([
-          {
-            item_id: latestPurchase.item_id,
-            stock_in_date: new Date().toISOString(),
-            expiry_date: latestPurchase.expiry_date || null, // Use null if expiry date is 'N/A'
-            stock_damaged: 0,
-            po_id: latestPurchase.po_id,
-            item_stocks: latestPurchase.quantity,
-            pd_id: latestPurchase.pd_id, // Include pd_id to track it in the back inventory
-          },
-        ]),
+      // Wait for all updates to complete
+      await Promise.all(updatePromises);
+  
+      // Fetch the updated back inventory and update the state
+      const updatedBackInventoryResponse = await fetch('/api/back_inventory', {
+        method: 'GET',
       });
-      if (!responseUpdate.ok) {
-        throw new Error('Network response was not ok');
+      if (!updatedBackInventoryResponse.ok) {
+        throw new Error('Failed to fetch updated back inventory');
       }
-      const updatedBackInventory = await responseUpdate.json();
-      setData([...data, ...updatedBackInventory]);
-      // window.location.reload();
-      router.refresh();
+      const updatedBackInventory = await updatedBackInventoryResponse.json();
+      setData(updatedBackInventory);
+  
+      // Optionally, refresh the page or navigate
+      router.push('/BackInventory');
     } catch (error) {
-      console.error('Failed to stock in item: ', error);
+      console.error('Failed to stock in items: ', error);
     }
   };
+  
 
   //VIEW MODAL
   const handleViewDetails = (item: BackInventoryData) => {
@@ -299,8 +299,9 @@ const backInventory = () => {
         Back Inventory
       </p>
 
-      <div className="flex justify-end mt-10">
+      <div className="flex justify-end mt-10 space-x-4">
         <Button onClick={handleAddNewBackInventory}>Set Back Inventory</Button>
+        <Button onClick={handleStockIn}>Stock In</Button>
       </div>
 
       <div className="mt-10">
