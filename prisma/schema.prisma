@@ -13,13 +13,19 @@ model back_inventory {
   bd_id           Int              @id @default(autoincrement())
   item_id         Int
   item_stocks     Int
+  unit_id         Int
+  category_id     Int
+  ls_id           Int
   stock_in_date   DateTime
   stock_damaged   Int
-  po_id           Int
+  po_id           Int?
   // purchase_order purchase_order[]
   item            item             @relation(fields: [item_id], references: [item_id])
+  unit            unit             @relation(fields: [unit_id], references: [unit_id])
+  category        category         @relation(fields: [category_id], references: [category_id])
+  location_shelf  location_shelf   @relation(fields: [ls_id], references: [ls_id])
   front_inventory front_inventory?
-  purchase_order  purchase_order   @relation(fields: [po_id], references: [po_id])
+  purchase_order  purchase_order?   @relation(fields: [po_id], references: [po_id])
 }
 
 model front_inventory {
@@ -57,29 +63,32 @@ model purchase_details {
 
 model unit {
   unit_id   Int    @id @default(autoincrement())
-  unit_name String @unique
-  item      item?
+  unit_name String 
+  item      item[]
   purchase_details purchase_details[]
+  back_inventory back_inventory[]
 }
 
 model category {
   category_id   Int    @id @default(autoincrement())
-  category_name String @unique
-  item          item?
+  category_name String 
+  item          item[]
+  back_inventory back_inventory[]
 }
 
 model location_shelf {
   ls_id   Int    @id @default(autoincrement())
-  ls_name String @unique
-  item    item?
+  ls_name String 
+  item    item[]
+  back_inventory back_inventory[]
 }
 
 model item {
   item_id          Int                @id @default(autoincrement())
-  item_name        String             @unique
-  unit_id          Int                @unique
-  category_id      Int                @unique
-  ls_id            Int                @unique
+  item_name        String             
+  unit_id          Int                
+  category_id      Int                
+  ls_id            Int                
   unit             unit               @relation(fields: [unit_id], references: [unit_id])
   category         category           @relation(fields: [category_id], references: [category_id])
   location_shelf   location_shelf     @relation(fields: [ls_id], references: [ls_id])
