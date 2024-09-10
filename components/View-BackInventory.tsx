@@ -26,9 +26,10 @@ interface BackInventoryData {
   ls_id: number;
   stock_in_date: string;
   stock_damaged: number;
-  po_id: {
-      pd_id: number;
-  }
+  // po_id: {
+  //     pd_id?: number;
+  // }
+  po_id: number | null;
   expiry_date: string | null;
 };
 
@@ -389,8 +390,8 @@ const backInventory = () => {
                 <td className="px-5 py-3 whitespace-nowrap">{selectedItem.stock_damaged}</td>
               </tr>
               <tr>
-                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Recent PD ID:</td>
-                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.po_id.pd_id}</td>
+                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Recent PO ID:</td>
+                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.po_id}</td>
               </tr>
             </tbody>
           </table>
