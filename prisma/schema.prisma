@@ -16,9 +16,12 @@ model back_inventory {
   unit_id         Int
   category_id     Int
   ls_id           Int
-  stock_in_date   DateTime
+  stock_in_date   DateTime?
+  stock_out_date  DateTime?
   stock_damaged   Int
   po_id           Int?
+  expiry_date     DateTime?
+  pd_id           Int?
   // purchase_order purchase_order[]
   item            item             @relation(fields: [item_id], references: [item_id])
   unit            unit             @relation(fields: [unit_id], references: [unit_id])
@@ -26,6 +29,7 @@ model back_inventory {
   location_shelf  location_shelf   @relation(fields: [ls_id], references: [ls_id])
   front_inventory front_inventory?
   purchase_order  purchase_order?   @relation(fields: [po_id], references: [po_id])
+  purchase_details purchase_details? @relation(fields: [pd_id], references: [pd_id])
 }
 
 model front_inventory {
@@ -34,6 +38,8 @@ model front_inventory {
   in_stock       Int
   stock_used     Int
   stock_damaged  Int
+  stock_in_date  DateTime
+  stock_out_date DateTime
   product_id     Int
   back_inventory back_inventory @relation(fields: [bd_id], references: [bd_id])
   product        product        @relation(fields: [product_id], references: [product_id])
@@ -59,6 +65,15 @@ model purchase_details {
   purchase_order purchase_order @relation(fields: [po_id], references: [po_id])
   item           item           @relation(fields: [item_id], references: [item_id])
   unit           unit           @relation(fields: [unit_id], references: [unit_id])
+  back_inventory back_inventory[]
+  processed_purchase_details ProcessedPurchaseDetails[]
+}
+
+model ProcessedPurchaseDetails {
+  ppd_id         Int            @id @default(autoincrement())
+  pd_id          Int
+  processed_at   DateTime       @default(now())
+  purchase_details purchase_details @relation(fields: [pd_id], references: [pd_id])
 }
 
 model unit {

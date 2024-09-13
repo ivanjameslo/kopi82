@@ -29,8 +29,19 @@ interface FrontInventoryData {
 
 interface BackInventoryData {
     bd_id: number;
+    item_id: number;
+    unit_id: number;
+}
+
+interface ItemData {
+    item_id: number;
     item_name: string;
-  }
+}
+
+interface UnitData {
+    unit_id: number;
+    unit_name: string;
+}
 
 const frontInventory = () => {
     
@@ -58,11 +69,6 @@ const frontInventory = () => {
     useEffect(() => {
         fetchFrontInventoryData().catch(error => console.error(error));
     }, []);
-
-    //ADD NEW FRONT INVENTORY PAGE
-    const handleAddNewFrontInventory = () => {
-        router.push('/Add-FrontInventory');
-    };
 
     //VIEW MODAL
     const handleViewDetails = (item: FrontInventoryData) => {
@@ -129,6 +135,48 @@ const frontInventory = () => {
         fetchItemNames().catch(error => console.error(error));
     }, []);
 
+    // ADD ALL BACK INVENTORY ITEMS TO FRONT INVENTORY
+    const handleAddAllBackInventoryToFront = async () => {
+        try {
+            const response = await fetch('/api/back_inventory', {
+                method: 'GET',
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch back inventory');
+            }
+            const backInventoryData: BackInventoryData[] = await response.json();
+
+            // Filter out unnecessary fields and prepare data for front inventory
+            // Set defailt values for fields that are not present in back inventory
+            const frontInventoryData = backInventoryData.map(item => ({
+                bd_id: item.bd_id,
+                in_stock: 0,
+                unit_id: item.unit_id,
+                stock_used: 0,
+                stock_damaged: 0,
+                product_id: 0,
+            }));
+
+            // Save data to front inventory
+            for (const item of frontInventoryData) {
+                const saveResponse = await fetch('/api/front_inventory', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(item),
+                });
+                if (!saveResponse.ok) {
+                    throw new Error('Failed to save front inventory item');
+                }
+            }
+
+            // Fetch updated front inventory data
+            fetchFrontInventoryData().catch(error => console.error(error));
+        } catch (error) {
+            console.error('Failed to add back inventory items to front inventory: ', error);
+        }
+    };
 
     return (
         <div className="mt-24 ml-40 mr-40">
@@ -136,7 +184,7 @@ const frontInventory = () => {
                 Front Inventory
             </p>
             <div className="flex justify-end mt-10">
-                <Button onClick={handleAddNewFrontInventory}>Add New Front Inventory</Button>
+                <Button onClick={handleAddAllBackInventoryToFront} className="ml-2">Set Front Inventory</Button>
             </div>
             <div className="mt-10">
                 <Table>

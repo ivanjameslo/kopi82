@@ -26,11 +26,10 @@ interface BackInventoryData {
   ls_id: number;
   stock_in_date: string;
   stock_damaged: number;
-  // po_id: {
-  //     pd_id?: number;
-  // }
+  stock_out_date: string | null;
   po_id: number | null;
   expiry_date: string | null;
+  pd_id: number | null;
 };
 
 interface ItemData {
@@ -123,6 +122,7 @@ const backInventory = () => {
         stock_in_date: null,
         expiry_date: null,
         stock_damaged: 0,
+        stock_out_date: null,
         po_id: null,
       }));
 
@@ -140,87 +140,108 @@ const backInventory = () => {
       const newBackInventory = await response.json();
       setData([...data, ...newBackInventory]);
       
-      router.push('/BackInventory');
+      router.refresh();
     } catch (error) {
       console.error('Failed to add new back inventory: ', error);
     }
   };
 
-  //STOCK IN FEATURE
-  const handleStockIn = async () => {
-    try {
-      // Fetch the latest purchase details and the back inventory concurrently
-      const [purchaseDetails, backInventory] = await Promise.all([
-        fetch('/api/purchase_details/latest', {
+ // STOCK IN FEATURE
+ const handleStockIn = async () => {
+  try {
+    const [purchaseDetails, backInventory] = await Promise.all([
+      fetch('/api/purchase_details/latest', {
+        method: 'GET',
+      }).then(response => {
+        if (!response.ok) throw new Error('Failed to fetch purchase details');
+        return response.json();
+      }),
+      fetch('/api/back_inventory', {
+        method: 'GET',
+      }).then(response => {
+        if (!response.ok) throw new Error('Failed to fetch back inventory');
+        return response.json();
+      }),
+    ]);
+
+    console.log('Fetched purchaseDetails:', purchaseDetails);
+    console.log('Fetched backInventory:', backInventory);
+
+    const now = new Date().getTime();
+
+    const updatePromises = backInventory.map(async (item: BackInventoryData) => {
+      const relevantPurchases = purchaseDetails.filter((pd: { item_id: any }) => pd.item_id === item.item_id);
+
+      if (!relevantPurchases.length) {
+        console.log(`No matching purchases for item_id: ${item.item_id}`);
+        return;
+      }
+
+      // Iterate through relevant purchases
+      for (const latestPurchase of relevantPurchases) {
+        // Check if this purchase detail has already been processed
+        const isAlreadyProcessed = await fetch(`/api/processed_purchase_details/${latestPurchase.id}`, {
           method: 'GET',
-        }).then(response => {
-          if (!response.ok) throw new Error('Failed to fetch purchase details');
-          return response.json();
-        }),
-        fetch('/api/back_inventory', {
-          method: 'GET',
-        }).then(response => {
-          if (!response.ok) throw new Error('Failed to fetch back inventory');
-          return response.json();
-        }),
-      ]);
-  
-      // Get the current date in milliseconds
-      const now = new Date().getTime();
-  
-      // Prepare an array of promises for each item update
-      const updatePromises = backInventory.map(async (item: { item_id: any; bd_id: any; }) => {
-        // Find the latest purchase detail for the current back inventory item
-        const latestPurchase = purchaseDetails
-          .filter((pd: { item_id: any; }) => pd.item_id === item.item_id)
-          .reduce((nearest: { expiry_date: string | number | Date; pd_id: number; }, current: { expiry_date: string | number | Date; pd_id: number; }) => {
-            const nearestExpiry = nearest.expiry_date ? new Date(nearest.expiry_date).getTime() : 0;
-            const currentExpiry = current.expiry_date ? new Date(current.expiry_date).getTime() : 0;
-  
-            if (nearestExpiry === 0 && currentExpiry === 0) return current.pd_id > nearest.pd_id ? current : nearest;
-            if (nearestExpiry === 0) return current;
-            if (currentExpiry === 0) return nearest;
-  
-            return Math.abs(currentExpiry - now) < Math.abs(nearestExpiry - now) ? current : nearest;
-          }, purchaseDetails[0]);
-  
+        }).then(res => res.ok);
+
+        if (isAlreadyProcessed) {
+          console.log(`PurchaseDetail ID ${latestPurchase.id} already processed`);
+          continue; // Skip if already processed
+        }
+
+        const newItemStocks = item.item_stocks + (latestPurchase?.quantity || 0);
+
         // Perform the PATCH request to update the back inventory item
-        return fetch(`/api/back_inventory/${item.bd_id}`, {
+        const response = await fetch(`/api/back_inventory/${item.bd_id}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            stock_in_date: new Date().toISOString(),  // Set stock_in_date to the current date and time
-            expiry_date: latestPurchase.expiry_date || null,  // Use null if expiry date is 'N/A'
+            stock_in_date: new Date().toISOString(),
+            expiry_date: latestPurchase?.expiry_date || null,
             stock_damaged: 0,
-            po_id: latestPurchase.po_id || null,  // Ensure 'po_id' is passed correctly
-            item_stocks: latestPurchase.quantity,
-            pd_id: latestPurchase.pd_id,  // Include pd_id to track it in the back inventory
+            po_id: latestPurchase?.po_id || null,
+            item_stocks: newItemStocks,
+            pd_id: latestPurchase?.pd_id,
+            stock_out_date: item.stock_out_date || null,
           }),
         });
-      });
-  
-      // Wait for all updates to complete
-      await Promise.all(updatePromises);
-  
-      // Fetch the updated back inventory and update the state
-      const updatedBackInventoryResponse = await fetch('/api/back_inventory', {
-        method: 'GET',
-      });
-      if (!updatedBackInventoryResponse.ok) {
-        throw new Error('Failed to fetch updated back inventory');
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Error updating back inventory item with ID:', item.bd_id, errorData);
+          throw new Error(`Failed to update back inventory item with ID: ${item.bd_id}`);
+        }
+
+        // Mark this purchase detail as processed
+        await fetch('/api/processed_purchase_details', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ purchase_detail_id: latestPurchase.id }),
+        });
       }
-      const updatedBackInventory = await updatedBackInventoryResponse.json();
-      setData(updatedBackInventory);
-  
-      // Optionally, refresh the page or navigate
-      router.push('/BackInventory');
-    } catch (error) {
-      console.error('Failed to stock in items: ', error);
+    });
+
+    await Promise.all(updatePromises);
+
+    const updatedBackInventoryResponse = await fetch('/api/back_inventory', {
+      method: 'GET',
+    });
+    if (!updatedBackInventoryResponse.ok) {
+      throw new Error('Failed to fetch updated back inventory');
     }
-  };
-  
+    const updatedBackInventory = await updatedBackInventoryResponse.json();
+    setData(updatedBackInventory);
+
+    router.refresh();
+  } catch (error) {
+    console.error('Failed to stock in items:', error);
+  }
+};
+
 
   //VIEW MODAL
   const handleViewDetails = (item: BackInventoryData) => {
@@ -250,13 +271,16 @@ const backInventory = () => {
 
   //DELETE BACK INVENTORY
   const handleDeleteItem = async (bd_id: number) => {
+    const isConfirmed = window.confirm("Are you sure you want to delete this item?");
+    if (!isConfirmed) {
+      return;
+    }
+
     try {
-      const response = await fetch(`/api/back_inventory/${bd_id}`, {
+      await fetch(`/api/back_inventory/${bd_id}`, {
         method: 'DELETE',
       });
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
+
       setData(data.filter(item => item.bd_id !== bd_id));
     } catch (error) {
       console.error('Failed to delete item: ', error);
