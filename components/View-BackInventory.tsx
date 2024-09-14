@@ -146,101 +146,273 @@ const backInventory = () => {
     }
   };
 
- // STOCK IN FEATURE
- const handleStockIn = async () => {
-  try {
-    const [purchaseDetails, backInventory] = await Promise.all([
-      fetch('/api/purchase_details/latest', {
+  const fetchPurchaseDetailsAndInventory = async () => {
+    return Promise.all([
+      fetch('/api/purchase_details/latest',{
         method: 'GET',
-      }).then(response => {
+      }).then(response =>{
         if (!response.ok) throw new Error('Failed to fetch purchase details');
         return response.json();
       }),
-      fetch('/api/back_inventory', {
+      fetch('/api/back_inventory',{
         method: 'GET',
       }).then(response => {
         if (!response.ok) throw new Error('Failed to fetch back inventory');
         return response.json();
-      }),
-    ]);
-
-    console.log('Fetched purchaseDetails:', purchaseDetails);
-    console.log('Fetched backInventory:', backInventory);
-
-    const now = new Date().getTime();
-
-    const updatePromises = backInventory.map(async (item: BackInventoryData) => {
-      const relevantPurchases = purchaseDetails.filter((pd: { item_id: any }) => pd.item_id === item.item_id);
-
-      if (!relevantPurchases.length) {
-        console.log(`No matching purchases for item_id: ${item.item_id}`);
-        return;
-      }
-
-      // Iterate through relevant purchases
-      for (const latestPurchase of relevantPurchases) {
-        // Check if this purchase detail has already been processed
-        const isAlreadyProcessed = await fetch(`/api/processed_purchase_details/${latestPurchase.id}`, {
-          method: 'GET',
-        }).then(res => res.ok);
-
-        if (isAlreadyProcessed) {
-          console.log(`PurchaseDetail ID ${latestPurchase.id} already processed`);
-          continue; // Skip if already processed
-        }
-
-        const newItemStocks = item.item_stocks + (latestPurchase?.quantity || 0);
-
-        // Perform the PATCH request to update the back inventory item
-        const response = await fetch(`/api/back_inventory/${item.bd_id}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            stock_in_date: new Date().toISOString(),
-            expiry_date: latestPurchase?.expiry_date || null,
-            stock_damaged: 0,
-            po_id: latestPurchase?.po_id || null,
-            item_stocks: newItemStocks,
-            pd_id: latestPurchase?.pd_id,
-            stock_out_date: item.stock_out_date || null,
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Error updating back inventory item with ID:', item.bd_id, errorData);
-          throw new Error(`Failed to update back inventory item with ID: ${item.bd_id}`);
-        }
-
-        // Mark this purchase detail as processed
-        await fetch('/api/processed_purchase_details', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ purchase_detail_id: latestPurchase.id }),
-        });
-      }
-    });
-
-    await Promise.all(updatePromises);
-
-    const updatedBackInventoryResponse = await fetch('/api/back_inventory', {
-      method: 'GET',
-    });
-    if (!updatedBackInventoryResponse.ok) {
-      throw new Error('Failed to fetch updated back inventory');
-    }
-    const updatedBackInventory = await updatedBackInventoryResponse.json();
-    setData(updatedBackInventory);
-
-    router.refresh();
-  } catch (error) {
-    console.error('Failed to stock in items:', error);
+      })
+    ])
   }
-};
+
+  const filterPurchasesByExpiryDate = (relevantPurchase: any[], now: number, daysThreshold: number = 30) => {
+    return relevantPurchase.filter((pd: { expiry_date: string | null}) => {
+      if (pd.expiry_date) {
+        const expiryDate = new Date(pd.expiry_date).getTime();
+        const daysDifference = (expiryDate - now) / (1000 * 60 * 60 * 24);
+        return daysDifference <= daysThreshold;
+      }
+      return false;
+    })
+  }
+
+  const getEarliestPurchaseDetail = (relevantPurchases: any[]) => {
+    return relevantPurchases.reduce((earliest, current) => {
+      const earliestDate = earliest.expiry_date ? new Date(earliest.expiry_date).getTime() : Infinity;
+      const currentDate = current.expiry_date ? new Date(current.expiry_date).getTime() : Infinity;
+      return currentDate < earliestDate ? current : earliest;
+    })
+  }
+
+  const checkIfAlreadyProcessed = async (pd_id: number) => {
+    try {
+      const response = await fetch(`/api/processed_purchase_details/${pd_id}`, {
+        method: 'GET',
+      });
+  
+      if (!response.ok) {
+        // If not ok, pd_id is not processed
+        return false;
+      }
+  
+      const data = await response.json();
+      return data.processed; //  API returns { processed: true } or { processed: false }
+    } catch (error) {
+      console.error(`Error checking if purchase detail ID ${pd_id} is processed: `, error);
+      return false;
+    }
+  };
+  
+
+  const updateBackInventoryItem = async (item: BackInventoryData, purchaseToProcess: any) => {
+    const newItemStocks = item.item_stocks + (purchaseToProcess?.quantity || 0);
+
+    const response = await fetch(`/api/back_inventory/${item.bd_id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        stock_in_date: new Date().toISOString(),
+        expiry_date: purchaseToProcess?.expiry_date || null,
+        stock_damaged: 0,
+        po_id: purchaseToProcess?.po_id || null,
+        item_stocks: newItemStocks,
+        pd_id: purchaseToProcess?.pd_id,
+        stock_out_date: item.stock_out_date || null,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Error updating back inventory item with ID:', item.bd_id, errorData);
+      throw new Error(`Failed to update back inventory item with ID: ${item.bd_id}`);
+    }
+
+    await fetch('/api/processed_purchase_details', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        pd_id: purchaseToProcess.pd_id
+      }),
+    })
+   }
+
+   const handleStockIn = async () => {
+    try{
+      const [purchaseDetails, backInventory] = await fetchPurchaseDetailsAndInventory();
+      const now = new Date().getTime();
+
+      const updatePromises = backInventory.map(async (item: BackInventoryData) => {
+        const relevantPurchases = purchaseDetails.filter(
+          (pd: { item_id: any }) => pd.item_id === item.item_id
+        );
+
+        if (!relevantPurchases.length) {
+          console.log(`No matching purchases for item_id: ${item.item_id}`);
+          return;
+        }
+
+        const filteredPurchases = filterPurchasesByExpiryDate(relevantPurchases, now);
+
+        const purchaseToProcess = filteredPurchases.length
+          ? filteredPurchases[0]
+          : getEarliestPurchaseDetail(relevantPurchases);
+
+        const isAlreadyProcessed = await checkIfAlreadyProcessed(purchaseToProcess.pd_id);
+        if (isAlreadyProcessed) {
+          console.log(`PurchaseDetail ID ${purchaseToProcess.pd_id} already processed`);
+          return;
+        }
+
+        await updateBackInventoryItem(item, purchaseToProcess);
+      });
+
+      await Promise.all(updatePromises);
+
+      const updatedBackInventoryResponse = await fetch('/api/back_inventory', {
+        method: 'GET',
+      });
+      
+      if (!updatedBackInventoryResponse.ok) {
+        throw new Error('Failed to fetch updated back inventory');
+      }
+      const updatedBackInventory = await updatedBackInventoryResponse.json();
+      setData(updatedBackInventory);
+
+      router.refresh();
+    }catch(error){
+      console.error('Failed to stock in items:', error);
+    }
+   }
+
+    //-----------------------------------------
+
+   // Find the latest purchase detail for the current back inventory item
+  //   const latestPurchase = purchaseDetails
+  //   .filter((pd: { item_id: any; }) => pd.item_id === item.item_id)
+  //   .reduce((nearest: { expiry_date: string | number | Date; pd_id: number; }, current: { expiry_date: string | number | Date; pd_id: number; }) => {
+  //     const nearestExpiry = nearest.expiry_date ? new Date(nearest.expiry_date).getTime() : 0;
+  //     const currentExpiry = current.expiry_date ? new Date(current.expiry_date).getTime() : 0;
+
+  //     if (nearestExpiry === 0 && currentExpiry === 0) return current.pd_id > nearest.pd_id ? current : nearest;
+  //     if (nearestExpiry === 0) return current;
+  //     if (currentExpiry === 0) return nearest;
+
+  //     return Math.abs(currentExpiry - now) < Math.abs(nearestExpiry - now) ? current : nearest;
+  //   }, purchaseDetails[0]);
+  // }
+
+  
+
+ // STOCK IN FEATURE
+//  const handleStockIn = async () => {
+//   try {
+//     const [purchaseDetails, backInventory] = await Promise.all([
+//       fetch('/api/purchase_details/latest', {
+//         method: 'GET',
+//       }).then(response => {
+//         if (!response.ok) throw new Error('Failed to fetch purchase details');
+//         return response.json();
+//       }),
+//       fetch('/api/back_inventory', {
+//         method: 'GET',
+//       }).then(response => {
+//         if (!response.ok) throw new Error('Failed to fetch back inventory');
+//         return response.json();
+//       }),
+//     ]);
+
+//     const now = new Date().getTime();
+
+//     const updatePromises = backInventory.map(async (item: BackInventoryData) => {
+//       const relevantPurchases = purchaseDetails.filter((pd: { item_id: any }) => pd.item_id === item.item_id);
+
+//       if (!relevantPurchases.length) {
+//         console.log(`No matching purchases for item_id: ${item.item_id}`);
+//         return;
+//       }
+
+//       // Filter purchases to get those with expiry date close to the current date
+//       const filteredPurchases = relevantPurchases.filter((pd: { expiry_date: string | null }) => {
+//         if (pd.expiry_date) {
+//           const expiryDate = new Date(pd.expiry_date).getTime();
+//           const daysDifference = (expiryDate - now) / (1000 * 60 * 60 * 24);
+//           return daysDifference <= 30; // Adjust the number of days as needed
+//         }
+//         return false;
+//       });
+
+//       // If no purchases with expiry date close to the current date, get the earliest purchase detail
+//       const purchaseToProcess = filteredPurchases.length
+//         ? filteredPurchases[0]
+//         : relevantPurchases.reduce((earliest: { expiry_date: string | number | Date; }, current: { expiry_date: string | number | Date; }) => {
+//             const earliestDate = earliest.expiry_date ? new Date(earliest.expiry_date).getTime() : Infinity;
+//             const currentDate = current.expiry_date ? new Date(current.expiry_date).getTime() : Infinity;
+//             return currentDate < earliestDate ? current : earliest;
+//           });
+
+//       // Check if this purchase detail has already been processed
+//       const isAlreadyProcessed = await fetch(`/api/processed_purchase_details/${purchaseToProcess.pd_id}`, {
+//         method: 'GET',
+//       }).then(res => res.json());
+
+//       if (isAlreadyProcessed.processed) {
+//         console.log(`PurchaseDetail ID ${purchaseToProcess.pd_id} already processed`);
+//         return; // Skip if already processed
+//       }
+
+//       const newItemStocks = item.item_stocks + (purchaseToProcess?.quantity || 0);
+
+//       // Perform the PATCH request to update the back inventory item
+//       const response = await fetch(`/api/back_inventory/${item.bd_id}`, {
+//         method: 'PATCH',
+//         headers: {
+//           'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify({
+//           stock_in_date: new Date().toISOString(),
+//           expiry_date: purchaseToProcess?.expiry_date || null,
+//           stock_damaged: 0,
+//           po_id: purchaseToProcess?.po_id || null,
+//           item_stocks: newItemStocks,
+//           pd_id: purchaseToProcess?.pd_id,
+//           stock_out_date: item.stock_out_date || null,
+//         }),
+//       });
+
+//       if (!response.ok) {
+//         const errorData = await response.json();
+//         console.error('Error updating back inventory item with ID:', item.bd_id, errorData);
+//         throw new Error(`Failed to update back inventory item with ID: ${item.bd_id}`);
+//       }
+
+//       // Mark this purchase detail as processed
+//       await fetch('/api/processed_purchase_details', {
+//         method: 'POST',
+//         headers: {
+//           'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify({ purchase_detail_id: purchaseToProcess.pd_id }),
+//       });
+//     });
+
+//     await Promise.all(updatePromises);
+
+//     const updatedBackInventoryResponse = await fetch('/api/back_inventory', {
+//       method: 'GET',
+//     });
+//     if (!updatedBackInventoryResponse.ok) {
+//       throw new Error('Failed to fetch updated back inventory');
+//     }
+//     const updatedBackInventory = await updatedBackInventoryResponse.json();
+//     setData(updatedBackInventory);
+
+//     router.refresh();
+//   } catch (error) {
+//     console.error('Failed to stock in items:', error);
+//   }
+// };
 
 
   //VIEW MODAL

@@ -71,7 +71,7 @@ model purchase_details {
 
 model ProcessedPurchaseDetails {
   ppd_id         Int            @id @default(autoincrement())
-  pd_id          Int
+  pd_id          Int            @unique
   processed_at   DateTime       @default(now())
   purchase_details purchase_details @relation(fields: [pd_id], references: [pd_id])
 }

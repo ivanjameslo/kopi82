@@ -1,23 +1,31 @@
 import prisma from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
-// GET function to check if a purchase detail has been processed
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  // GET function to check if a purchase detail has been processed
+  export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
     const { id } = params;
-  
-    const processed = await prisma.processedPurchaseDetails.findUnique({
-      where: { ppd_id: parseInt(id) },
-    });
-  
-    if (!processed) {
-      return new Response('Not processed', { status: 404 });
+
+    try {
+      // Fetch the processed purchase detail by its pd_id
+      const processed = await prisma.processedPurchaseDetails.findUnique({
+        where: { pd_id: parseInt(id) },
+      });
+
+      // If the purchase detail is not found, return a 404 response
+      if (!processed) {
+        return new Response(JSON.stringify({ processed: false, message: 'Not processed' }), { status: 404 });
+      }
+
+      // If the purchase detail is found, return a 200 response with a 'processed' status
+      return new Response(JSON.stringify({ processed: true, message: 'Already processed' }), { status: 200 });
+    } catch (error) {
+      console.error(`Error fetching purchase detail with pd_id ${id}:`, error);
+      return new Response(JSON.stringify({ message: 'Internal Server Error' }), { status: 500 });
     }
-  
-    return new Response('Already processed', { status: 200 });
   }
   
   // POST function to mark a purchase detail as processed
-export async function POST(request: NextRequest) {
+  export async function POST(request: NextRequest) {
     try {
       const { purchase_detail_id } = await request.json();
   
