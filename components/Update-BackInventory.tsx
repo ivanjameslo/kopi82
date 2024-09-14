@@ -21,6 +21,12 @@ const EditBackInventory: React.FC<EditBackInventoryProps> = ({ selectedItem, onC
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            const newItemStocks = selectedItem.item_stocks - formData.stock_damaged;
+            
+            if (newItemStocks < 0) {
+                throw new Error('Stock damaged cannot exceed available item stocks.');
+            }
+
             const response = await fetch(`/api/back_inventory/${selectedItem.bd_id}`, {
                 method: 'PATCH',
                 headers: {
@@ -28,6 +34,7 @@ const EditBackInventory: React.FC<EditBackInventoryProps> = ({ selectedItem, onC
                 },
                 body: JSON.stringify({
                     stock_damaged: formData.stock_damaged,
+                    item_stocks: newItemStocks,
                     stock_out_date: new Date().toISOString(), // current date and time
                 }),
             });

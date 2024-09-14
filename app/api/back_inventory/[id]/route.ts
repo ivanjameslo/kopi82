@@ -99,7 +99,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       console.log('Received data for PATCH:', data); // Log received data
   
       // Validate data (e.g., required fields) before processing
-      if (!data.item_stocks || !data.stock_in_date) {
+      if (!data.stock_damaged && !data.stock_out_date && !data.item_stocks && !data.stock_in_date) {
         return new Response('Invalid data', { status: 400 });
       }
   
