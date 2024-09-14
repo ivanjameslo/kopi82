@@ -38,11 +38,11 @@ model front_inventory {
   in_stock       Int
   stock_used     Int
   stock_damaged  Int
-  stock_in_date  DateTime
-  stock_out_date DateTime
-  product_id     Int
+  stock_in_date  DateTime?
+  stock_out_date DateTime?
+  product_id     Int?
   back_inventory back_inventory @relation(fields: [bd_id], references: [bd_id])
-  product        product        @relation(fields: [product_id], references: [product_id])
+  product        product?        @relation(fields: [product_id], references: [product_id])
   //product product[]
 }
 

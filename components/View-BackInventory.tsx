@@ -52,13 +52,13 @@ interface LocationShelfData {
   ls_name: string;
 }
 
-interface PurchaseDetailsData {
-  pd_id: number;
-  item_id: number;
-  quantity: number;
-  expiry_date: string;
-  po_id: number;
-}
+// interface PurchaseDetailsData {
+//   pd_id: number;
+//   item_id: number;
+//   quantity: number;
+//   expiry_date: string;
+//   po_id: number;
+// }
 
 const backInventory = () => {
 
@@ -120,7 +120,7 @@ const backInventory = () => {
       const newBackInventoryItems = newItems.map(item => ({
         item_id: item.item_id,
         stock_in_date: null,
-        expiry_date: null,
+        expiry_date: "N/A",
         stock_damaged: 0,
         stock_out_date: null,
         po_id: null,

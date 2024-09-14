@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    //Crate a map for quick lookup
+    //Create a map for quick lookup
     const itemMap = new Map(items.map(item => [item.item_id, item]));
     
 
