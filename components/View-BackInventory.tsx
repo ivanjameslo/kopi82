@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { error } from 'console';
 import UpdateBackInventory from "./Update-BackInventory";
 import { format } from 'path';
+import { toast } from 'react-toastify';
 
 interface BackInventoryData {
   bd_id: number;
@@ -141,8 +142,8 @@ const backInventory = () => {
       setData([...data, ...newBackInventory]);
       
       router.refresh();
-    } catch (error) {
-      console.error('Failed to add new back inventory: ', error);
+    } catch (error: any) {
+      toast.error('Failed to add new back inventory: ', error.message);
     }
   };
 
@@ -281,8 +282,8 @@ const backInventory = () => {
       setData(updatedBackInventory);
 
       router.refresh();
-    }catch(error){
-      console.error('Failed to stock in items:', error);
+    }catch(error: any){
+      toast.error('Failed to stock in items: ', error.message);
     }
    }
 
@@ -530,7 +531,7 @@ const backInventory = () => {
                     View
                   </Button>
                   <Button variant="outline" className="mx-1" onClick={() => handleEditDetails(item)}>
-                    Edit
+                    Stock Out
                   </Button>
                   <Button variant="outline" className="mx-1" onClick={() => handleDeleteItem(item.bd_id)}>
                     Delete
@@ -584,6 +585,10 @@ const backInventory = () => {
               <tr>
                 <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Stock Damaged:</td>
                 <td className="px-5 py-3 whitespace-nowrap">{selectedItem.stock_damaged}</td>
+              </tr>
+              <tr>
+                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Stock Out Date:</td>
+                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.stock_out_date ? formatDateTime(selectedItem.stock_out_date) : 'N/A'}</td>
               </tr>
               <tr>
                 <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Recent PO ID:</td>

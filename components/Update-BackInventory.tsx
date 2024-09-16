@@ -1,5 +1,6 @@
 import React, { useState, ChangeEvent } from 'react';
 import { Button } from "@/components/ui/button";
+import { toast } from 'react-toastify';
 
 interface EditBackInventoryProps {
     selectedItem: any;
@@ -8,7 +9,7 @@ interface EditBackInventoryProps {
 }
 
 const EditBackInventory: React.FC<EditBackInventoryProps> = ({ selectedItem, onClose, onSave }) => {
-    const [formData, setFormData] = useState({ stock_damaged: selectedItem.stock_damaged });
+    const [formData, setFormData] = useState({ stock_damaged: 0 });
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -24,7 +25,8 @@ const EditBackInventory: React.FC<EditBackInventoryProps> = ({ selectedItem, onC
             const newItemStocks = selectedItem.item_stocks - formData.stock_damaged;
             
             if (newItemStocks < 0) {
-                throw new Error('Stock damaged cannot exceed available item stocks.');
+                toast.error('Stock damaged cannot exceed available item stocks.');
+                return;
             }
 
             const response = await fetch(`/api/back_inventory/${selectedItem.bd_id}`, {
@@ -46,8 +48,8 @@ const EditBackInventory: React.FC<EditBackInventoryProps> = ({ selectedItem, onC
 
             onSave(updatedItem);
             onClose();
-        } catch (error) {
-            console.error(error);
+        } catch (error: any) {
+            toast.error(error.message);
         }
     };
 

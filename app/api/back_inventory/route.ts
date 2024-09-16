@@ -50,7 +50,6 @@ export async function POST(request: NextRequest) {
 
     //Create a map for quick lookup
     const itemMap = new Map(items.map(item => [item.item_id, item]));
-    
 
     const created = await prisma.back_inventory.createMany({
       data: formDataArray.map((formData: {item_id: number, stock_in_date: string | number | Date; expiry_date: string | number | Date; stock_damaged: number; stock_out_date: string | number | Date; po_id: string; pd_id: string}) => {

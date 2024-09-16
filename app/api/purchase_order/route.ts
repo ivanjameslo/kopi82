@@ -15,6 +15,14 @@ export async function POST(request: NextRequest) {
   try {
     const res = await request.json();
     const { receipt_no, purchase_date } = res;
+
+    if (!receipt_no) {
+      return NextResponse.json(
+        { error: "Please enter the Receipt Number." },
+        { status: 400 }
+      );
+    }
+
     const created = await prisma.purchase_order.create({
       data: {
         receipt_no: Number(receipt_no),

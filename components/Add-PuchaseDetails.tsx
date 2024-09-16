@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
+import { toast } from "react-toastify";
 
 const AddPurchaseDetails = () => {
 
@@ -36,6 +37,7 @@ const AddPurchaseDetails = () => {
   const [recentPoId, setRecentPoId] = useState<number | null>(null);
   const [items, setItems] = useState<{ item_name: any; unit_id: any; item_id: number }[]>([]);
   const [units, setUnits] = useState<{ unit_id: any; unit_name: string }[]>([]);
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
     const fetchRecentPoId = async () => {
@@ -91,6 +93,7 @@ const AddPurchaseDetails = () => {
     const newFormDataArray = [...formDataArray];
     newFormDataArray[index] = { ...newFormDataArray[index], [e.target.name]: e.target.value };
     setFormDataArray(newFormDataArray);
+    setError("");
   };
 
   const handleItemChange = (index: number, e: ChangeEvent<HTMLSelectElement>) => {
@@ -110,32 +113,40 @@ const AddPurchaseDetails = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Validate form data
-    const isValid = formDataArray.every((formData) => formData.item_id && formData.unit_id);
-    if (!isValid) {
-      alert("Please fill in all required fields.");
-      return;
+  
+    const isConfirmed = window.confirm("Are you sure the details are correct? Once saved, they cannot be edited.");
+    if (!isConfirmed) {
+      return; 
     }
+
     try {
       const formattedDataArray = formDataArray.map((formData) => ({
-        po_id: parseInt(formData.po_id),
-        item_id: parseInt(formData.item_id),
-        unit_id: parseInt(formData.unit_id),
-        quantity: parseInt(formData.quantity),
+        po_id: Number(formData.po_id),
+        item_id: Number(formData.item_id),
+        unit_id: Number(formData.unit_id),
+        quantity: Number(formData.quantity),
         price: parseFloat(formData.price),
         expiry_date: formData.expiry_date ? new Date(formData.expiry_date).toISOString() : null, // Convert to ISO string
       }));
 
-      await fetch(`/api/purchase_details`, {
+      const response = await fetch(`/api/purchase_details`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(formattedDataArray),
       });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+          throw new Error(data.error || 'Failed to add purchase details.');
+      }
+
+      toast.success('Purchase details added successfully!');
       router.push("/PurchaseOrder");
-    } catch (error) {
-      console.error("Error submitting form:", error);
+    } catch (error: any) {
+      toast.error(error.message);
     }
   };
 
