@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { toast } from "react-toastify";
 
 
 const AddPurchaseOrder = () => {
@@ -21,10 +22,29 @@ const AddPurchaseOrder = () => {
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+
+    // Custom validation to ensure input contains only numbers
+    const isNumeric = /^\d+$/.test(formData.receipt_no);
+    if (!isNumeric) {
+      toast.error('Receipt number must contain only numbers!');
+      return;
+    }
   };
 
   const handleSubmit = async (e: ChangeEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (formData.receipt_no.trim() === "") {
+      toast.error("Please enter the Receipt Number.");
+      return;
+    }
+
+    // // Custom validation to ensure input contains only numbers
+    // const isNumeric = /^\d+$/.test(formData.receipt_no);
+    // if (!isNumeric) {
+    //   toast.error('Receipt number must contain only numbers!');
+    //   return;
+    // }
 
     try {
       await fetch("/api/purchase_order", {
@@ -46,7 +66,7 @@ const AddPurchaseOrder = () => {
       //Redirect to the Add-PuchaseDetails page with the recent po_id
       router.push(`/PurchaseDetails`);
     } catch (error) {
-      console.log(error);
+      toast.error("Failed to create Purchase Order");
     }
   };
 
@@ -65,7 +85,7 @@ const AddPurchaseOrder = () => {
             name="receipt_no"
             value={formData.receipt_no}
             onChange={handleChange}
-            required
+            // required
             className="mt-1 w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none sm:text-sm"
           />
 

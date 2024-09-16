@@ -1,37 +1,30 @@
 'use client'
 
 import { useState, ChangeEvent, FormEvent, TextareaHTMLAttributes } from "react";
-import React from 'react'
+import React from 'react';
 import { Button } from "@/components/ui/button";
-import Link from 'next/link'
-import { useRouter } from "next/navigation";
-import Modal from './Modal'; 
+import Link from 'next/link';
 import { set } from "react-hook-form";
+import { toast } from "react-toastify";
 
 const AddCategory = () => {
 
-    const router = useRouter();
-
     const [categoryName, setCategoryName] = useState<string>("");
-    const [error, setError] = useState<string>("");
-    const [isModalOpen, setIsModalOpen] = useState<boolean>(false); 
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         setCategoryName(e.target.value);
-        setError("");
     }
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
+        // Validation for empty or whitespace input
+        if (categoryName.trim() === "") {
+            toast.error("Category name cannot be blank");
+            return;  // Early return to prevent the API call
+        }
+
         try {
-            const checkResponse = await fetch(`/api/category?category_name=${categoryName}`);
-            const checkData = await checkResponse.json();
-
-            if (checkData.exists) {
-                setIsModalOpen(true);
-                return;
-            }
-
             const response = await fetch('/api/category', {
                 method: 'POST',
                 headers: {
@@ -40,22 +33,20 @@ const AddCategory = () => {
                 body: JSON.stringify({
                     category_name: categoryName
                 }),
-            })
+            });
 
+            // Check for errors in the response
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || 'Category name already exists.');
+                throw new Error(errorData.error || 'An error occurred while adding the category.');
             }
 
+            toast.success('Category added successfully');
             window.location.reload();
         } catch (error: any) {
-            setError(error.message);
-            setIsModalOpen(true);
+            // Handle errors (e.g., duplicate category)
+            toast.error(error.message);
         }
-    }
-
-    const closeModal = () => {
-        setIsModalOpen(false);
     }
 
     return (
@@ -79,9 +70,6 @@ const AddCategory = () => {
                     </Button>
                 </div>
             </form>
-            <Modal isOpen={isModalOpen} onClose={closeModal} title="Error">
-                <p>{error}</p>
-            </Modal>
         </div>
     )
 

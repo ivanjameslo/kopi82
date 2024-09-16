@@ -2,66 +2,134 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChangeEvent } from 'react';
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { error } from 'console';
-import { set } from 'react-hook-form';
-import UpdateFrontInventory from './Update-FrontInventory';
+import StockInFrontInventory from './Stock-In-FrontInventory';
+import StockOutFrontInventory from './Stock-Out-FrontInventory';
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface FrontInventoryData {
     fd_id: number;
     bd_id: number;
+    item_id: number;
     in_stock: number;
-    unit: string;
+    unit_id: number;
     stock_used: number;
     stock_damaged: number;
-    product_id: number;
+    stock_in_date: string | null;
+    stock_out_date: string | null;
+    product_id: number | null;
 };
 
 interface BackInventoryData {
     bd_id: number;
-    item_name: string;
-  }
+    item_id: number;
+    unit_id: number;
+}
 
-const frontInventory = () => {
+interface ItemData {
+    item_id: number;
+    item_name: string;
+}
+
+interface UnitData {
+    unit_id: number;
+    unit_name: string;
+}
+
+const FrontInventory = () => {
     
     const router = useRouter();
 
-    const [data, setData] = useState<FrontInventoryData[]>([]);
+    const [data, setFrontInventoryData] = useState<FrontInventoryData[]>([]);
+    const [backInventoryData, setBackInventoryData] = useState<BackInventoryData[]>([]);
+    const [items, setItems] = useState<ItemData[]>([]);
+    const [units, setUnits] = useState<UnitData[]>([]);
+    
     const [selectedItem, setSelectedItem] = useState<FrontInventoryData | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [itemNameMap, setItemNameMap] = useState<{ [key: number]: string }>({});
+    const [isStockInModalOpen, setIsStockInModalOpen] = useState(false);
+    const [isStockOutModalOpen, setIsStockOutModalOpen] = useState(false);
 
-    //READ FRONT INVENTORY DATA
-    const fetchFrontInventoryData = async () => {
-        const response = await fetch('/api/front_inventory', {
-            method: 'GET',
-        });
+    //READ DATA FROM VARIOUS ENDPOINTS
+    const fetchData = async (endpoint: string) => {
+        const response = await fetch(endpoint, { method: 'GET' });
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
-        const data = await response.json();
-        console.log(data);
-        setData(data);
+        return response.json();
     };
 
+    const fetchAllData = async () => {
+        try {
+            const [frontInventoryData, backInventoryData, itemsData, unitsData] = await Promise.all([
+                fetchData('/api/front_inventory'),
+                fetchData('/api/back_inventory'),
+                fetchData('/api/item'),
+                fetchData('/api/unit'),
+            ]);
+            setFrontInventoryData(frontInventoryData);
+            setBackInventoryData(backInventoryData);
+            setItems(itemsData);
+            setUnits(unitsData);
+        } catch (error) {
+            console.error('Failed to fetch data: ', error);
+        }
+    }
+
+    // Fetch data on page load
     useEffect(() => {
-        fetchFrontInventoryData().catch(error => console.error(error));
+        fetchAllData().catch(error => console.error(error));
     }, []);
 
-    //ADD NEW FRONT INVENTORY PAGE
-    const handleAddNewFrontInventory = () => {
-        router.push('/Add-FrontInventory');
+    // ADD ALL BACK INVENTORY ITEMS TO FRONT INVENTORY
+    const handleAddAllBackInventoryToFront = async () => {
+        try {
+            const existingBDIds = data.map(item => item.bd_id);
+            const newBackInv = backInventoryData.filter(item => !existingBDIds.includes(item.bd_id));
+
+            if (newBackInv.length === 0) {
+                console.error('No new back inventory items to add to front inventory');
+                return;
+            }
+
+            const newFrontInventory = newBackInv.map(item => ({
+                bd_id: item.bd_id,
+                in_stock: 0,
+                stock_used: 0,
+                stock_damaged: 0,
+                stock_in_date: "N/A",
+                stock_out_date: "N/A",
+                product_id: null,
+            }));
+
+            const response = await fetch('/api/front_inventory', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(newFrontInventory),
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const newFrontInventoryData = await response.json();
+            setFrontInventoryData([...data, ...newFrontInventoryData]);
+
+            router.refresh();
+        } catch (error) {
+            console.error('Failed to add back inventory items to front inventory: ', error);
+        }
     };
 
     //VIEW MODAL
@@ -75,18 +143,33 @@ const frontInventory = () => {
         setSelectedItem(null);
     };
 
-    //EDIT MODAL
-    const handleEditDetails = (item: FrontInventoryData) => {
+    //STOCK IN MODAL
+    const handleStockIn = (item: FrontInventoryData) => {
         setSelectedItem(item);
-        setIsEditModalOpen(true);
+        setIsStockInModalOpen(true);
     };
 
-    const handleSaveEdit = (updatedItem: FrontInventoryData) => {
-        setData(data.map(item => item.fd_id === updatedItem.fd_id ? updatedItem : item));
+    const handleSaveStockIn = (updatedItem: FrontInventoryData) => {
+        setFrontInventoryData(data.map(item => item.fd_id === updatedItem.fd_id ? updatedItem : item));
     };
 
-    const handleCloseEditModal = () => {
-        setIsEditModalOpen(false);
+    const handleCloseStockIn = () => {
+        setIsStockInModalOpen(false);
+        setSelectedItem(null);
+    };
+
+    //STOCK OUT MODAL
+    const handleStockOut = (item: FrontInventoryData) => {
+        setSelectedItem(item);
+        setIsStockOutModalOpen(true);
+    };
+
+    const handleSaveStockOut = (updatedItem: FrontInventoryData) => {
+        setFrontInventoryData(data.map(item => item.fd_id === updatedItem.fd_id ? updatedItem : item));
+    };
+
+    const handleCloseStockOut = () => {
+        setIsStockOutModalOpen(false);
         setSelectedItem(null);
     };
 
@@ -99,44 +182,64 @@ const frontInventory = () => {
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
-            setData(data.filter(item => item.fd_id !== fd_id));
+            setFrontInventoryData(data.filter(item => item.fd_id !== fd_id));
         } catch (error) {
             console.error('Failed to delete item: ', error);
         }
     };
 
-    // FETCH ITEM NAMES FROM BACK INVENTORY
-    const fetchItemNames = async () => {
-        const response = await fetch('/api/back_inventory', {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        });
-        if (!response.ok) {
-        throw new Error('Something went wrong');
+    // Helper functions to get names from Back Inventory IDs
+    const getItemNameFromBackInventory = (bd_id: number) => {
+        // Find the corresponding back inventory entry by bd_id
+        const backInvEntry = backInventoryData.find(backInv => backInv.bd_id === bd_id);
+        console.log('Looking up item for bd_id:', bd_id, 'Back Inventory Entry:', backInvEntry);
+        
+        if (backInvEntry) {
+            // Now get the corresponding item by item_id
+            const item = items.find(item => item.item_id === backInvEntry.item_id);
+            console.log('Item found for item_id:', backInvEntry.item_id, 'Item:', item);
+            return item ? item.item_name : 'Unknown Item';
+        } else {
+            console.warn('No matching Back Inventory entry found for bd_id:', bd_id);
         }
-        const data: BackInventoryData[] = await response.json();
-        const itemNameMap: { [key: number]: string } = {};
-        data.forEach(item => {
-        itemNameMap[item.bd_id] = item.item_name;
-        });
-        setItemNameMap(itemNameMap);
+        return 'Unknown Item';
     };
-
-    useEffect(() => {
-        fetchFrontInventoryData().catch(error => console.error(error));
-        fetchItemNames().catch(error => console.error(error));
-    }, []);
-
+    
+    const getUnitNameFromBackInventory = (bd_id: number) => {
+        // Find the corresponding back inventory entry by bd_id
+        const backInvEntry = backInventoryData.find(backInv => backInv.bd_id === bd_id);
+        console.log('Looking up unit for bd_id:', bd_id, 'Back Inventory Entry:', backInvEntry);
+        
+        if (backInvEntry) {
+            // Now get the corresponding unit by unit_id
+            const unit = units.find(unit => unit.unit_id === backInvEntry.unit_id);
+            console.log('Unit found for unit_id:', backInvEntry.unit_id, 'Unit:', unit);
+            return unit ? unit.unit_name : 'Unknown Unit';
+        } else {
+            console.warn('No matching Back Inventory entry found for bd_id:', bd_id);
+        }
+        return 'Unknown Unit';
+    };
 
     return (
         <div className="mt-24 ml-40 mr-40">
+
+            <ToastContainer 
+                position="bottom-right" 
+                autoClose={5000} 
+                hideProgressBar={false} 
+                newestOnTop={false} 
+                closeOnClick rtl={false} 
+                pauseOnFocusLoss 
+                draggable 
+                pauseOnHover 
+                style={{ zIndex: 9999 }} />
+
             <p className="flex text-3xl text-[#483C32] font-bold justify-center mb-2">
                 Front Inventory
             </p>
             <div className="flex justify-end mt-10">
-                <Button onClick={handleAddNewFrontInventory}>Add New Front Inventory</Button>
+                <Button onClick={handleAddAllBackInventoryToFront} className="ml-2">Set Front Inventory</Button>
             </div>
             <div className="mt-10">
                 <Table>
@@ -155,18 +258,18 @@ const frontInventory = () => {
                             <TableRow key={item.fd_id}>
                                 <TableCell className="text-center">{item.fd_id}</TableCell>
                                 <TableCell className="text-center">{item.bd_id}</TableCell>
-                                <TableCell className="text-center">{itemNameMap[item.bd_id]}</TableCell>
+                                <TableCell className="text-center">{getItemNameFromBackInventory(item.bd_id)}</TableCell>
                                 <TableCell className="text-center">{item.in_stock}</TableCell>
-                                <TableCell className="text-center">{item.unit}</TableCell>
+                                <TableCell className="text-center">{getUnitNameFromBackInventory(item.bd_id)}</TableCell>
                                 <TableCell className="text-center">
                                     <Button variant="outline" className="mx-1" onClick={() => handleViewDetails(item)}>
                                         View
                                     </Button>
-                                    <Button variant="outline" className="mx-1" onClick={() => handleEditDetails(item)}>
-                                        Edit
+                                    <Button variant="outline" className="mx-1" onClick={() => handleStockIn(item)}>
+                                        Stock In
                                     </Button>
-                                    <Button variant="outline" className="mx-1" onClick={() => handleDeleteItem(item.fd_id)}>
-                                        Delete
+                                    <Button variant="outline" className="mx-1" onClick={() => handleStockOut(item)}>
+                                        Stock Out
                                     </Button>
                                 </TableCell>
                             </TableRow>
@@ -196,7 +299,7 @@ const frontInventory = () => {
                                 </tr>
                                 <tr>
                                     <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Unit:</td>
-                                    <td className="px-5 py-3 whitespace-nowrap">{selectedItem.unit}</td>
+                                    <td className="px-5 py-3 whitespace-nowrap">{getUnitNameFromBackInventory(selectedItem.bd_id)}</td>
                                 </tr>
                                 <tr>
                                     <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Stock Used:</td>
@@ -217,14 +320,22 @@ const frontInventory = () => {
                 </div>
             )}
 
-            {isEditModalOpen && selectedItem && (
-                <UpdateFrontInventory
+            {isStockInModalOpen && selectedItem && (
+                <StockInFrontInventory
                     selectedItem={selectedItem}
-                    onClose={handleCloseEditModal}
-                    onSave={handleSaveEdit}
+                    onClose={handleCloseStockIn}
+                    onSave={handleSaveStockIn}
+                />
+            )}
+
+            {isStockOutModalOpen && selectedItem && (
+                <StockOutFrontInventory
+                    selectedItem={selectedItem}
+                    onClose={handleCloseStockOut}
+                    onSave={handleSaveStockOut}
                 />
             )}
         </div>
     );
 };
-export default frontInventory;
+export default FrontInventory;

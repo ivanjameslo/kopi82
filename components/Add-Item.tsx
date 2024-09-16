@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import Link from 'next/link';
 import Modal from './Modal'; // Assuming you have a modal component
+import { toast } from 'react-toastify';
 
 const AddItem = () => {
     const router = useRouter();
@@ -27,11 +28,13 @@ const AddItem = () => {
         ls_id: "",
     }]);
 
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isSuccess, setIsSuccess] = useState(false);
     const [existingItems, setExistingItems] = useState<any[]>([]);
-    const [duplicateItems, setDuplicateItems] = useState<any[]>([]);
+
+    // const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    // const [isModalOpen, setIsModalOpen] = useState(false);
+    // const [isSuccess, setIsSuccess] = useState(false);
+    // const [existingItems, setExistingItems] = useState<any[]>([]);
+    // const [duplicateItems, setDuplicateItems] = useState<any[]>([]);
 
     const handleChange = (index: number, e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const newFormDataArray = [...formDataArray];
@@ -44,9 +47,7 @@ const AddItem = () => {
         const duplicates = [];
         for (const formData of formDataArray) {
             const identifier = `${formData.item_name}-${formData.unit_id}-${formData.category_id}-${formData.ls_id}`;
-            console.log(`Checking identifier: ${identifier}`); // Debugging statement
             if (seen.has(identifier)) {
-                console.log(`Duplicate found: ${identifier}`); // Debugging statement
                 duplicates.push(formData);
             }
             seen.add(identifier);
@@ -54,73 +55,55 @@ const AddItem = () => {
         return duplicates;
     };
 
-    const checkForDatabaseDuplicates = () => {
-        const duplicates = [];
-        for (const formData of formDataArray) {
-            const identifier = `${formData.item_name}-${formData.unit_id}-${formData.category_id}-${formData.ls_id}`;
-            for (const item of existingItems) {
-                const existingIdentifier = `${item.item_name}-${item.unit_id}-${item.category_id}-${item.ls_id}`;
-                if (identifier === existingIdentifier) {
-                    console.log(`Database duplicate found: ${identifier}`); // Debugging statement
-                    duplicates.push(formData);
-                }
-            }
-        }
-        return duplicates;
-    };
-
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const isConfirmed = window.confirm("Are you sure you want to submit this form?");
-        if (!isConfirmed) {
-            return;
-        }
-
+    
+        // Frontend validation for empty fields
         for (const formData of formDataArray) {
             if (!formData.item_name || !formData.unit_id || !formData.category_id || !formData.ls_id) {
-                setErrorMessage("Please fill in all fields.");
-                setIsModalOpen(true);
-                console.log("Validation failed: Please fill in all fields."); // Debugging statement
+                toast.error("Please fill in all fields.");
                 return;
             }
         }
-
+    
+        // Check for duplicate entries in the form data
         const duplicateEntries = checkForDuplicates();
-        const databaseDuplicates = checkForDatabaseDuplicates();
-
-        if (duplicateEntries.length > 0 || databaseDuplicates.length > 0) {
-            setErrorMessage("Duplicate entries found. Please ensure all items are unique.");
-            setDuplicateItems([...duplicateEntries, ...databaseDuplicates]);
-            setIsModalOpen(true);
-            console.log("Validation failed: Duplicate entries found."); // Debugging statement
+        if (duplicateEntries.length > 0) {
+            toast.error("Duplicate entries found. Please ensure all items are unique.");
             return;
         }
-
+    
         const formDataArrayWithNumbers = formDataArray.map(formData => ({
             ...formData,
             unit_id: Number(formData.unit_id),
             category_id: Number(formData.category_id),
             ls_id: Number(formData.ls_id),
         }));
-
+    
         try {
-            await fetch('/api/item', {
+            const response = await fetch('/api/item', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(formDataArrayWithNumbers),
             });
-            setIsSuccess(true);
-            setErrorMessage("Item created successfully.");
-            setIsModalOpen(true);
-            console.log("Item created successfully."); // Debugging statement
+    
+            const result = await response.json();
+    
+            // Check if the request was successful
+            if (!response.ok) {
+                toast.error(result.error || "Error creating items. Please try again.");
+                return;
+            }
+    
+            toast.success("Items created successfully.");
+            router.push('/Item');
         } catch (error) {
-            console.log("Error creating Item", error);
-            setErrorMessage("Error creating Item. Please try again.");
-            setIsModalOpen(true);
+            toast.error("Error creating items. Please try again.");
         }
     };
+    
 
     const addNewRow = () => {
         setFormDataArray([
@@ -177,12 +160,6 @@ const AddItem = () => {
         fetchExistingItems().catch(error => console.log(error));
     }, []);
 
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
-        if (isSuccess) {
-            router.push('/Item');
-        }
-    };
 
     const getUnitName = (unit_id: number) => {
         const unit = unitOptions.find(unit => unit.unit_id === unit_id);
@@ -276,27 +253,6 @@ const AddItem = () => {
                     <Button variant="outline" type="submit">Submit</Button>
                 </div>
             </form>
-
-            {isModalOpen && (
-                <Modal isOpen={isModalOpen} title={isSuccess ? "Success" : "Error"} onClose={handleCloseModal}>
-                    <div className="p-4">
-                        <p className="font-bold">{errorMessage}</p>
-                        <br></br>
-                        {duplicateItems.length > 0 && (
-                            <div>
-                                <h3 className="font-bold">Duplicate Items:</h3>
-                                <ul>
-                                    {duplicateItems.map((item, index) => (
-                                        <li key={index}>
-                                            {item.item_name} - {item.unit_id} - {item.category_id} - {item.ls_id}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-                    </div>
-                </Modal>
-            )}
         </div>
     );
 };

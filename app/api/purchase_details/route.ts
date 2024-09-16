@@ -14,6 +14,26 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const formDataArray = await request.json();
+    
+    for (const formData of formDataArray) {
+      const { po_id, item_id, quantity, unit_id, price, expiry_date } = formData;
+
+      if (item_id || !quantity || !unit_id || !price) {
+        return NextResponse.json(
+          { error: "All fields (item, quantity, unit, price) are required." },
+          { status: 400 }
+        );
+      }
+   
+      const isNumeric = /^\d+$/.test(formData.quantity) && /^\d+$/.test(formData.price);
+      if (!isNumeric) {
+        return NextResponse.json(
+          { error: "Quantity and Price must be a Number." },
+          { status: 400 }
+        );
+      }
+    }
+    
     const created = await prisma.purchase_details.createMany({
         data: formDataArray.map((formData: { po_id: any; item_id: any; quantity: any; unit_id: any; price: any; expiry_date: any; }) => ({
             po_id: parseInt(formData.po_id),

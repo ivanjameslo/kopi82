@@ -1,36 +1,30 @@
 'use client'
 
-import { useState, ChangeEvent, FormEvent, TextareaHTMLAttributes, use } from "react";
+import { useState, ChangeEvent, FormEvent } from "react";
 import React from 'react'
 import { Button } from "@/components/ui/button";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Modal from './Modal';
+import { toast } from "react-toastify";
 
 const AddLocationShelf = () => {
 
-    const router = useRouter();
-
     const [lsName, setLsName] = useState<string>("");
-    const [error, setError] = useState<string>("");
-    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         setLsName(e.target.value);
-        setError("");
     }
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
+        // Validation for empty or whitespace input
+        if (lsName.trim() === "") {
+            toast.error("Location Shelf name cannot be blank");
+            return;  // Early return to prevent the API call
+        }
+
         try {
-            const checkResponse = await fetch(`/api/location_shelf?ls_name=${lsName}`);
-            const checkData = await checkResponse.json();
-
-            if (checkData.exists) {
-                setIsModalOpen(true);
-                return;
-            }
-
             const response = await fetch('/api/location_shelf', {
                 method: 'POST',
                 headers: {
@@ -39,22 +33,20 @@ const AddLocationShelf = () => {
                 body: JSON.stringify({
                     ls_name: lsName
                 }),
-            })
+            });
 
+            // Check for errors in the response
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || 'Shelf Location name already exists.');
+                throw new Error(errorData.error || 'An error occurred while adding the location shelf.');
             }
 
+            toast.success('Location Shelf added successfully');
             window.location.reload();
         } catch (error: any) {
-            setError(error.message);
-            setIsModalOpen(true);
+            // Handle errors (e.g., duplicate category)
+            toast.error(error.message);
         }
-    }
-
-    const closeModal = () => {
-        setIsModalOpen(false);
     }
 
     return (
@@ -78,9 +70,6 @@ const AddLocationShelf = () => {
                     </Button>
                 </div>
             </form>
-            <Modal isOpen={isModalOpen} onClose={closeModal} title="Error">
-                <p>{error}</p>
-            </Modal>
         </div>
     )
 

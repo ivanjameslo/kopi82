@@ -4,32 +4,26 @@ import { useState, ChangeEvent, FormEvent } from "react";
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
-import { useRouter } from "next/navigation";
-import Modal from './Modal'; 
+import { toast } from "react-toastify";
 
 const AddUnit = () => {
-    const router = useRouter();
 
     const [unitName, setUnitName] = useState<string>("");
-    const [error, setError] = useState<string>("");
-    const [isModalOpen, setIsModalOpen] = useState<boolean>(false); 
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         setUnitName(e.target.value);
-        setError("");
     }
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
+        // Validation for empty or whitespace input
+        if (unitName.trim() === "") {
+            toast.error("Unit name cannot be blank");
+            return;  // Early return to prevent the API call
+        }
+
         try {
-            const checkResponse = await fetch(`/api/unit?unit_name=${unitName}`);
-            const checkData = await checkResponse.json();
-
-            if (checkData.exists) {
-                setIsModalOpen(true);
-                return;
-            }
-
             const response = await fetch('/api/unit', {
                 method: 'POST',
                 headers: {
@@ -40,20 +34,18 @@ const AddUnit = () => {
                 }),
             });
 
+            // Check for errors in the response
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || 'Unit name already exists.');
+                throw new Error(errorData.error || 'An error occurred while adding the unit.');
             }
 
+            toast.success('Unit added successfully');
             window.location.reload();
         } catch (error: any) {
-            setError(error.message);
-            setIsModalOpen(true);
+            // Handle errors (e.g., duplicate category)
+            toast.error(error.message);
         }
-    }
-
-    const closeModal = () => {
-        setIsModalOpen(false);
     }
 
     return (
@@ -77,9 +69,6 @@ const AddUnit = () => {
                     </Button>
                 </div>
             </form>
-            <Modal isOpen={isModalOpen} onClose={closeModal} title="Error">
-                <p>{error}</p>
-            </Modal>
         </div>
     );
 }
