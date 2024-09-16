@@ -37,3 +37,8 @@ SAD Issues/Updates (Aug 24, 2024)
 
 SAD Issues/Updates (Aug 25, 2024)
 - created add page for front inventory
+
+
+September 2, 2024
+- Setup Supabase 
+- Password: Group3M1!051220

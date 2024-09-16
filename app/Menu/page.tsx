@@ -1,4 +1,4 @@
-import EditProduct from "@/components/EditProduct";
+import UpdateProduct from "@/components/Update-Product";
 import MenuRow from "@/components/MenuRow";
 
 import {
@@ -46,7 +46,7 @@ const MenuPage = () => {
                 <CarouselItem key={index} className="flex-none w-1/6 p-2">
                   {" "}
                   <div className="flex flex-col justify-center items-center w-full h-[330px] rounded-xl">
-                    <EditProduct />
+                    <UpdateProduct />
                     <div className="flex justify-center items-center h-2/3 w-full">
                       <Image
                         className="object-contain w-full h-full"
@@ -83,7 +83,7 @@ const MenuPage = () => {
                 <CarouselItem key={index} className="flex-none w-1/6 p-2">
                   {" "}
                   <div className="flex flex-col justify-center items-center w-full h-[330px] rounded-xl">
-                    <EditProduct />
+                    <UpdateProduct />
                     <div className="flex justify-center items-center h-2/3 w-full">
                       <Image
                         className="object-contain w-full h-full"
@@ -120,7 +120,7 @@ const MenuPage = () => {
                 <CarouselItem key={index} className="flex-none w-1/6 p-2">
                   {" "}
                   <div className="flex flex-col justify-center items-center w-full h-[330px] rounded-xl">
-                    <EditProduct />
+                    <UpdateProduct />
                     <div className="flex justify-center items-center h-2/3 w-full">
                       <Image
                         className="object-contain w-full h-full"
@@ -157,7 +157,7 @@ const MenuPage = () => {
                 <CarouselItem key={index} className="flex-none w-1/6 p-2">
                   {" "}
                   <div className="flex flex-col justify-center items-center w-full h-[330px] rounded-xl">
-                    <EditProduct />
+                    <UpdateProduct />
                     <div className="flex justify-center items-center h-2/3 w-full">
                       <Image
                         className="object-contain w-full h-full"
@@ -194,7 +194,7 @@ const MenuPage = () => {
                 <CarouselItem key={index} className="flex-none w-1/6 p-2">
                   {" "}
                   <div className="flex flex-col justify-center items-center w-full h-[330px] rounded-xl">
-                    <EditProduct />
+                    <UpdateProduct />
                     <div className="flex justify-center items-center h-2/3 w-full">
                       <Image
                         className="object-contain w-full h-full"
@@ -231,7 +231,7 @@ const MenuPage = () => {
                 <CarouselItem key={index} className="flex-none w-1/6 p-2">
                   {" "}
                   <div className="flex flex-col justify-center items-center w-full h-[330px] rounded-xl">
-                    <EditProduct />
+                    <UpdateProduct />
                     <div className="flex justify-center items-center h-2/3 w-full">
                       <Image
                         className="object-contain w-full h-full"
@@ -268,7 +268,7 @@ const MenuPage = () => {
                 <CarouselItem key={index} className="flex-none w-1/6 p-2">
                   {" "}
                   <div className="flex flex-col justify-center items-center w-full h-[330px] rounded-xl">
-                    <EditProduct />
+                    <UpdateProduct />
                     <div className="flex justify-center items-center h-2/3 w-full">
                       <Image
                         className="object-contain w-full h-full"
@@ -305,7 +305,7 @@ const MenuPage = () => {
                 <CarouselItem key={index} className="flex-none w-1/6 p-2">
                   {" "}
                   <div className="flex flex-col justify-center items-center w-full h-[330px] rounded-xl">
-                    <EditProduct />
+                    <UpdateProduct />
                     <div className="flex justify-center items-center h-2/3 w-full">
                       <Image
                         className="object-contain w-full h-full"
@@ -342,7 +342,7 @@ const MenuPage = () => {
                 <CarouselItem key={index} className="flex-none w-1/6 p-2">
                   {" "}
                   <div className="flex flex-col justify-center items-center w-full h-[330px] rounded-xl">
-                    <EditProduct />
+                    <UpdateProduct />
                     <div className="flex justify-center items-center h-2/3 w-full">
                       <Image
                         className="object-contain w-full h-full"
@@ -379,7 +379,7 @@ const MenuPage = () => {
                 <CarouselItem key={index} className="flex-none w-1/6 p-2">
                   {" "}
                   <div className="flex flex-col justify-center items-center w-full h-[330px] rounded-xl">
-                    <EditProduct />
+                    <UpdateProduct />
                     <div className="flex justify-center items-center h-2/3 w-full">
                       <Image
                         className="object-contain w-full h-full"
@@ -416,7 +416,7 @@ const MenuPage = () => {
                 <CarouselItem key={index} className="flex-none w-1/6 p-2">
                   {" "}
                   <div className="flex flex-col justify-center items-center w-full h-[330px] rounded-xl">
-                    <EditProduct />
+                    <UpdateProduct />
                     <div className="flex justify-center items-center h-2/3 w-full">
                       <Image
                         className="object-contain w-full h-full"

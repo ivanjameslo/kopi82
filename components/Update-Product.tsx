@@ -12,7 +12,15 @@ import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 
+interface UpdateProductProps {
+  selectedItem: any;
+  onClose: () => void;
+  onSave: (updatedItem: any) => void;
+};
+
 const UpdateProduct = () => {
+
+
   return (
     <Dialog>
       <div className="flex justify-end w-full">
@@ -32,8 +40,8 @@ const UpdateProduct = () => {
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="item" className="text-right">
-              Item
+            <Label htmlFor="product_name" className="text-right">
+              Product Name
             </Label>
             <Input id="item" className="col-span-3" />
           </div>
@@ -44,8 +52,8 @@ const UpdateProduct = () => {
             <Input id="price" className="col-span-3" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="availability" className="text-right">
-              Availability
+            <Label htmlFor="Status" className="text-right">
+              Status
             </Label>
             <Input id="availability" className="col-span-3" />
           </div>
