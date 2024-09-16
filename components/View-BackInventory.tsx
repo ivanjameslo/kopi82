@@ -114,7 +114,7 @@ const backInventory = () => {
       const newItems = items.filter(item => !existingItemsIds.includes(item.item_id));
 
       if (newItems.length === 0) {
-        console.error('No new items to add to back inventory');
+        toast.info('All items are already added to the back inventory.');
         return;
       }
 
@@ -244,6 +244,9 @@ const backInventory = () => {
       const [purchaseDetails, backInventory] = await fetchPurchaseDetailsAndInventory();
       const now = new Date().getTime();
 
+      // Track if any items were updated
+      let itemsUpdated = false;
+
       const updatePromises = backInventory.map(async (item: BackInventoryData) => {
         const relevantPurchases = purchaseDetails.filter(
           (pd: { item_id: any }) => pd.item_id === item.item_id
@@ -267,21 +270,30 @@ const backInventory = () => {
         }
 
         await updateBackInventoryItem(item, purchaseToProcess);
+        
+        // Set the flag to true when any update is made
+        itemsUpdated = true;
       });
 
       await Promise.all(updatePromises);
 
-      const updatedBackInventoryResponse = await fetch('/api/back_inventory', {
-        method: 'GET',
-      });
-      
-      if (!updatedBackInventoryResponse.ok) {
-        throw new Error('Failed to fetch updated back inventory');
+      if (!itemsUpdated) {
+        toast.info('All purchase details are already processed.');
+      } else {
+        // Refresh the back inventory data if updates were made
+        const updatedBackInventoryResponse = await fetch('/api/back_inventory', {
+          method: 'GET',
+        });
+  
+        if (!updatedBackInventoryResponse.ok) {
+          throw new Error('Failed to fetch updated back inventory');
+        }
+  
+        const updatedBackInventory = await updatedBackInventoryResponse.json();
+        setData(updatedBackInventory);
+  
+        router.refresh();
       }
-      const updatedBackInventory = await updatedBackInventoryResponse.json();
-      setData(updatedBackInventory);
-
-      router.refresh();
     }catch(error: any){
       toast.error('Failed to stock in items: ', error.message);
     }
