@@ -124,6 +124,7 @@ export default function Component() {
               </Label>
               <Input
                 id="hot-price"
+                name="hotPrice"
                 type="number"
                 value={formData.hotPrice}
                 onChange={handleChange}
@@ -138,6 +139,7 @@ export default function Component() {
               </Label>
               <Input
                 id="iced-price"
+                name="icedPrice"
                 type="number"
                 value={formData.icedPrice}
                 onChange={handleChange}
@@ -151,6 +153,7 @@ export default function Component() {
               </Label>
               <Input
                 id="frappe-price"
+                name="frappePrice"
                 type="number"
                 value={formData.frappePrice}
                 onChange={handleChange}
@@ -169,6 +172,7 @@ export default function Component() {
               </Label>
               <Input
                 id="hot-price"
+                name="hotPrice"
                 type="number"
                 value={formData.hotPrice}
                 onChange={handleChange}
@@ -182,6 +186,7 @@ export default function Component() {
               </Label>
               <Input
                 id="iced-price"
+                name="icedPrice"
                 type="number"
                 value={formData.icedPrice}
                 onChange={handleChange}
@@ -199,6 +204,7 @@ export default function Component() {
             </Label>
             <Input
               id="single-price"
+              name="singlePrice"
               type="number"
               value={formData.singlePrice}
               onChange={handleChange}
@@ -262,6 +268,7 @@ export default function Component() {
                 </Label>
                 <Input
                   id="name"
+                  name="product_name"
                   value={formData.product_name}
                   onChange={handleChange}
                   placeholder="Enter product name"
@@ -319,6 +326,7 @@ export default function Component() {
             </Label>
             <Textarea
               id="description"
+              name="description"
               value={formData.description}
               onChange={handleChange}
               placeholder="Enter product description"

@@ -114,6 +114,14 @@ const AddPurchaseDetails = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
   
+    // Frontend validation for empty fields
+    for (const formData of formDataArray) {
+      if (!formData.item_id || !formData.unit_id || !formData.quantity || !formData.price) {
+          toast.error("Please fill in all fields.");
+          return;
+      }
+    }
+    
     const isConfirmed = window.confirm("Are you sure the details are correct? Once saved, they cannot be edited.");
     if (!isConfirmed) {
       return; 
