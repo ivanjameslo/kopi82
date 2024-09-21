@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import UpdateCategory from './Update-Category';
+import { MdEdit, MdDelete } from "react-icons/md";
 
 interface CategoryData {
     category_id: number;
@@ -100,12 +101,10 @@ const ViewCategory = () => {
                             <TableCell className="text-center">{category.category_id}</TableCell>
                             <TableCell className="text-center">{category.category_name}</TableCell>
                             <TableCell className="text-center">
-                                <Button variant="outline" className="mx-1" onClick={() => handleEdit(category)}>
-                                    Edit
-                                </Button>
-                                <Button variant="outline" className="mx-1" onClick={() => handleDelete(category.category_id)}>
-                                    Delete
-                                </Button>
+                                <div className="flex items-center justify-center space-x-2">
+                                    <MdEdit size={25} className="cursor-pointer" style={{color: '3d3130'}} onClick={() => handleEdit(category)} />
+                                    <MdDelete size={25} className="cursor-pointer" style={{color: 'd00000'}} onClick={() => handleDelete(category.category_id)} />
+                                </div>
                             </TableCell>
                         </TableRow>
                     ))}

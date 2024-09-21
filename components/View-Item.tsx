@@ -16,10 +16,12 @@ import { Button } from "@/components/ui/button";
 import { set } from 'react-hook-form';
 import UpdateItem from './Update-Item';
 import Link from 'next/link';
+import { MdEdit, MdDelete } from "react-icons/md";
 
 interface ItemData {
     item_id: number;
     item_name: string;
+    description: string;
     unit: {
         unit_id: number;
         unit_name: string;
@@ -28,11 +30,6 @@ interface ItemData {
         category_id: number;
         category_name: string;
     }
-    location_shelf: {
-        ls_id: number;
-        ls_name: string;
-    }
-
 };
 
 const ViewItem = () => {
@@ -105,13 +102,10 @@ const ViewItem = () => {
                     <Button>Add New Item</Button>
                 </Link>
                 <Link href="./Item/Add-Unit">
-                    <Button>Add New Unit</Button>
+                    <Button>Manage Unit</Button>
                 </Link>
                 <Link href="./Item/Add-Category">
-                    <Button>Add New Category</Button>
-                </Link>
-                <Link href="./Item/Add-Location-Shelf">
-                    <Button>Add New Location Shelf</Button>
+                    <Button>Manage Category</Button>
                 </Link>
             </div>
 
@@ -121,9 +115,9 @@ const ViewItem = () => {
                     <TableRow>
                     <TableHead className="text-center">ID</TableHead>
                     <TableHead className="text-center">Item Name</TableHead>
+                    <TableHead className="text-center">Description</TableHead>
                     <TableHead className="text-center">Unit</TableHead>
                     <TableHead className="text-center">Category</TableHead>
-                    <TableHead className="text-center">Shelf Location</TableHead>
                     <TableHead className="text-center">Action</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -132,16 +126,14 @@ const ViewItem = () => {
                     <TableRow key={items.item_id}>
                         <TableCell className="text-center">{items.item_id}</TableCell>
                         <TableCell className="text-center">{items.item_name}</TableCell>
+                        <TableCell className="text-center">{items.description}</TableCell>
                         <TableCell className="text-center">{items.unit.unit_name}</TableCell>
                         <TableCell className="text-center">{items.category.category_name}</TableCell>
-                        <TableCell className="text-center">{items.location_shelf.ls_name}</TableCell>
                         <TableCell className="text-center">
-                        <Button variant="outline" className="mx-1" onClick={() => handleEdit(items)}>
-                            Edit
-                        </Button>
-                        <Button variant="outline" className="mx-1" onClick={() => handleDelete(items.item_id)}>
-                            Delete
-                        </Button>
+                        <div className="flex items-center justify-center space-x-2">
+                            <MdEdit size={25} className="cursor-pointer" style={{color: '3d3130'}} onClick={() => handleEdit(items)} />
+                            <MdDelete size={25} className="cursor-pointer" style={{color: 'd00000'}} onClick={() => handleDelete(items.item_id)} />
+                        </div>
                         </TableCell>
                     </TableRow>
                     ))}
