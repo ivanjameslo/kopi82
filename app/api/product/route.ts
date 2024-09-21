@@ -1,11 +1,6 @@
 import prisma from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { supabase } from "@/lib/initSupabase";
 
 // GET function remains unchanged
 export async function GET(request: NextRequest) {
@@ -36,9 +31,9 @@ export async function POST(request: NextRequest) {
     // Handle image upload with Supabase
     if (image) {
       const { data, error } = await supabase.storage
-        .from("product-images")
+        .from("ProductImages")
         .upload(
-          `${Date.now()}-${product_name}`,
+          `${Date.now()}-${product_name}.png`,
           Buffer.from(image.split(",")[1], "base64"),
           {
             contentType: "image/png",
@@ -46,12 +41,13 @@ export async function POST(request: NextRequest) {
         );
 
       if (error) {
+        console.error("Supabase upload error:", error);
         throw new Error("Failed to upload image");
       }
 
       const {
         data: { publicUrl },
-      } = supabase.storage.from("product-images").getPublicUrl(data.path);
+      } = supabase.storage.from("ProductImages").getPublicUrl(data.path);
 
       image_url = publicUrl;
     }
