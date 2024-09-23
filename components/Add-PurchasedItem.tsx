@@ -97,7 +97,7 @@ const AddPurchasedItem = () => {
       const recentPoId = data.pi_id;
 
       //Redirect to the Add-PuchaseDetails page with the recent pi_id
-      router.push(`/PurchaseDetails`);
+      router.push(`/PurchasedDetail`);
     } catch (error) {
       toast.error("Failed to create Purchase Order");
     }
@@ -109,8 +109,7 @@ const AddPurchasedItem = () => {
         Purchased Item
       </p>
       <div className="flex justify-end mt-4">
-      <AddSupplier />
-       
+        <AddSupplier />
       </div>
       <form onSubmit={handleSubmit}>
         <div className="mb-4 mt-5 flex items-center space-x-4 justify-center">

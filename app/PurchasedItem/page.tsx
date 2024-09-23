@@ -3,7 +3,7 @@ import ViewPurchasedItem from "@/components/View-PurchasedItem";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const PurchaseOrder = () => {
+const PurchasedItem = () => {
   return (
     <div>
       <AddPurchasedItem />
@@ -22,4 +22,4 @@ const PurchaseOrder = () => {
     </div>
   );
 };
-export default PurchaseOrder;
+export default PurchasedItem;

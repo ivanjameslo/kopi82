@@ -2,7 +2,7 @@ import AddPurchaseDetails from "@/components/Add-PuchasedDetail";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const PurchaseDetails = () => {
+const PurchasedDetail = () => {
   return (
     <main>
       <AddPurchaseDetails />
@@ -21,4 +21,4 @@ const PurchaseDetails = () => {
   );
 };
 
-export default PurchaseDetails;
+export default PurchasedDetail;
