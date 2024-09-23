@@ -3,7 +3,6 @@ import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { parse } from "path";
 
-// GET function to fetch all data from Purchase Details model
 export async function GET(request: NextRequest) {
   const item = await prisma.item.findMany({
     include: {
@@ -15,7 +14,6 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(item);
 }
 
-// POST function to create a new Purchase Details
 export async function POST(request: NextRequest) {
     try {
       const formDataArray = await request.json();

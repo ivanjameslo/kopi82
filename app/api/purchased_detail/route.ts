@@ -5,9 +5,9 @@ import { NextResponse } from "next/server";
 
 // GET function to fetch all data from Purchase Details model
 export async function GET(request: NextRequest) {
-  const purchase_details = await prisma.purchase_details.findMany();
-  console.log(purchase_details);
-  return NextResponse.json(purchase_details);
+  const purchased_detail = await prisma.purchased_detail.findMany();
+  console.log(purchased_detail);
+  return NextResponse.json(purchased_detail);
 }
 
 // POST function to create a new Purchase Details
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const formDataArray = await request.json();
     
     for (const formData of formDataArray) {
-      const { po_id, item_id, quantity, unit_id, price, expiry_date } = formData;
+      const { pi_id, item_id, quantity, unit_id, price, expiry_date } = formData;
 
       if (item_id || !quantity || !unit_id || !price) {
         return NextResponse.json(
@@ -34,9 +34,9 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    const created = await prisma.purchase_details.createMany({
-        data: formDataArray.map((formData: { po_id: any; item_id: any; quantity: any; unit_id: any; price: any; expiry_date: any; }) => ({
-            po_id: parseInt(formData.po_id),
+    const created = await prisma.purchased_detail.createMany({
+        data: formDataArray.map((formData: { pi_id: any; item_id: any; quantity: any; unit_id: any; price: any; expiry_date: any; }) => ({
+            pi_id: parseInt(formData.pi_id),
             item_id: parseInt(formData.item_id),
             quantity: Number(formData.quantity),
             unit_id: parseInt(formData.unit_id),

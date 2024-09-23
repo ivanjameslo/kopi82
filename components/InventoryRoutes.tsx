@@ -55,9 +55,9 @@ const InventoryRoutes = () => {
 
         <Card className="mt-96 bg-black border-none">
           <CardHeader>
-            <CardTitle className="text-white">Purchase Order</CardTitle>
+            <CardTitle className="text-white">Purchased Item</CardTitle>
             <CardDescription className="text-white font-light">
-              View your Purchase Order archive.
+              View your Purchased Item archive.
             </CardDescription>
           </CardHeader>
           <CardContent>

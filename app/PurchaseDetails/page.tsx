@@ -1,4 +1,4 @@
-import AddPurchaseDetails from "@/components/Add-PuchaseDetails";
+import AddPurchaseDetails from "@/components/Add-PuchasedDetail";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 

@@ -5,12 +5,12 @@ import { NextResponse } from "next/server";
 
 export async function GET (request: Request, { params } : { params  : { id: string}} ){
     const id = params.id
-    const purchase_order = await prisma.purchase_order.findMany({
+    const purchase_order = await prisma.purchased_item.findMany({
         where: {
-            po_id: parseInt(id, 10)
+            pi_id: parseInt(id, 10)
         }, 
         include: {
-            purchase_details: true
+            purchased_detail: true
         }
 
     });
@@ -20,9 +20,9 @@ export async function GET (request: Request, { params } : { params  : { id: stri
 export async function PUT (request: Request, { params } : { params : {id: string}}) {
     const id = params.id;
     const json = await request.json();
-    const updatedPurchaseOrder = await prisma.purchase_order.update({
+    const updatedPurchaseOrder = await prisma.purchased_item.update({
         where: {
-            po_id: parseInt(id, 10)
+            pi_id: parseInt(id, 10)
         },
         data: json
     })
@@ -32,9 +32,9 @@ export async function PUT (request: Request, { params } : { params : {id: string
 
 export async function DELETE (request: Request, { params } : { params : { id: string}}){
     const id = params.id;
-    const deletedPurchaseOrder = await prisma.purchase_order.delete({
+    const deletedPurchaseOrder = await prisma.purchased_item.delete({
         where: {
-            po_id: parseInt(id, 10)
+            pi_id: parseInt(id, 10)
         }
     })
 

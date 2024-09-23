@@ -4,22 +4,22 @@ import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 export async function GET (request: Request, { params } : { params  : { id: string}} ){
-    const po_id = params.id
-    const purchase_details = await prisma.purchase_details.findMany({
+    const pi_id = params.id
+    const purchased_detail = await prisma.purchased_detail.findMany({
         where: {
-            po_id: parseInt(po_id, 10)
+            pi_id: parseInt(pi_id, 10)
         }
     });
-    return NextResponse.json(purchase_details);
+    return NextResponse.json(purchased_detail);
 }
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
     try {
-        const po_id = params.id;
+        const pi_id = params.id;
         const formDataArray = await request.json();
-        const created = await prisma.purchase_details.createMany({
-            data: formDataArray.map((formData: { po_id: any; item_name: any; quantity: any; unit: any; price: any; }) => ({
-                po_id: parseInt(po_id, 10),
+        const created = await prisma.purchased_detail.createMany({
+            data: formDataArray.map((formData: { pi_id: any; item_name: any; quantity: any; unit: any; price: any; }) => ({
+                pi_id: parseInt(pi_id, 10),
                 item_name: formData.item_name,
                 quantity: Number(formData.quantity),
                 unit: formData.unit,
@@ -70,12 +70,12 @@ export async function POST(request: Request, { params }: { params: { id: string 
 // }
 
 export async function DELETE (request: Request, { params } : { params : { id: string}}){
-    const po_id = params.id;
-    const deletedPurchaseDetails = await prisma.purchase_details.deleteMany({
+    const pi_id = params.id;
+    const deletedPurchasedDetail = await prisma.purchased_detail.deleteMany({
         where: {
-            po_id: parseInt(po_id, 10)
+            pi_id: parseInt(pi_id, 10)
         }
     })
 
-    return NextResponse.json(deletedPurchaseDetails);
+    return NextResponse.json(deletedPurchasedDetail);
 }

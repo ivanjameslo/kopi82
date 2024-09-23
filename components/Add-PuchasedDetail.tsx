@@ -26,7 +26,7 @@ const AddPurchaseDetails = () => {
 
   const [formDataArray, setFormDataArray] = useState([{
     pd_id: uuidv4(),
-    po_id: "",
+    pi_id: "",
     item_id: "",
     unit_id: "",
     quantity: "",
@@ -34,7 +34,7 @@ const AddPurchaseDetails = () => {
     expiry_date: getExpiryDate(), 
   }]);
 
-  const [recentPoId, setRecentPoId] = useState<number | null>(null);
+  const [recentPiId, setRecentPiId] = useState<number | null>(null);
   const [items, setItems] = useState<{ item_name: any; unit_id: any; item_id: number }[]>([]);
   const [units, setUnits] = useState<{ unit_id: any; unit_name: string }[]>([]);
   const [error, setError] = useState<string>("");
@@ -42,16 +42,16 @@ const AddPurchaseDetails = () => {
   useEffect(() => {
     const fetchRecentPoId = async () => {
       try {
-        const response = await fetch("/api/get_recent_po_id");
+        const response = await fetch("/api/get_recent_pi_id");
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
         const data = await response.json();
-        setRecentPoId(data.po_id);
+        setRecentPiId(data.pi_id);
         setFormDataArray([
           {
             pd_id: uuidv4(),
-            po_id: data.po_id,
+            pi_id: data.pi_id,
             item_id: "",
             unit_id: "",
             quantity: "",
@@ -129,7 +129,7 @@ const AddPurchaseDetails = () => {
 
     try {
       const formattedDataArray = formDataArray.map((formData) => ({
-        po_id: Number(formData.po_id),
+        pi_id: Number(formData.pi_id),
         item_id: Number(formData.item_id),
         unit_id: Number(formData.unit_id),
         quantity: Number(formData.quantity),
@@ -137,7 +137,7 @@ const AddPurchaseDetails = () => {
         expiry_date: formData.expiry_date ? new Date(formData.expiry_date).toISOString() : null, // Convert to ISO string
       }));
 
-      const response = await fetch(`/api/purchase_details`, {
+      const response = await fetch(`/api/purchased_detail`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -159,10 +159,10 @@ const AddPurchaseDetails = () => {
   };
 
   const addNewRow = () => {
-    if (recentPoId !== null) {
+    if (recentPiId !== null) {
       setFormDataArray([...formDataArray, {
         pd_id: uuidv4(),
-        po_id: recentPoId.toString(),
+        pi_id: recentPiId.toString(),
         item_id: "",
         unit_id: "",
         quantity: "",
@@ -187,13 +187,14 @@ const AddPurchaseDetails = () => {
   return (
     <div className="mt-24 ml-40 mr-40">
       <p className="flex text-3xl text-[#483C32] font-bold justify-center mb-2">
-        Purchase Details
+        Purchased Item Details
       </p>
+      
       <form onSubmit={handleSubmit}>
         <Table className="min-w-full">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-96">PO_ID</TableHead>
+              <TableHead className="w-96">Purchased Item ID</TableHead>
               <TableHead className="w-96">Item Name</TableHead>
               <TableHead className="w-96">Quantity</TableHead>
               <TableHead className="w-96">Unit</TableHead>
@@ -208,8 +209,8 @@ const AddPurchaseDetails = () => {
                 <TableCell className="font-medium">
                   <input
                     type="number"
-                    name="po_id"
-                    value={formData.po_id}
+                    name="pi_id"
+                    value={formData.pi_id}
                     onChange={(e) => handleChange(index, e)}
                     readOnly
                     className="w-full"

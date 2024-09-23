@@ -1,13 +1,13 @@
-import AddPurchaseOrder from "@/components/Add-PurchaseOrder";
-import ViewPurchaseOrder from "@/components/View-PurchaseOrder";
+import AddPurchasedItem from "@/components/Add-PurchasedItem";
+import ViewPurchasedItem from "@/components/View-PurchasedItem";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const PurchaseOrder = () => {
   return (
     <div>
-      <AddPurchaseOrder />
-      <ViewPurchaseOrder />
+      <AddPurchasedItem />
+      <ViewPurchasedItem />
       <ToastContainer 
           position="bottom-right" 
           autoClose={5000} 

@@ -12,15 +12,16 @@ import {
 } from "./ui/table";
 import { Button } from "./ui/button";
 
-interface PurchaseOrderData {
-  po_id: number;
+
+interface PurchasedItemData {
+  pi_id: number;
   receipt_no: number;
   purchase_date: string;
 }
 
-interface PurchaseDetailsData {
+interface PurchasedDetailData {
   pd_id: number;
-  po_id: number;
+  pi_id: number;
   item_id: number;
   quantity: number;
   unit_id: number;
@@ -42,13 +43,13 @@ const ViewPurchaseOrder = () => {
   const router = useRouter();
 
   // For Displaying the table
-  const [data, setData] = useState<PurchaseOrderData[]>([]);
+  const [data, setData] = useState<PurchasedItemData[]>([]);
   const [items, setItems] = useState<ItemDate[]>([]);
   const [units, setUnits] = useState<UnitData[]>([]);
 
-  const fetchPurchaseOrder = async () => {
+  const fetchPurchasedItem = async () => {
     try {
-      const response = await fetch("/api/purchase_order", {
+      const response = await fetch("/api/purchased_item", {
         method: "GET",
       });
       if (!response.ok) {
@@ -93,22 +94,22 @@ const ViewPurchaseOrder = () => {
   };
 
   useEffect(() => {
-    fetchPurchaseOrder();
+    fetchPurchasedItem();
     fetchItemsAndUnits();
   }, []);
 
   // For displaying purchase details in modal
-  const [selectedPurchaseDetails, setSelectedPurchaseDetails] = useState<PurchaseDetailsData[]>([]);
+  const [selectedPurchasedDetail, setSelectedPurchasedDetail] = useState<PurchasedDetailData[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleViewDetails = async (po_id: number) => {
+  const handleViewDetails = async (pi_id: number) => {
     try {
-      const response = await fetch(`/api/purchase_details/${po_id}`);
+      const response = await fetch(`/api/purchased_detail/${pi_id}`);
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
       const data = await response.json();
-      setSelectedPurchaseDetails(data);
+      setSelectedPurchasedDetail(data);
       setIsModalOpen(true);
       console.log(data);
     } catch (error) {
@@ -118,7 +119,7 @@ const ViewPurchaseOrder = () => {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedPurchaseDetails([]);
+    setSelectedPurchasedDetail([]);
   };
 
   const phpFormatter = new Intl.NumberFormat("en-PH", {
@@ -160,13 +161,13 @@ const ViewPurchaseOrder = () => {
           </TableHeader>
           <TableBody>
             {data.map((purchaseOrder) => (
-              <TableRow key={purchaseOrder.po_id}>
+              <TableRow key={purchaseOrder.pi_id}>
                 <TableCell className="text-center">{purchaseOrder.receipt_no}</TableCell>
                 <TableCell className="text-center">{formatDateTime(purchaseOrder.purchase_date)}</TableCell>
                 <TableCell className="text-center">
                   <Button
                     variant="outline"
-                    onClick={() => handleViewDetails(purchaseOrder.po_id)}
+                    onClick={() => handleViewDetails(purchaseOrder.pi_id)}
                   >
                     View
                   </Button>
@@ -181,8 +182,8 @@ const ViewPurchaseOrder = () => {
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-8 rounded-md shadow-md">
-            <h2 className="text-2xl font-bold mb-4">Purchase Details</h2>
-            {selectedPurchaseDetails.length > 0 ? (
+            <h2 className="text-2xl font-bold mb-4">Purchased Item Details</h2>
+            {selectedPurchasedDetail.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -195,7 +196,7 @@ const ViewPurchaseOrder = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {selectedPurchaseDetails.map((detail, index) => {
+                  {selectedPurchasedDetail.map((detail, index) => {
                     const total = detail.quantity * detail.price;
                     return (
                       <TableRow key={index}>
@@ -212,7 +213,7 @@ const ViewPurchaseOrder = () => {
                     <TableCell colSpan={5} className="text-right font-bold">Grand Total</TableCell>
                     <TableCell className="font-bold text-center">
                       {phpFormatter.format(
-                        selectedPurchaseDetails.reduce((acc, detail) => acc + detail.quantity * detail.price, 0)
+                        selectedPurchasedDetail.reduce((acc, detail) => acc + detail.quantity * detail.price, 0)
                       )}
                     </TableCell>
                   </TableRow>
