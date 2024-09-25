@@ -1,15 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, ChangeEvent } from "react";
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-  TableCell,
-  TableCaption,
-} from "@/components/ui/table";
+import { Table, TableBody, TableHead, TableHeader, TableRow, TableCell, TableCaption } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
@@ -21,20 +13,35 @@ const AddPurchaseDetails = () => {
 
   const router = useRouter();
 
-  const getExpiryDate = () => {
+  const getExpiryDate = (noExpiry: boolean = false) => {
+    if (noExpiry) {
+      return "NA";
+    }
+  
     const date = new Date();
     return date.toISOString().split('T')[0];
   };
 
-  const [formDataArray, setFormDataArray] = useState([{
+  const [formDataArray, setFormDataArray] = useState<Array<{
+    pd_id: string;
+    pi_id: string;
+    item_id: string;
+    unit_id: string;
+    quantity: string;
+    price: string;
+    expiry_date: string | null; 
+    supplier_id: string;
+    noExpiry: boolean;
+  }>>([{
     pd_id: uuidv4(),
     pi_id: "",
     item_id: "",
     unit_id: "",
     quantity: "",
     price: "",
-    expiry_date: getExpiryDate(), 
+    expiry_date: getExpiryDate(false), 
     supplier_id: "",
+    noExpiry: false,
   }]);
 
   const [recentPiId, setRecentPiId] = useState<number | null>(null);
@@ -64,6 +71,7 @@ const AddPurchaseDetails = () => {
             price: "",
             expiry_date: getExpiryDate(),
             supplier_id: "",
+            noExpiry: false,
           },
         ]);
       } catch (error) {
@@ -106,6 +114,16 @@ const AddPurchaseDetails = () => {
     setError("");
   };
 
+  const handleExpiryToggle = (index: number) => {
+    const newFormDataArray = [...formDataArray];
+    newFormDataArray[index] = {
+      ...newFormDataArray[index],
+      noExpiry: !newFormDataArray[index].noExpiry,
+      expiry_date: !newFormDataArray[index].noExpiry ? "NA" : getExpiryDate(false), // Set to null when no expiry
+    };
+    setFormDataArray(newFormDataArray);
+  };
+  
   const handleItemChange = (index: number, e: ChangeEvent<HTMLSelectElement>) => {
     const selectedItem = items.find(
       (item) => item.item_id === parseInt(e.target.value)
@@ -158,7 +176,7 @@ const AddPurchaseDetails = () => {
         unit_id: Number(formData.unit_id),
         quantity: Number(formData.quantity),
         price: parseFloat(formData.price),
-        expiry_date: formData.expiry_date ? new Date(formData.expiry_date).toISOString() : null,
+        expiry_date: formData.noExpiry ? null : new Date(formData.expiry_date as string).toISOString(),
         supplier_id: Number(formData.supplier_id),
       }));
 
@@ -192,8 +210,9 @@ const AddPurchaseDetails = () => {
         unit_id: "",
         quantity: "",
         price: "",
-        expiry_date: getExpiryDate(),
+        expiry_date: getExpiryDate(false),
         supplier_id: "",
+        noExpiry: false,
       }]);
     } else {
       console.error('Recent PO ID is not available');
@@ -229,7 +248,7 @@ const AddPurchaseDetails = () => {
   };
 
   return (
-    <div className="mt-24 ml-40 mr-40">
+    <div className="mt-24 ml-20 mr-20">
       <p className="flex text-3xl text-[#483C32] font-bold justify-center mb-2">
         Purchased Item Details
       </p>
@@ -238,12 +257,13 @@ const AddPurchaseDetails = () => {
         <Table className="min-w-full">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-16">ID</TableHead>
+              <TableHead className="w-20">ID</TableHead>
               <TableHead className="w-96">Item Name</TableHead>
               <TableHead className="w-32">Quantity</TableHead>
               <TableHead className="w-32">Unit</TableHead>
               <TableHead className="w-32">Price</TableHead>
-              <TableHead className="w-48">Expiry Date</TableHead>
+              <TableHead className="w-40">Expiry Date</TableHead>
+              <TableHead className="w-16">No Expiry?</TableHead>
               <TableHead className="w-48">Supplier</TableHead>
             </TableRow>
           </TableHeader>
@@ -310,9 +330,17 @@ const AddPurchaseDetails = () => {
                   <input
                     type="date"
                     name="expiry_date"
-                    value={formData.expiry_date}
+                    value={formData.expiry_date || ''}
                     onChange={(e) => handleChange(index, e)}
                     className="w-full p-0.5"
+                    disabled={formData.noExpiry}
+                  />
+                </TableCell>
+                <TableCell>
+                  <input
+                    type="checkbox"
+                    checked={formData.noExpiry}
+                    onChange={() => handleExpiryToggle(index)}  // Toggle expiry on checkbox change
                   />
                 </TableCell>
                 <TableCell>
@@ -323,7 +351,7 @@ const AddPurchaseDetails = () => {
                     className="w-full p-0.5"
                   >
                     <option value="" disabled hidden>
-                      Select Item
+                      Select Supplier
                     </option>
                     {suppliers.map((supplier) => (
                       <option key={supplier.supplier_id} value={supplier.supplier_id}>

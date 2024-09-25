@@ -35,6 +35,7 @@ interface PurchasedDetailData {
 interface ItemDate {
   item_id: number;
   item_name: string;
+  description: string;
 }
 
 interface UnitData {
@@ -161,9 +162,17 @@ const ViewPurchaseOrder = () => {
     minimumFractionDigits: 2,
   });
 
-  const getItemName = (item_id: number) => {
+  const getItemWithDescription = (item_id: number) => {
     const item = items.find((item) => item.item_id === item_id);
-    return item ? item.item_name : "Unknown Item";
+    if (item) {
+      return (
+        <div>
+          <div>{item.item_name}</div>
+          <div className="text-sm text-gray-500"> {item.description}</div>
+        </div>
+      )
+    }
+    return  "Unknown Item";
   };
 
   const getUnitName = (unit_id: number) => {
@@ -176,7 +185,10 @@ const ViewPurchaseOrder = () => {
     return supplier ? supplier.supplier_name : '';
   };
 
-  const formatDateTime = (dateTimeString: string) => {
+  const formatDateTime = (dateTimeString: string | null) => {
+    if (!dateTimeString || dateTimeString === "NA") {
+      return "NA";
+    }
     const options: Intl.DateTimeFormatOptions = {
       year: 'numeric',
       month: 'long',
@@ -224,9 +236,9 @@ const ViewPurchaseOrder = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-center w-32">Item Name</TableHead>
-                    <TableHead className="text-center w-32">Expiry Date</TableHead>
                     <TableHead className="text-center w-32">Quantity</TableHead>
                     <TableHead className="text-center w-32">Unit</TableHead>
+                    <TableHead className="text-center w-32">Expiry Date</TableHead>
                     <TableHead className="text-center w-32">Supplier</TableHead>
                     <TableHead className="text-center w-32">Price</TableHead>
                     <TableHead className="text-center w-32">Subtotal</TableHead>
@@ -237,10 +249,10 @@ const ViewPurchaseOrder = () => {
                     const total = detail.quantity * detail.price;
                     return (
                       <TableRow key={index}>
-                        <TableCell className="text-center">{getItemName(detail.item_id)}</TableCell>
-                        <TableCell className="text-center whitespace-nowrap">{formatDateTime(detail.expiry_date)}</TableCell>
+                        <TableCell className="text-center">{getItemWithDescription(detail.item_id)}</TableCell>
                         <TableCell className="text-center">{detail.quantity}</TableCell>
                         <TableCell className="text-center">{getUnitName(detail.unit_id)}</TableCell>
+                        <TableCell className="text-center whitespace-nowrap">{formatDateTime(detail.expiry_date)}</TableCell>
                         <TableCell className="text-center">{getSupplierName(detail.supplier_id)}</TableCell> 
                         <TableCell className="text-center">{phpFormatter.format(detail.price)}</TableCell>
                         <TableCell className="text-center">{phpFormatter.format(total)}</TableCell>

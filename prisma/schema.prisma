@@ -82,7 +82,7 @@ model purchased_detail {
   quantity                   Int
   unit_id                    Int
   price                      Float
-  expiry_date                DateTime
+  expiry_date                DateTime?
   supplier_id                Int
   purchased_item             purchased_item             @relation(fields: [pi_id], references: [pi_id])
   item                       item                       @relation(fields: [item_id], references: [item_id])
