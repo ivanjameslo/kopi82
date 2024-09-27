@@ -42,7 +42,9 @@ const AddCategory = () => {
             }
 
             toast.success('Category added successfully');
-            window.location.reload();
+            setTimeout(() => {
+                window.location.reload(); // Redirect to the desired page
+            }, 1500);
         } catch (error: any) {
             // Handle errors (e.g., duplicate category)
             toast.error(error.message);

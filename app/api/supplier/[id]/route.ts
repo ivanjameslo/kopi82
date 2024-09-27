@@ -1,38 +1,38 @@
 import prisma from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
-// GET method to fetch a category by ID or check if a category_name exists
+// GET method to fetch a supplier by ID or check if a supplier_name exists
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
     const id = params.id
-    const category = await prisma.category.findUnique({
+    const supplier = await prisma.supplier.findUnique({
         where: {
-            category_id: Number(id)
+            supplier_id: Number(id)
         }
     });
-    return NextResponse.json(category);
+    return NextResponse.json(supplier);
 }
 
-// PUT method to update a new category
+// PUT method to update a new supplier
 export async function PUT(request: Request, { params }: { params: { id: string }}) {
     const id = params.id
     const json = await request.json()
-    const updatedCategory = await prisma.category.update({
+    const updatedSupplier = await prisma.supplier.update({
         where: {
-            category_id: Number(id)
+            supplier_id: Number(id)
         },
         data: json
     })
-    return NextResponse.json(updatedCategory);
+    return NextResponse.json(updatedSupplier);
 }
 
-// DELETE method to delete a category by ID
+// DELETE method to delete a unit by ID
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
     const id = params.id;
-    const deletedCategory = await prisma.category.delete({
+    const deletedSupplier = await prisma.supplier.delete({
         where: {
-            category_id: parseInt(id, 10)
+            supplier_id: parseInt(id, 10)
         }
     });
 
-    return NextResponse.json(deletedCategory);
+    return NextResponse.json(deletedSupplier);
 }

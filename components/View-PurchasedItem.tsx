@@ -11,26 +11,31 @@ import {
   TableRow,
 } from "./ui/table";
 import { Button } from "./ui/button";
+import { set } from "react-hook-form";
+import { HiClipboardDocumentList } from "react-icons/hi2";
+import { MdDelete } from "react-icons/md";
 
-interface PurchaseOrderData {
-  po_id: number;
+interface PurchasedItemData {
+  pi_id: number;
   receipt_no: number;
   purchase_date: string;
 }
 
-interface PurchaseDetailsData {
+interface PurchasedDetailData {
   pd_id: number;
-  po_id: number;
+  pi_id: number;
   item_id: number;
   quantity: number;
   unit_id: number;
   price: number;
   expiry_date: string;
+  supplier_id: number;
 }
 
 interface ItemDate {
   item_id: number;
   item_name: string;
+  description: string;
 }
 
 interface UnitData {
@@ -38,26 +43,34 @@ interface UnitData {
   unit_name: string;
 }
 
+interface SupplierData {
+  supplier_id: number;
+  supplier_name: string;
+}
+
 const ViewPurchaseOrder = () => {
   const router = useRouter();
 
   // For Displaying the table
-  const [data, setData] = useState<PurchaseOrderData[]>([]);
+  const [data, setData] = useState<PurchasedItemData[]>([]);
   const [items, setItems] = useState<ItemDate[]>([]);
   const [units, setUnits] = useState<UnitData[]>([]);
+  const [suppliers, setSupplier] = useState<SupplierData[]>([]);
 
-  const fetchPurchaseOrder = async () => {
+  const fetchPurchasedItem = async () => {
     try {
-      const response = await fetch("/api/purchase_order", {
+      const response = await fetch("/api/purchased_item", {
         method: "GET",
       });
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
       const data = await response.json();
-      console.log(data);
-
-      const formattedData = data.map((item: any) => {
+  
+      // Sort data in descending order based on pi_id
+      const sortedData = data.sort((a: PurchasedItemData, b: PurchasedItemData) => b.pi_id - a.pi_id);
+  
+      const formattedData = sortedData.map((item: any) => {
         const [purchaseDate, purchaseTime] = item.purchase_date.split("T");
         return {
           ...item,
@@ -65,50 +78,55 @@ const ViewPurchaseOrder = () => {
           purchase_time: purchaseTime.split("Z")[0],
         };
       });
+  
       setData(formattedData);
     } catch (error) {
       console.error("Error fetching purchase orders:", error);
     }
   };
+  
 
-  const fetchItemsAndUnits = async () => {
+  const fetchItemsAndUnitsAndSupplier = async () => {
     try {
-      const [itemsResponse, unitsResponse] = await Promise.all([
+      const [itemsResponse, unitsResponse, suppliersResponse] = await Promise.all([
         fetch("/api/item"),
         fetch("/api/unit"),
+        fetch("/api/supplier"),
       ]);
 
-      if (!itemsResponse.ok || !unitsResponse.ok) {
+      if (!itemsResponse.ok || !unitsResponse.ok || !suppliersResponse.ok) {
         throw new Error("Network response was not ok");
       }
 
       const itemsData = await itemsResponse.json();
       const unitsData = await unitsResponse.json();
+      const suppliersData = await suppliersResponse.json();
 
       setItems(itemsData);
       setUnits(unitsData);
+      setSupplier(suppliersData);
     } catch (error) {
       console.error("Error fetching items and units:", error);
     }
   };
 
   useEffect(() => {
-    fetchPurchaseOrder();
-    fetchItemsAndUnits();
+    fetchPurchasedItem();
+    fetchItemsAndUnitsAndSupplier();
   }, []);
 
   // For displaying purchase details in modal
-  const [selectedPurchaseDetails, setSelectedPurchaseDetails] = useState<PurchaseDetailsData[]>([]);
+  const [selectedPurchasedDetail, setSelectedPurchasedDetail] = useState<PurchasedDetailData[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleViewDetails = async (po_id: number) => {
+  const handleViewDetails = async (pi_id: number) => {
     try {
-      const response = await fetch(`/api/purchase_details/${po_id}`);
+      const response = await fetch(`/api/purchased_detail/${pi_id}`);
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
       const data = await response.json();
-      setSelectedPurchaseDetails(data);
+      setSelectedPurchasedDetail(data);
       setIsModalOpen(true);
       console.log(data);
     } catch (error) {
@@ -116,9 +134,26 @@ const ViewPurchaseOrder = () => {
     }
   };
 
+  //DELETE
+  const handleDelete = async (pi_id: number) => {
+    const isConfirmed = window.confirm("Are you sure you want to delete this item?");
+    if (!isConfirmed) {
+        return;
+    }
+    try {
+        await fetch(`/api/purchased_item/${pi_id}`, {
+            method: 'DELETE',
+        });
+
+        setData(data.filter(pi => pi.pi_id !== pi_id));
+    } catch (error) {
+        console.error('Failed to delete item', error);
+    };
+}
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedPurchaseDetails([]);
+    setSelectedPurchasedDetail([]);
   };
 
   const phpFormatter = new Intl.NumberFormat("en-PH", {
@@ -127,9 +162,17 @@ const ViewPurchaseOrder = () => {
     minimumFractionDigits: 2,
   });
 
-  const getItemName = (item_id: number) => {
+  const getItemWithDescription = (item_id: number) => {
     const item = items.find((item) => item.item_id === item_id);
-    return item ? item.item_name : "Unknown Item";
+    if (item) {
+      return (
+        <div>
+          <div>{item.item_name}</div>
+          <div className="text-sm text-gray-500"> {item.description}</div>
+        </div>
+      )
+    }
+    return  "Unknown Item";
   };
 
   const getUnitName = (unit_id: number) => {
@@ -137,7 +180,15 @@ const ViewPurchaseOrder = () => {
     return unit ? unit.unit_name : "Unknown Unit";
   };
 
-  const formatDateTime = (dateTimeString: string) => {
+  const getSupplierName = (supplier_id: number) => {
+    const supplier = suppliers.find((supplier) => supplier.supplier_id === supplier_id);
+    return supplier ? supplier.supplier_name : '';
+  };
+
+  const formatDateTime = (dateTimeString: string | null) => {
+    if (!dateTimeString || dateTimeString === "NA") {
+      return "NA";
+    }
     const options: Intl.DateTimeFormatOptions = {
       year: 'numeric',
       month: 'long',
@@ -159,17 +210,15 @@ const ViewPurchaseOrder = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((purchaseOrder) => (
-              <TableRow key={purchaseOrder.po_id}>
-                <TableCell className="text-center">{purchaseOrder.receipt_no}</TableCell>
-                <TableCell className="text-center">{formatDateTime(purchaseOrder.purchase_date)}</TableCell>
+            {data.map((purchasedItem) => (
+              <TableRow key={purchasedItem.pi_id}>
+                <TableCell className="text-center">{purchasedItem.receipt_no}</TableCell>
+                <TableCell className="text-center">{formatDateTime(purchasedItem.purchase_date)}</TableCell>
                 <TableCell className="text-center">
-                  <Button
-                    variant="outline"
-                    onClick={() => handleViewDetails(purchaseOrder.po_id)}
-                  >
-                    View
-                  </Button>
+                <div className="flex items-center justify-center space-x-6">
+                  <HiClipboardDocumentList size={25} className="cursor-pointer" style={{color: '3d3130'}} onClick={() => handleViewDetails(purchasedItem.pi_id)} />
+                  <MdDelete size={25} className="cursor-pointer" style={{color: 'd00000'}} onClick={() => handleDelete(purchasedItem.pi_id)} />
+                </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -181,38 +230,40 @@ const ViewPurchaseOrder = () => {
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-8 rounded-md shadow-md">
-            <h2 className="text-2xl font-bold mb-4">Purchase Details</h2>
-            {selectedPurchaseDetails.length > 0 ? (
+            <h2 className="text-2xl font-bold mb-4">Purchased Item Details</h2>
+            {selectedPurchasedDetail.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-center w-32">Item Name</TableHead>
-                    <TableHead className="text-center w-32">Expiry Date</TableHead>
                     <TableHead className="text-center w-32">Quantity</TableHead>
                     <TableHead className="text-center w-32">Unit</TableHead>
+                    <TableHead className="text-center w-32">Expiry Date</TableHead>
+                    <TableHead className="text-center w-32">Supplier</TableHead>
                     <TableHead className="text-center w-32">Price</TableHead>
                     <TableHead className="text-center w-32">Subtotal</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {selectedPurchaseDetails.map((detail, index) => {
+                  {selectedPurchasedDetail.map((detail, index) => {
                     const total = detail.quantity * detail.price;
                     return (
                       <TableRow key={index}>
-                        <TableCell className="text-center">{getItemName(detail.item_id)}</TableCell>
-                        <TableCell className="text-center whitespace-nowrap">{formatDateTime(detail.expiry_date)}</TableCell>
+                        <TableCell className="text-center">{getItemWithDescription(detail.item_id)}</TableCell>
                         <TableCell className="text-center">{detail.quantity}</TableCell>
                         <TableCell className="text-center">{getUnitName(detail.unit_id)}</TableCell>
+                        <TableCell className="text-center whitespace-nowrap">{formatDateTime(detail.expiry_date)}</TableCell>
+                        <TableCell className="text-center">{getSupplierName(detail.supplier_id)}</TableCell> 
                         <TableCell className="text-center">{phpFormatter.format(detail.price)}</TableCell>
                         <TableCell className="text-center">{phpFormatter.format(total)}</TableCell>
                       </TableRow>
                     );
                   })}
                   <TableRow>
-                    <TableCell colSpan={5} className="text-right font-bold">Grand Total</TableCell>
+                    <TableCell colSpan={6} className="text-right font-bold">Grand Total</TableCell>
                     <TableCell className="font-bold text-center">
                       {phpFormatter.format(
-                        selectedPurchaseDetails.reduce((acc, detail) => acc + detail.quantity * detail.price, 0)
+                        selectedPurchasedDetail.reduce((acc, detail) => acc + detail.quantity * detail.price, 0)
                       )}
                     </TableCell>
                   </TableRow>

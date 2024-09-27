@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import UpdateUnit from './Update-Unit';
+import { MdEdit, MdDelete } from 'react-icons/md';
 
 interface UnitData {
     unit_id: number;
@@ -100,12 +101,10 @@ const ViewUnit = () => {
                             <TableCell className="text-center">{unit.unit_id}</TableCell>
                             <TableCell className="text-center">{unit.unit_name}</TableCell>
                             <TableCell className="text-center">
-                                <Button variant="outline" className="mx-1" onClick={() => handleEdit(unit)}>
-                                    Edit
-                                </Button>
-                                <Button variant="outline" className="mx-1" onClick={() => handleDelete(unit.unit_id)}>
-                                    Delete
-                                </Button>
+                                <div className="flex items-center justify-center space-x-2">
+                                    <MdEdit size={25} className="cursor-pointer" style={{color: '3d3130'}} onClick={() => handleEdit(unit)} />
+                                    <MdDelete size={25} className="cursor-pointer" style={{color: 'd00000'}} onClick={() => handleDelete(unit.unit_id)} />
+                                </div>
                             </TableCell>
                         </TableRow>
                     ))}

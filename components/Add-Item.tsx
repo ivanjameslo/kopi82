@@ -14,8 +14,8 @@ import {
     TableCell,
 } from "@/components/ui/table";
 import Link from 'next/link';
-import Modal from './Modal'; // Assuming you have a modal component
 import { toast } from 'react-toastify';
+import { MdCancel } from "react-icons/md";
 
 const AddItem = () => {
     const router = useRouter();
@@ -23,18 +23,12 @@ const AddItem = () => {
     const [formDataArray, setFormDataArray] = useState([{
         item_id: uuidv4(),
         item_name: "",
+        description: "",
         unit_id: "",
         category_id: "",
-        ls_id: "",
     }]);
 
     const [existingItems, setExistingItems] = useState<any[]>([]);
-
-    // const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    // const [isModalOpen, setIsModalOpen] = useState(false);
-    // const [isSuccess, setIsSuccess] = useState(false);
-    // const [existingItems, setExistingItems] = useState<any[]>([]);
-    // const [duplicateItems, setDuplicateItems] = useState<any[]>([]);
 
     const handleChange = (index: number, e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const newFormDataArray = [...formDataArray];
@@ -46,7 +40,7 @@ const AddItem = () => {
         const seen = new Set();
         const duplicates = [];
         for (const formData of formDataArray) {
-            const identifier = `${formData.item_name}-${formData.unit_id}-${formData.category_id}-${formData.ls_id}`;
+            const identifier = `${formData.item_name}-${formData.description}-${formData.unit_id}-${formData.category_id}`;
             if (seen.has(identifier)) {
                 duplicates.push(formData);
             }
@@ -60,7 +54,7 @@ const AddItem = () => {
     
         // Frontend validation for empty fields
         for (const formData of formDataArray) {
-            if (!formData.item_name || !formData.unit_id || !formData.category_id || !formData.ls_id) {
+            if (!formData.item_name || !formData.description || !formData.unit_id || !formData.category_id) {
                 toast.error("Please fill in all fields.");
                 return;
             }
@@ -77,7 +71,6 @@ const AddItem = () => {
             ...formData,
             unit_id: Number(formData.unit_id),
             category_id: Number(formData.category_id),
-            ls_id: Number(formData.ls_id),
         }));
     
         try {
@@ -98,22 +91,23 @@ const AddItem = () => {
             }
     
             toast.success("Items created successfully.");
-            router.push('/Item');
+            setTimeout(() => {
+                router.push('/Item');
+            }, 1500);
         } catch (error) {
             toast.error("Error creating items. Please try again.");
         }
     };
     
-
     const addNewRow = () => {
         setFormDataArray([
             ...formDataArray,
             {
                 item_id: uuidv4(),
                 item_name: "",
+                description: "",
                 unit_id: "",
                 category_id: "",
-                ls_id: "",
             }
         ]);
     };
@@ -125,21 +119,17 @@ const AddItem = () => {
 
     const [unitOptions, setUnitOptions] = useState<{ unit_id: number; unit_name: string }[]>([]);
     const [categoryOptions, setCategoryOptions] = useState<{ category_id: number; category_name: string }[]>([]);
-    const [shelfLocationOptions, setShelfLocationOptions] = useState<{ ls_id: number; ls_name: string }[]>([]);
 
     const fetchOptions = async () => {
         try {
             const unitResponse = await fetch('/api/unit');
             const categoryResponse = await fetch('/api/category');
-            const shelfLocationResponse = await fetch('/api/location_shelf');
 
             const unitData = await unitResponse.json();
             const categoryData = await categoryResponse.json();
-            const shelfLocationData = await shelfLocationResponse.json();
 
             setUnitOptions(unitData);
             setCategoryOptions(categoryData);
-            setShelfLocationOptions(shelfLocationData);
         } catch (error) {
             console.log("Error fetching data", error);
         }
@@ -171,11 +161,6 @@ const AddItem = () => {
         return category ? category.category_name : '';
     };
 
-    const getShelfLocationName = (ls_id: number) => {
-        const shelfLocation = shelfLocationOptions.find(shelfLocation => shelfLocation.ls_id === ls_id);
-        return shelfLocation ? shelfLocation.ls_name : '';
-    };
-
     return (
         <div className="mt-24 ml-40 mr-40">
             <p className="flex text-3xl text-[#483C32] font-bold justify-center mb-2">
@@ -193,10 +178,10 @@ const AddItem = () => {
                     <TableHeader>
                         <TableRow>
                             <TableHead className="text-center">Item Name</TableHead>
+                            <TableHead className="text-center">Description</TableHead>
                             <TableHead className="text-center">Unit</TableHead>
                             <TableHead className="text-center">Category</TableHead>
-                            <TableHead className="text-center">Shelf Location</TableHead>
-                            <TableHead className="text-center">Action</TableHead>
+                            <TableHead className="text-center"></TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -204,6 +189,8 @@ const AddItem = () => {
                             <TableRow key={formData.item_id}>
                                 <TableCell className="text-center">
                                     <input
+                                        className="p-1"
+                                        placeholder="Item Name"
                                         type="text"
                                         name="item_name"
                                         value={formData.item_name}
@@ -211,7 +198,17 @@ const AddItem = () => {
                                     />
                                 </TableCell>
                                 <TableCell className="text-center">
-                                    <select name="unit_id" value={formData.unit_id} onChange={(e) => handleChange(index, e)}>
+                                    <input
+                                        className="p-1"
+                                        placeholder="Brand, Size, etc."
+                                        type="text"
+                                        name="description"
+                                        value={formData.description}
+                                        onChange={(e) => handleChange(index, e)}
+                                    />
+                                </TableCell>
+                                <TableCell className="text-center">
+                                    <select className="p-1" name="unit_id" value={formData.unit_id} onChange={(e) => handleChange(index, e)}>
                                         <option value="" disabled hidden> Select Unit</option>
                                         {unitOptions.map((units: any) => (
                                             <option key={units.unit_id} value={units.unit_id}>
@@ -221,7 +218,7 @@ const AddItem = () => {
                                     </select>
                                 </TableCell>
                                 <TableCell className="text-center">
-                                    <select name="category_id" value={formData.category_id} onChange={(e) => handleChange(index, e)}>
+                                    <select className="p-1" name="category_id" value={formData.category_id} onChange={(e) => handleChange(index, e)}>
                                         <option value="" disabled hidden> Select Category</option>
                                         {categoryOptions.map((categories: any) => (
                                             <option key={categories.category_id} value={categories.category_id}>
@@ -231,17 +228,11 @@ const AddItem = () => {
                                     </select>
                                 </TableCell>
                                 <TableCell className="text-center">
-                                    <select name="ls_id" value={formData.ls_id} onChange={(e) => handleChange(index, e)}>
-                                        <option value="" disabled hidden> Select Shelf Location</option>
-                                        {shelfLocationOptions.map((shelfLocation: any) => (
-                                            <option key={shelfLocation.ls_id} value={shelfLocation.ls_id}>
-                                                {shelfLocation.ls_name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </TableCell>
-                                <TableCell className="text-center">
-                                    <Button variant="outline" type="button" onClick={() => removeRow(index)}>Cancel</Button>
+                                    {formDataArray.length > 1 ? (
+                                        <MdCancel type="button" size={25} style={{color: 'd00000', cursor: 'pointer'}} onClick={() => removeRow(index)} />
+                                    ) : (
+                                        <span style={{ display: 'inline-block', width: '25px', height: '25px' }}></span>
+                                    )}
                                 </TableCell>
                             </TableRow>
                         ))}

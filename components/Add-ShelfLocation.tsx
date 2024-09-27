@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from "react-toastify";
 
-const AddLocationShelf = () => {
+const AddShelfLocation = () => {
 
     const [lsName, setLsName] = useState<string>("");
 
@@ -75,4 +75,4 @@ const AddLocationShelf = () => {
 
 }
 
-export default AddLocationShelf
+export default AddShelfLocation;
