@@ -26,12 +26,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
+import { supabase } from "../lib/initSupabase";  // Import supabase client
 
 export default function Component() {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
-    image: "",
     category: "",
     product_name: "",
     type: "",
@@ -43,8 +43,9 @@ export default function Component() {
     description: "",
   });
 
-  //ERASE
-  const [image, setImage] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null); // Update image state
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false); // Manage upload state
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -63,66 +64,50 @@ export default function Component() {
     });
   };
 
-  //CHECK
+  // Handle image file change
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImage(e.target?.result as string);
-      };
-      reader.readAsDataURL(e.target.files[0]);
+      const file = e.target.files[0];
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
     }
   };
 
-  const handleCategoryChange = (value: string) => {
-    const isNoHotPrice = ["kold-brew"].includes(value);
-    const isNoIcedPrice = [
-      "beer",
-      "all-day-breakfast",
-      "rice-meals",
-      "pasta",
-      "pizza",
-      "pica-pica",
-      "sandwiches",
-    ].includes(value);
-    const isNoFrappePrice = [
-      "kold-brew",
-      "beer",
-      "fusion-teas",
-      "all-day-breakfast",
-      "rice-meals",
-      "pasta",
-      "pizza",
-      "pica-pica",
-      "sandwiches",
-    ].includes(value);
-    const isNoSinglePrice = [
-      "klassic-kopi",
-      "kold-brew",
-      "non-kopi",
-      "fusion-teas",
-    ].includes(value);
-
-    setFormData({
-      ...formData,
-      category: value,
-      hotPrice: isNoHotPrice ? "0" : "",
-      icedPrice: isNoIcedPrice ? "0" : "",
-      frappePrice: isNoFrappePrice ? "0" : "",
-      singlePrice: isNoSinglePrice ? "0" : "",
-    });
-  };
-
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setUploading(true);
+
+    let imageUrl = "";
+
     try {
+      // Upload the image if a file is selected
+      if (imageFile) {
+        const { data, error } = await supabase.storage
+          .from("ProductImages")  // Use the correct bucket name
+          .upload(`uploads/${Date.now()}_${imageFile.name}`, imageFile);
+
+        if (error) {
+          throw new Error("Error uploading image: " + error.message);
+        }
+
+        // Get the public URL of the uploaded image
+        const { data: publicUrlData } = supabase
+          .storage
+          .from("ProductImages")
+          .getPublicUrl(data.path); // data.path holds the path to the uploaded file
+
+        imageUrl = publicUrlData.publicUrl;  // Access the public URL directly
+      }
+
+      // Submit the form data along with the image URL
       await fetch("/api/products", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          image,
+          image: imageUrl,
           category: formData.category,
           product_name: formData.product_name,
           type: formData.type,
@@ -134,11 +119,15 @@ export default function Component() {
           description: formData.description,
         }),
       });
-      router.push("/menu"); //Routing
+
+      router.push("/menu"); // Routing after successful submission
     } catch (error) {
-      console.error(error);
+      console.error("Error submitting form:", error);
+    } finally {
+      setUploading(false);
     }
   };
+
 
   const renderPriceInputs = () => {
     switch (formData.category) {
@@ -258,9 +247,9 @@ export default function Component() {
                   htmlFor="image-upload"
                   className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
                 >
-                  {image ? (
+                  {imagePreview ? (
                     <img
-                      src={image}
+                      src={imagePreview}
                       alt="Product preview"
                       className="w-full h-full object-cover rounded-lg"
                     />
@@ -306,7 +295,7 @@ export default function Component() {
                 </Label>
                 <Select
                   value={formData.category}
-                  onValueChange={handleCategoryChange}
+                  onValueChange={handleSelectChange}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
@@ -364,8 +353,8 @@ export default function Component() {
               required
             />
           </div>
-          <Button type="submit" variant="outline" className="w-full">
-            Add Product
+          <Button type="submit" variant="outline" className="w-full" disabled={uploading}>
+            {uploading ? "Uploading..." : "Add Product"}
           </Button>
         </form>
       </CardContent>

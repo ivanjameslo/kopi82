@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     // Handle image upload with Supabase
     if (image) {
       const { data, error } = await supabase.storage
-        .from("product-images")
+        .from("ProductImages")
         .upload(
           `${Date.now()}-${product_name}`,
           Buffer.from(image.split(",")[1], "base64"),
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 
       const {
         data: { publicUrl },
-      } = supabase.storage.from("product-images").getPublicUrl(data.path);
+      } = supabase.storage.from("ProductImages").getPublicUrl(data.path);
 
       image_url = publicUrl;
     }
