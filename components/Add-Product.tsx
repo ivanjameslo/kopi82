@@ -1,11 +1,8 @@
 "use client";
 
-import {
-  useState,
-  ChangeEvent,
-  FormEvent,
-  TextareaHTMLAttributes,
-} from "react";
+import React, { useState, ChangeEvent, FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -25,10 +21,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useRouter } from "next/navigation";
-import { supabase } from "../lib/initSupabase";  // Import supabase client
+import { supabase } from "../lib/initSupabase";
 
-export default function Component() {
+export default function AddProduct() {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -43,9 +38,9 @@ export default function Component() {
     description: "",
   });
 
-  const [imageFile, setImageFile] = useState<File | null>(null); // Update image state
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false); // Manage upload state
+  const [uploading, setUploading] = useState(false);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -57,14 +52,13 @@ export default function Component() {
     });
   };
 
-  const handleSelectChange = (value: string) => {
+  const handleSelectChange = (name: string, value: string) => {
     setFormData({
       ...formData,
-      status: value,
+      [name]: value,
     });
   };
 
-  // Handle image file change
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -73,35 +67,31 @@ export default function Component() {
     }
   };
 
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setUploading(true);
 
     let imageUrl = "";
 
     try {
-      // Upload the image if a file is selected
       if (imageFile) {
         const { data, error } = await supabase.storage
-          .from("ProductImages")  // Use the correct bucket name
+          .from("ProductImages")
           .upload(`uploads/${Date.now()}_${imageFile.name}`, imageFile);
 
         if (error) {
           throw new Error("Error uploading image: " + error.message);
         }
 
-        // Get the public URL of the uploaded image
         const { data: publicUrlData } = supabase
           .storage
           .from("ProductImages")
-          .getPublicUrl(data.path); // data.path holds the path to the uploaded file
+          .getPublicUrl(data.path);
 
-        imageUrl = publicUrlData.publicUrl;  // Access the public URL directly
+        imageUrl = publicUrlData.publicUrl;
       }
 
-      // Submit the form data along with the image URL
-      await fetch("/api/products", {
+      const response = await fetch("/api/products", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -120,14 +110,18 @@ export default function Component() {
         }),
       });
 
-      router.push("/menu"); // Routing after successful submission
+      if (response.ok) {
+        // Redirect to the existing Products page
+        router.push('/Menu');
+      } else {
+        throw new Error('Failed to create product');
+      }
     } catch (error) {
       console.error("Error submitting form:", error);
     } finally {
       setUploading(false);
     }
   };
-
 
   const renderPriceInputs = () => {
     switch (formData.category) {
@@ -136,11 +130,12 @@ export default function Component() {
         return (
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="hot-price" className="text-white">
+              <Label htmlFor="hotPrice" className="text-white">
                 Hot Price
               </Label>
               <Input
-                id="hot-price"
+                id="hotPrice"
+                name="hotPrice"
                 type="number"
                 value={formData.hotPrice}
                 onChange={handleChange}
@@ -149,12 +144,12 @@ export default function Component() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="iced-price" className="text-white">
-                {" "}
+              <Label htmlFor="icedPrice" className="text-white">
                 Iced Price
               </Label>
               <Input
-                id="iced-price"
+                id="icedPrice"
+                name="icedPrice"
                 type="number"
                 value={formData.icedPrice}
                 onChange={handleChange}
@@ -163,11 +158,12 @@ export default function Component() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="frappe-price" className="text-white">
+              <Label htmlFor="frappePrice" className="text-white">
                 Frappe Price
               </Label>
               <Input
-                id="frappe-price"
+                id="frappePrice"
+                name="frappePrice"
                 type="number"
                 value={formData.frappePrice}
                 onChange={handleChange}
@@ -181,11 +177,11 @@ export default function Component() {
         return (
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="hot-price" className="text-white">
+              <Label htmlFor="hotPrice" className="text-white">
                 Hot Price
               </Label>
               <Input
-                id="hot-price"
+                id="hotPrice"
                 name="hotPrice"
                 type="number"
                 value={formData.hotPrice}
@@ -195,11 +191,11 @@ export default function Component() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="iced-price" className="text-white">
+              <Label htmlFor="icedPrice" className="text-white">
                 Iced Price
               </Label>
               <Input
-                id="iced-price"
+                id="icedPrice"
                 name="icedPrice"
                 type="number"
                 value={formData.icedPrice}
@@ -213,11 +209,11 @@ export default function Component() {
       default:
         return (
           <div className="space-y-2">
-            <Label htmlFor="single-price" className="text-white">
+            <Label htmlFor="singlePrice" className="text-white">
               Price
             </Label>
             <Input
-              id="single-price"
+              id="singlePrice"
               name="singlePrice"
               type="number"
               value={formData.singlePrice}
@@ -248,9 +244,11 @@ export default function Component() {
                   className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
                 >
                   {imagePreview ? (
-                    <img
+                    <Image
                       src={imagePreview}
                       alt="Product preview"
+                      width={400}
+                      height={400}
                       className="w-full h-full object-cover rounded-lg"
                     />
                   ) : (
@@ -277,11 +275,11 @@ export default function Component() {
             </div>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-white">
+                <Label htmlFor="product_name" className="text-white">
                   Product Name
                 </Label>
                 <Input
-                  id="name"
+                  id="product_name"
                   name="product_name"
                   value={formData.product_name}
                   onChange={handleChange}
@@ -295,7 +293,7 @@ export default function Component() {
                 </Label>
                 <Select
                   value={formData.category}
-                  onValueChange={handleSelectChange}
+                  onValueChange={(value) => handleSelectChange("category", value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
@@ -323,7 +321,7 @@ export default function Component() {
                 </Label>
                 <Select
                   value={formData.status}
-                  onValueChange={handleSelectChange}
+                  onValueChange={(value) => handleSelectChange("status", value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select availability" />
