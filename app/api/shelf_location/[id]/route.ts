@@ -6,24 +6,24 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const { id } = params;
   
     if (id) {
-      const ls = await prisma.location_shelf.findUnique({
+      const sl = await prisma.shelf_location.findUnique({
         where: {
-          ls_id: parseInt(id, 10),
+          sl_id: parseInt(id, 10),
         },
       });
-      return NextResponse.json(ls);
+      return NextResponse.json(sl);
     }
   
     const { searchParams } = new URL(request.url);
-    const ls_name = searchParams.get('ls_name');
+    const sl_name = searchParams.get('sl_name');
   
-    if (ls_name) {
-      const existingLS = await prisma.location_shelf.findFirst({
+    if (sl_name) {
+      const existingSL = await prisma.shelf_location.findFirst({
         where: {
-          ls_name: ls_name,
+          sl_name: sl_name,
         },
       });
-      return NextResponse.json({ exists: !!existingLS });
+      return NextResponse.json({ exists: !!existingSL });
     }
   
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
@@ -34,24 +34,24 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const id = params.id;
     const json = await request.json();
 
-    const updatedLS = await prisma.location_shelf.update({
+    const updatedSL = await prisma.shelf_location.update({
         where: {
-            ls_id: parseInt(id, 10)
+            sl_id: parseInt(id, 10)
         },
         data: json
     });
 
-    return NextResponse.json(updatedLS);
+    return NextResponse.json(updatedSL);
 }
 
 // DELETE method to delete a location shelf by ID
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
     const id = params.id;
-    const deletedLS = await prisma.location_shelf.delete({
+    const deletedSL = await prisma.shelf_location.delete({
         where: {
-            ls_id: parseInt(id, 10)
+            sl_id: parseInt(id, 10)
         }
     });
 
-    return NextResponse.json(deletedLS);
+    return NextResponse.json(deletedSL);
 }

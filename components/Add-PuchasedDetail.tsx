@@ -27,6 +27,7 @@ const AddPurchaseDetails = () => {
     pi_id: string;
     item_id: string;
     unit_id: string;
+    category_id: string;
     quantity: string;
     price: string;
     expiry_date: string | null; 
@@ -37,6 +38,7 @@ const AddPurchaseDetails = () => {
     pi_id: "",
     item_id: "",
     unit_id: "",
+    category_id: "",
     quantity: "",
     price: "",
     expiry_date: getExpiryDate(false), 
@@ -46,9 +48,10 @@ const AddPurchaseDetails = () => {
 
   const [recentPiId, setRecentPiId] = useState<number | null>(null);
   const [items, setItems] = useState<{
-    description: any; item_name: any; unit_id: any; item_id: number 
+    description: any; item_name: any; unit_id: any; item_id: number; category_id: any;
 }[]>([]);
   const [units, setUnits] = useState<{ unit_id: any; unit_name: string }[]>([]);
+  const [categories, setCategories] = useState<{ category_id: any; category_name: string }[]>([]);
   const [suppliers, setSupplier] = useState<{ supplier_id: any; supplier_name: string }[]>([]);
   const [error, setError] = useState<string>("");
 
@@ -67,6 +70,7 @@ const AddPurchaseDetails = () => {
             pi_id: data.pi_id,
             item_id: "",
             unit_id: "",
+            category_id: "",
             quantity: "",
             price: "",
             expiry_date: getExpiryDate(),
@@ -79,24 +83,27 @@ const AddPurchaseDetails = () => {
       }
     };
 
-    const fetchItemsAndUnitsAndSupplier = async () => {
+    const fetchItemDeets = async () => {
       try {
-        const [itemsResponse, unitsResponse, supplierResponse] = await Promise.all([
+        const [itemsResponse, unitsResponse, categoriesResponse, supplierResponse] = await Promise.all([
           fetch("/api/item"),
           fetch("/api/unit"),
+          fetch("/api/category"),
           fetch("/api/supplier"),
         ]);
 
-        if (!itemsResponse.ok || !unitsResponse.ok) {
+        if (!itemsResponse.ok || !unitsResponse.ok || !categoriesResponse.ok || !supplierResponse.ok) {
           throw new Error("Network response was not ok");
         }
 
         const itemsData = await itemsResponse.json();
         const unitsData = await unitsResponse.json();
+        const categoryData = await categoriesResponse.json();
         const supplierData = await supplierResponse.json();
 
         setItems(itemsData);
         setUnits(unitsData);
+        setCategories(categoryData);
         setSupplier(supplierData);
       } catch (error) {
         console.log(error);
@@ -104,7 +111,7 @@ const AddPurchaseDetails = () => {
     };
 
     fetchRecentPoId();
-    fetchItemsAndUnitsAndSupplier();
+    fetchItemDeets();
   }, []);
 
   const handleChange = (index: number, e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -134,6 +141,7 @@ const AddPurchaseDetails = () => {
         ...newFormDataArray[index],
         item_id: selectedItem.item_id.toString(),
         unit_id: selectedItem.unit_id ? selectedItem.unit_id.toString() : "",
+        category_id: selectedItem.category_id ? selectedItem.category_id.toString() : "",
       };
       setFormDataArray(newFormDataArray);
     }
@@ -158,7 +166,7 @@ const AddPurchaseDetails = () => {
   
     // Frontend validation for empty fields
     for (const formData of formDataArray) {
-      if (!formData.item_id || !formData.unit_id || !formData.quantity || !formData.price || !formData.supplier_id) {
+      if (!formData.item_id || !formData.unit_id || !formData.quantity || !formData.price || !formData.supplier_id || !formData.category_id) {
           toast.error("Please fill in all fields.");
           return;
       }
@@ -174,6 +182,7 @@ const AddPurchaseDetails = () => {
         pi_id: Number(formData.pi_id),
         item_id: Number(formData.item_id),
         unit_id: Number(formData.unit_id),
+        category_id: Number(formData.category_id),
         quantity: Number(formData.quantity),
         price: parseFloat(formData.price),
         expiry_date: formData.noExpiry ? null : new Date(formData.expiry_date as string).toISOString(),
@@ -208,6 +217,7 @@ const AddPurchaseDetails = () => {
         pi_id: recentPiId.toString(),
         item_id: "",
         unit_id: "",
+        category_id: "",
         quantity: "",
         price: "",
         expiry_date: getExpiryDate(false),
@@ -222,6 +232,11 @@ const AddPurchaseDetails = () => {
   const getUnitName = (unit_id: any) => {
     const unit = units.find((unit) => unit.unit_id === unit_id);
     return unit ? unit.unit_name : '';
+  }
+
+  const getCategoryName = (category_id: any) => {
+    const category = categories.find((category) => category.category_id === category_id);
+    return category ? category.category_name : '';
   }
 
   const getSupplierName = (supplier_id: any) => {
@@ -248,7 +263,7 @@ const AddPurchaseDetails = () => {
   };
 
   return (
-    <div className="mt-24 ml-20 mr-20">
+    <div className="mt-24 ml-16 mr-16">
       <p className="flex text-3xl text-[#483C32] font-bold justify-center mb-2">
         Purchased Item Details
       </p>
@@ -261,6 +276,7 @@ const AddPurchaseDetails = () => {
               <TableHead className="w-96">Item Name</TableHead>
               <TableHead className="w-32">Quantity</TableHead>
               <TableHead className="w-32">Unit</TableHead>
+              <TableHead className="w-32">Category</TableHead>
               <TableHead className="w-32">Price</TableHead>
               <TableHead className="w-40">Expiry Date</TableHead>
               <TableHead className="w-16">No Expiry?</TableHead>
@@ -312,6 +328,15 @@ const AddPurchaseDetails = () => {
                       type="text"
                       name="unit"
                       value={getUnitName(parseInt(formData.unit_id))}
+                      readOnly
+                      className="w-full p-0.5"
+                    />
+                </TableCell>
+                <TableCell>
+                    <input
+                      type="text"
+                      name="category"
+                      value={getCategoryName(parseInt(formData.category_id))}
                       readOnly
                       className="w-full p-0.5"
                     />

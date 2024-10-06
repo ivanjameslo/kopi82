@@ -15,7 +15,7 @@ model employee {
   last_name        String
   first_name       String
   middle_name      String
-  purchase_request purchase_request[]
+  // purchase_request purchase_request[]
 }
 
 //INVENTORY
@@ -23,13 +23,12 @@ model employee {
 model back_inventory {
   bd_id                   Int               @id @default(autoincrement())
   item_id                 Int
+  pd_id                   Int 
+  pi_id                   Int?         
   stock_in_date           DateTime?
   stock_out_date          DateTime?
   stock_damaged           Int
-  pi_id                   Int?
-  expiry_date             DateTime?
-  pd_id                   Int?
-  item                    item              @relation(fields: [item_id], references: [item_id])
+  stock_used              Int
   front_inventory         front_inventory?
   purchased_item          purchased_item?   @relation(fields: [pi_id], references: [pi_id])
   purchased_detail        purchased_detail? @relation(fields: [pd_id], references: [pd_id])
@@ -54,17 +53,17 @@ model front_inventory {
   //product product[]
 }
 
-model purchase_request {
-  pr_id        Int      @id @default(autoincrement())
-  item_id      Int
-  quantity     Int
-  employee_id  Int
-  date_ordered DateTime @default(now())
-  status       String
-  item         item     @relation(fields: [item_id], references: [item_id])
-  employee     employee @relation(fields: [employee_id], references: [employee_id])
-  createdAt    DateTime @default(now())
-}
+// model purchase_request {
+//   pr_id        Int      @id @default(autoincrement())
+//   item_id      Int
+//   quantity     Int
+//   employee_id  Int
+//   date_ordered DateTime @default(now())
+//   status       String
+//   item         item     @relation(fields: [item_id], references: [item_id])
+//   employee     employee @relation(fields: [employee_id], references: [employee_id])
+//   createdAt    DateTime @default(now())
+// }
 
 model purchased_item {
   pi_id            Int                @id @default(autoincrement())
@@ -81,12 +80,14 @@ model purchased_detail {
   item_id                    Int
   quantity                   Int
   unit_id                    Int
+  category_id                Int
   price                      Float
   expiry_date                DateTime?
   supplier_id                Int
   purchased_item             purchased_item             @relation(fields: [pi_id], references: [pi_id])
   item                       item                       @relation(fields: [item_id], references: [item_id])
   unit                       unit                       @relation(fields: [unit_id], references: [unit_id])
+  category                   category                   @relation(fields: [category_id], references: [category_id])
   back_inventory             back_inventory[]
   processed_purchase_details ProcessedPurchaseDetails[]
   supplier                   supplier                   @relation(fields: [supplier_id], references: [supplier_id])
@@ -112,12 +113,14 @@ model category {
   category_id   Int    @id @default(autoincrement())
   category_name String
   item          item[]
+  purchased_detail purchased_detail[]
   // back_inventory back_inventory[]
 }
 
 model shelf_location {
   sl_id   Int    @id @default(autoincrement())
   sl_name String
+  inv_type String
   inventory_shelf inventory_shelf[]
 }
 
@@ -126,6 +129,7 @@ model inventory_shelf {
   bd_id  Int
   sl_id  Int
   quantity Int
+  hidden      Boolean  @default(false)
   shelf_location shelf_location @relation(fields: [sl_id], references: [sl_id])
   back_inventory back_inventory @relation(fields: [bd_id], references: [bd_id])
   @@unique([bd_id, sl_id])
@@ -141,9 +145,8 @@ model item {
   category_id      Int
   unit             unit               @relation(fields: [unit_id], references: [unit_id])
   category         category           @relation(fields: [category_id], references: [category_id])
-  back_inventory   back_inventory[]
   purchased_detail purchased_detail[]
-  purchase_request purchase_request[]
+  // purchase_request purchase_request[]
   createdAt        DateTime           @default(now())
 }
 

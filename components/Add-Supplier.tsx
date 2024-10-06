@@ -112,13 +112,13 @@ const AddSupplier = () => {
   
   // Edit Supplier
   const handleEdit = (supplier: SupplierData) => {
-    setSelectedSupplier(supplier); // Set supplier for editing
+    setSelectedSupplier(supplier);
     setSupplierForm({
       supplier_name: supplier.supplier_name,
       contact_no: String(supplier.contact_no),
       address: supplier.address,
     });
-    setIsModalOpen(true); // Open modal for editing
+    setIsModalOpen(true);
   };
 
   // Delete Supplier
@@ -131,7 +131,7 @@ const AddSupplier = () => {
       toast.success("Supplier deleted successfully!");
       setSuppliers(suppliers.filter((s) => s.supplier_id !== supplier_id)); // Remove supplier from list
     } catch (error) {
-      toast.error("Failed to delete supplier");
+      toast.error("Failed to delete supplier.");
     }
   };
 
@@ -146,35 +146,69 @@ const AddSupplier = () => {
 
       {/* Supplier Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="w-full max-w-2xl">
+        <DialogContent className="w-full max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{selectedSupplier ? "Edit Supplier" : "Manage Suppliers"}</DialogTitle>
+            <DialogTitle>{selectedSupplier ? "Edit Supplier" : "Add Suppliers"}</DialogTitle>
           </DialogHeader>
+
           <div className="space-y-4">
+          <div className="relative w-full mb-4">
             <input
               type="text"
               name="supplier_name"
               placeholder="Supplier Name"
               value={supplierForm.supplier_name}
               onChange={handleSupplierChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="peer border border-[#C4C4C4] rounded-lg h-10 pl-2 w-full 
+              placeholder-transparent focus:outline-none focus:ring-2 focus:ring-[#6c757d] pt-4 pb-4 mb-1"
             />
+            <label
+                htmlFor="supplier_name"
+                className={`absolute left-2 text-gray-500 transition-all 
+                  ${supplierForm.supplier_name ? '-top-4 text-sm text-[#6c757d]' : 'top-2 text-base text-gray-400'} 
+                  peer-focus:-top-4 peer-focus:text-sm peer-focus:text-[#6c757d] bg-white px-1`}
+                >
+                Supplier Name
+            </label>
+          </div>
+          <div className="relative w-full mb-4">
             <input
               type="text"
               name="contact_no"
               placeholder="Contact Number"
               value={supplierForm.contact_no}
               onChange={handleSupplierChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="peer border border-[#C4C4C4] rounded-lg h-10 pl-2 w-full 
+                placeholder-transparent focus:outline-none focus:ring-2 focus:ring-[#6c757d] pt-4 pb-4 mb-1"
             />
+            <label
+                htmlFor="contact_no"
+                className={`absolute left-2 text-gray-500 transition-all 
+                  ${supplierForm.contact_no ? '-top-4 text-sm text-[#6c757d]' : 'top-2 text-base text-gray-400'} 
+                  peer-focus:-top-4 peer-focus:text-sm peer-focus:text-[#6c757d] bg-white px-1`}
+                >
+                Contact Number
+            </label>
+          </div>
+          <div className="relative w-full mb-4">
             <input
               type="text"
               name="address"
               placeholder="Address"
               value={supplierForm.address}
               onChange={handleSupplierChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="peer border border-[#C4C4C4] rounded-lg h-10 pl-2 w-full 
+                placeholder-transparent focus:outline-none focus:ring-2 focus:ring-[#6c757d] pt-4 pb-4 mb-1"
             />
+            <label
+                htmlFor="address"
+                className={`absolute left-2 text-gray-500 transition-all 
+                  ${supplierForm.address ? '-top-4 text-sm text-[#6c757d]' : 'top-2 text-base text-gray-400'} 
+                  peer-focus:-top-4 peer-focus:text-sm peer-focus:text-[#6c757d] bg-white px-1`}
+                >
+                Address
+            </label>
+          </div>
             <Button className="w-full bg-black text-white" onClick={handleSupplierSubmit}>
               {selectedSupplier ? "Update Supplier" : "Add Supplier"}
             </Button>

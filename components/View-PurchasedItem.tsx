@@ -27,6 +27,7 @@ interface PurchasedDetailData {
   item_id: number;
   quantity: number;
   unit_id: number;
+  category_id: number;
   price: number;
   expiry_date: string;
   supplier_id: number;
@@ -43,6 +44,11 @@ interface UnitData {
   unit_name: string;
 }
 
+interface CategoryData {
+  category_id: number;
+  category_name: string;
+}
+
 interface SupplierData {
   supplier_id: number;
   supplier_name: string;
@@ -55,6 +61,7 @@ const ViewPurchaseOrder = () => {
   const [data, setData] = useState<PurchasedItemData[]>([]);
   const [items, setItems] = useState<ItemDate[]>([]);
   const [units, setUnits] = useState<UnitData[]>([]);
+  const [categories, setCategories] = useState<CategoryData[]>([]);
   const [suppliers, setSupplier] = useState<SupplierData[]>([]);
 
   const fetchPurchasedItem = async () => {
@@ -86,24 +93,27 @@ const ViewPurchaseOrder = () => {
   };
   
 
-  const fetchItemsAndUnitsAndSupplier = async () => {
+  const fetchItemDeets = async () => {
     try {
-      const [itemsResponse, unitsResponse, suppliersResponse] = await Promise.all([
+      const [itemsResponse, unitsResponse, categoriesResponse, suppliersResponse] = await Promise.all([
         fetch("/api/item"),
         fetch("/api/unit"),
+        fetch("/api/category"),
         fetch("/api/supplier"),
       ]);
 
-      if (!itemsResponse.ok || !unitsResponse.ok || !suppliersResponse.ok) {
+      if (!itemsResponse.ok || !unitsResponse.ok || !categoriesResponse.ok || !suppliersResponse.ok) {
         throw new Error("Network response was not ok");
       }
 
       const itemsData = await itemsResponse.json();
       const unitsData = await unitsResponse.json();
+      const categoriesData = await categoriesResponse.json();
       const suppliersData = await suppliersResponse.json();
 
       setItems(itemsData);
       setUnits(unitsData);
+      setCategories(categoriesData);
       setSupplier(suppliersData);
     } catch (error) {
       console.error("Error fetching items and units:", error);
@@ -112,7 +122,7 @@ const ViewPurchaseOrder = () => {
 
   useEffect(() => {
     fetchPurchasedItem();
-    fetchItemsAndUnitsAndSupplier();
+    fetchItemDeets();
   }, []);
 
   // For displaying purchase details in modal
@@ -180,6 +190,11 @@ const ViewPurchaseOrder = () => {
     return unit ? unit.unit_name : "Unknown Unit";
   };
 
+  const getCategoryName = (category_id: number) => {
+    const category = categories.find((category) => category.category_id === category_id);
+    return category ? category.category_name : "Unknown Category";
+  }
+
   const getSupplierName = (supplier_id: number) => {
     const supplier = suppliers.find((supplier) => supplier.supplier_id === supplier_id);
     return supplier ? supplier.supplier_name : '';
@@ -238,6 +253,7 @@ const ViewPurchaseOrder = () => {
                     <TableHead className="text-center w-32">Item Name</TableHead>
                     <TableHead className="text-center w-32">Quantity</TableHead>
                     <TableHead className="text-center w-32">Unit</TableHead>
+                    <TableHead className="text-center w-32">Category</TableHead>
                     <TableHead className="text-center w-32">Expiry Date</TableHead>
                     <TableHead className="text-center w-32">Supplier</TableHead>
                     <TableHead className="text-center w-32">Price</TableHead>
@@ -252,6 +268,7 @@ const ViewPurchaseOrder = () => {
                         <TableCell className="text-center">{getItemWithDescription(detail.item_id)}</TableCell>
                         <TableCell className="text-center">{detail.quantity}</TableCell>
                         <TableCell className="text-center">{getUnitName(detail.unit_id)}</TableCell>
+                        <TableCell className="text-center">{getCategoryName(detail.category_id)}</TableCell>
                         <TableCell className="text-center whitespace-nowrap">{formatDateTime(detail.expiry_date)}</TableCell>
                         <TableCell className="text-center">{getSupplierName(detail.supplier_id)}</TableCell> 
                         <TableCell className="text-center">{phpFormatter.format(detail.price)}</TableCell>
@@ -260,7 +277,7 @@ const ViewPurchaseOrder = () => {
                     );
                   })}
                   <TableRow>
-                    <TableCell colSpan={6} className="text-right font-bold">Grand Total</TableCell>
+                    <TableCell colSpan={7} className="text-right font-bold">Grand Total</TableCell>
                     <TableCell className="font-bold text-center">
                       {phpFormatter.format(
                         selectedPurchasedDetail.reduce((acc, detail) => acc + detail.quantity * detail.price, 0)

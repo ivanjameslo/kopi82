@@ -2,7 +2,7 @@ import prisma from "@/lib/db";
 import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-// GET function to fetch all data from Purchase Details model
+// GET function to fetch all data from the Purchase Details model
 export async function GET(request: NextRequest) {
   try {
     const categories = await prisma.category.findMany();
@@ -17,26 +17,35 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const res = await request.json();
+    
+    // Log the incoming request data for debugging
+    console.log("Received request body:", res);
+
     const { category_name } = res;
 
-    // Fetch all categories and filter manually in JavaScript (case-insensitive comparison)
-    const existingCategory = await prisma.category.findFirst({
-      where: {
-        category_name: {
-          equals: category_name.toLowerCase(), // Normalize the input
-        },
-      },
-    });
+    // Validate category_name input
+    if (!category_name || typeof category_name !== 'string') {
+      console.log("Invalid category_name:", category_name);
+      return NextResponse.json({ error: "Invalid category name" }, { status: 400 });
+    }
+
+    const normalizedCategoryName = category_name.toLowerCase();
+
+    // Fetch all categories to perform a manual case-insensitive comparison
+    const allCategories = await prisma.category.findMany();
+    const existingCategory = allCategories.find(
+      category => category.category_name.toLowerCase() === normalizedCategoryName
+    );
 
     // Check if a category with the same normalized name exists
-    if (existingCategory && existingCategory.category_name.toLowerCase() === category_name.toLowerCase()) {
+    if (existingCategory) {
       return NextResponse.json({ error: "Category already exists" }, { status: 400 });
     }
 
     // If no existing category, create a new one
     const created = await prisma.category.create({
       data: {
-        category_name,
+        category_name, // Save the category as it is, without lowering case
       },
     });
 
