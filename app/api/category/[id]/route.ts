@@ -1,7 +1,7 @@
 import prisma from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
-// GET method to fetch a unit by ID or check if a unit_name exists
+// GET method to fetch a category by ID or check if a category_name exists
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
     const id = params.id
     const category = await prisma.category.findUnique({
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     return NextResponse.json(category);
 }
 
-// PUT method to update a new unit
+// PUT method to update a new category
 export async function PUT(request: Request, { params }: { params: { id: string }}) {
     const id = params.id
     const json = await request.json()
@@ -25,7 +25,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json(updatedCategory);
 }
 
-// DELETE method to delete a unit by ID
+// DELETE method to delete a category by ID
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
     const id = params.id;
     const deletedCategory = await prisma.category.delete({

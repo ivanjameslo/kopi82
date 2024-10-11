@@ -1,135 +1,127 @@
-import React, { useState, ChangeEvent, useEffect } from 'react';
+import React, { useState, ChangeEvent } from 'react';
 import { Button } from "@/components/ui/button";
 
-interface EditItemProps {
-    selectedItem: any;
-    onClose: () => void;
-    onSave: (updatedItem: any) => void;
+interface UnitData {
+    unit_id: number;
+    unit_name: string;
 }
 
-const EditItem: React.FC<EditItemProps> = ({ selectedItem, onClose, onSave }) => {
-    const [formData, setFormData] = useState(selectedItem);
+interface CategoryData {
+    category_id: number;
+    category_name: string;
+}
+
+interface ItemData {
+    item_id: number;
+    item_name: string;
+    description: string;
+    unit: UnitData;
+    category: CategoryData;
+}
+
+interface EditItemModalProps {
+    selectedItem: ItemData;
+    unitOptions: UnitData[];
+    categoryOptions: CategoryData[];
+    onClose: () => void;
+    onSave: (updatedItem: ItemData) => void;
+}
+
+const UpdateItemModal: React.FC<EditItemModalProps> = ({ selectedItem, unitOptions, categoryOptions, onClose, onSave }) => {
+    const [formData, setFormData] = useState({
+        item_name: selectedItem.item_name,
+        description: selectedItem.description,
+        unit_id: selectedItem.unit.unit_id,
+        category_id: selectedItem.category.category_id,
+    });
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value,
-        });
+        console.log(`Field changed: ${name}, New Value: ${value}`);
+        setFormData({ ...formData, [name]: name === 'unit_id' || name === 'category_id' ? Number(value) : value });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const isConfirmed = window.confirm("Are you sure you want to submit this form?");
-        if (!isConfirmed) {
-            return;
-        }
-        try {
-            const response = await fetch(`/api/item/${selectedItem.item_id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData),
-            });
-            if (!response.ok) {
-                throw new Error('Failed to update Item');
-            }
-            let updatedItem = await response.json();
-            console.log('Updated item:', updatedItem);
-
-            updatedItem = {
-                ...updatedItem,
-            };
-
-            onSave(updatedItem);
-            onClose();
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    //FETCHING OF DATA
-    const [unitOptions, setUnitOptions] = useState<string[]>([]);
-    const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
-    const [shelfLocationOptions, setShelfLocationOptions] = useState<string[]>([]);
-
-    const fetchOptions = async () => {
-        try {
-            const unitResponse = await fetch('/api/unit');
-            const categoryResponse = await fetch('/api/category');
-            const shelfLocationResponse = await fetch('/api/location_shelf');
-
-            const unitData = await unitResponse.json();
-            const categoryData = await categoryResponse.json();
-            const shelfLocationData = await shelfLocationResponse.json();
-
-            setUnitOptions(unitData);
-            setCategoryOptions(categoryData);
-            setShelfLocationOptions(shelfLocationData);
-        } catch (error) {
-            console.log("Error fetching data", error);
-        }
-    }
-
-    useEffect(() => {
-        fetchOptions().catch(error => console.log(error));
-    });
+    
+        console.log('Submitting form data:', formData);
+    
+        const updatedData: ItemData = {
+            ...selectedItem,
+            item_name: formData.item_name,
+            description: formData.description,
+            unit: { unit_id: formData.unit_id, unit_name: unitOptions.find(u => u.unit_id === formData.unit_id)?.unit_name || '' },
+            category: { category_id: formData.category_id, category_name: categoryOptions.find(c => c.category_id === formData.category_id)?.category_name || '' },
+        };
+    
+        onSave(updatedData);  
+    };     
 
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
             <div className="bg-white p-8 rounded-md shadow-md max-h-[70vh] overflow-y-auto">
-                <h2 className="text-2xl font-bold mb-4">Edit Back Inventory</h2>
+                <h2 className="text-2xl font-bold mb-4">Edit Item</h2>
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
-                        <label>Item Name:</label>
+                        <label className="block mb-1 font-medium">Item Name:</label>
                         <input
                             type="text"
                             name="item_name"
                             value={formData.item_name}
                             onChange={handleChange}
-                            className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"
                         />
                     </div>
                     <div className="mb-4">
-                        <label>Unit:</label>
-                        <select name="unit_id" value={formData.unit_id} onChange={handleChange}>
-                            <option value="" disabled hidden> Select Unit</option>
-                            {unitOptions.map((units: any) => (
-                                <option key={units.unit_id} value={units.unit_id}>
-                                    {units.unit_name}
-                                </option>
-                            ))}
+                        <label className="block mb-1 font-medium">Description:</label>
+                        <input
+                            type="text"
+                            name="description"
+                            value={formData.description}
+                            onChange={handleChange}
+                            className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <label className="block mb-1 font-medium">Unit:</label>
+                        <select
+                            name="unit_id"
+                            value={formData.unit_id}
+                            onChange={handleChange}
+                            className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"
+                        >
+                        <option value="" disabled>Select Unit</option>
+                        {unitOptions.map((unit) => (
+                            <option key={unit.unit_id} value={unit.unit_id}>
+                            {unit.unit_name}
+                            </option>
+                        ))}
                         </select>
                     </div>
                     <div className="mb-4">
-                        <label>Category:</label>
-                        <select name="category_id" value={formData.category_id} onChange={handleChange}>
-                            <option value="" disabled hidden> Select Category</option>
-                            {categoryOptions.map((categories: any) => (
-                                <option key={categories.category_id} value={categories.category_id}>
-                                    {categories.category_name}
+                        <label className="block mb-1 font-medium">Category:</label>
+                        <select
+                            name="category_id"
+                            value={formData.category_id}
+                            onChange={handleChange}
+                            className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"
+                        >
+                            <option value="" disabled>Select Category</option>
+                            {categoryOptions.map((category) => (
+                                <option key={category.category_id} value={category.category_id}>
+                                    {category.category_name}
                                 </option>
                             ))}
                         </select>
                     </div>
-                    <div className="mb-4">
-                        <label>Shelf Location:</label>
-                        <select name="ls_id" value={formData.ls_id} onChange={handleChange}>
-                            <option value="" disabled hidden> Select Shelf Location</option>
-                            {shelfLocationOptions.map((shelfLocation: any) => (
-                                <option key={shelfLocation.ls_id} value={shelfLocation.ls_id}>
-                                    {shelfLocation.ls_name}
-                                </option>
-                            ))}
-                        </select>
+                    <div className="flex justify-end space-x-4">
+                        <Button type="submit">Save</Button>
+                        <Button onClick={onClose} type="button" variant="secondary">Cancel</Button>
                     </div>
-                    <Button type="submit" className="mt-4">Save</Button>
-                    <Button onClick={onClose} className="mt-4 ml-2">Cancel</Button>
                 </form>
             </div>
         </div>
     );
 };
 
-export default EditItem;
+export default UpdateItemModal;

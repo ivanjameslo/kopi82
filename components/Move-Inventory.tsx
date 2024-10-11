@@ -1,0 +1,248 @@
+'use client';
+
+import { useState, FormEvent, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "react-toastify";
+
+interface ShelfLocation {
+    sl_id: number;
+    sl_name: string;
+    inv_type: string;
+}
+
+interface BackInventory {
+    bd_id: number;
+    purchased_detail: {
+      item: {
+        item_id: number;
+        item_name: string;
+        description: string;
+        unit: {
+          unit_name: string;
+        }
+        category: {
+          category_name: string;
+        }
+      }
+      expiry_date: string;
+    };
+    inventory_shelf: Array<{
+      sl_id: number;
+      quantity: number;
+      shelf_location: {
+        sl_name: string;
+      };
+    }>;
+}
+
+interface MoveInventoryProps {
+    onModalClose?: () => void;
+    selectedItems: BackInventory[];  // Pass selected items from the table
+    refreshInventory: () => void;
+}
+
+const MoveInventory = ({ onModalClose, selectedItems, refreshInventory }: MoveInventoryProps) => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [localSelectedItems, setLocalSelectedItems] = useState<Array<{bd_id: number; sl_id: number; quantity: number | null; newSlId: number | null}>>([]);
+    const [shelfLocations, setShelfLocations] = useState<ShelfLocation[]>([]);
+    const [isSubmitting, setIsSubmitting] = useState(false); // New state to track form submission
+    const [hasInteracted, setHasInteracted] = useState<Record<number, boolean>>({}); // Track user interaction
+
+    // Fetch shelf locations (example API)
+    const fetchShelfLocations = async () => {
+        try {
+            const response = await fetch("/api/shelf_location");
+            const data = await response.json();
+            setShelfLocations(data);
+        } catch (error) {
+            console.log("Error fetching shelf locations", error);
+            toast.error("Failed to fetch shelf locations");
+        }
+    };
+
+    useEffect(() => {
+        if (selectedItems.length > 0) {
+            setIsModalOpen(true);  // Open modal only if there are selected items
+            fetchShelfLocations(); // Fetch shelf locations on open
+            // Initialize selected items
+            const initialSelectedItems = selectedItems.flatMap(item =>
+                item.inventory_shelf.map(shelf => ({
+                    bd_id: item.bd_id,
+                    sl_id: shelf.sl_id,
+                    quantity: null, // Quantity starts as null, placeholder will be shown
+                    newSlId: null
+                }))
+            );
+            setLocalSelectedItems(initialSelectedItems);
+        }
+    }, [selectedItems]);
+
+    // Handle quantity change
+    const handleQuantityChange = (bd_id: number, sl_id: number, value: string) => {
+        const quantity = Number(value);
+        if (isNaN(quantity) || quantity < 0) {
+            toast.error("Invalid quantity");
+            return;
+        }
+        setLocalSelectedItems(
+            localSelectedItems.map(item => item.bd_id === bd_id && item.sl_id === sl_id ? { ...item, quantity } : item)
+        );
+         // Mark the input as "interacted" when the user types into it
+         setHasInteracted((prev) => ({
+            ...prev,
+            [bd_id]: true,
+        }));
+    };
+
+    const isInvalidQuantity = (bd_id: number, sl_id: number) => {
+        const selectedItem = localSelectedItems.find(item => item.bd_id === bd_id && item.sl_id === sl_id);
+        const shelfEntry = selectedItems.find(inv => inv.bd_id === bd_id)?.inventory_shelf.find(shelf => shelf.sl_id === sl_id);
+        return selectedItem && (selectedItem.quantity === null || selectedItem.quantity < 0 || selectedItem.quantity > (shelfEntry?.quantity || 0));
+      };
+
+    // Handle location change
+    const handleLocationChange = (bd_id: number, sl_id: number, newShelfId: number) => {
+        console.log(`Updating shelf location for bd_id: ${bd_id}, sl_id: ${sl_id}, newShelfId: ${newShelfId}`);
+        setLocalSelectedItems(
+            localSelectedItems.map(item =>
+                item.bd_id === bd_id && item.sl_id === sl_id
+                    ? { ...item, newSlId: newShelfId }  // Store new shelf ID separately
+                    : item
+            )
+        );
+    };
+    
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setIsSubmitting(true); // Mark the form as submitting
+    
+        // Construct the payload expected by the API
+        const movements = localSelectedItems.map(item => {
+            const originalItem = selectedItems.find(inv => inv.bd_id === item.bd_id);
+            const isMovedBackToOriginal = item.newSlId === item.sl_id;
+    
+            return {
+                bd_id: item.bd_id,
+                source_sl_id: item.sl_id,
+                destination_sl_id: item.newSlId,
+                quantity: item.quantity,
+                hidden: isMovedBackToOriginal ? false : true  // Use false if moved back to original shelf
+            };
+        });
+    
+        // Log the exact payload being sent to the backend
+        console.log("Submitting movements: ", movements);
+    
+        try {
+            const response = await fetch("/api/move_inventory", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ movements }),
+            });
+    
+            if (!response.ok) throw new Error("Failed to move inventory");
+    
+            toast.success("Inventory moved successfully!");
+            setLocalSelectedItems([]);
+            setIsSubmitting(false);
+    
+            if (onModalClose) onModalClose();
+            setIsModalOpen(false);
+            await refreshInventory(); // Refresh the inventory table
+        } catch (error: any) {
+            toast.error(error.message);
+        }
+    };
+    
+    // Function to filter locations
+    const getFilteredLocations = (shelfName: string, categoryName: string) => {
+        if (categoryName === "Meat" && shelfName === "Raw Meat") {
+            return shelfLocations.filter(location => location.sl_name === "Meat Prep");
+        }
+        if (categoryName === "Seafood" && shelfName === "Raw Seafood") {
+            return shelfLocations.filter(location => location.sl_name === "Seafood Prep");
+        }
+        return shelfLocations.filter(location => 
+            location.sl_name !== "Raw Meat" &&
+            location.sl_name !== "Raw Seafood" &&
+            location.sl_name !== "Meat Prep" &&
+            location.sl_name !== "Seafood Prep"
+        );
+    };
+
+    return (
+        <div>
+            <Dialog open={isModalOpen} onOpenChange={(isOpen) => {
+                if (!isOpen) {
+                    setIsModalOpen(false);
+                    setLocalSelectedItems([]); // Reset local state
+                    setIsSubmitting(false); // Reset the submission state
+                    if (onModalClose) onModalClose(); // Notify parent
+                }
+            }}>
+                <DialogContent className="w-full max-w-5xl max-h-[80vh] overflow-y-auto p-6">
+                    <DialogHeader>
+                        <DialogTitle className="text-2xl font-bold">Move Inventory</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <h3 className="font-semibold text-xl mb-4">Selected Items to Move</h3>
+                            {selectedItems.length > 0 ? (
+                                <div className="space-y-6">
+                                    {selectedItems.map((inventory) => (
+                                        <div key={inventory.bd_id}>
+                                            {inventory.inventory_shelf.map((shelf) => (
+                                                <div className="flex items-center justify-between space-x-2" key={shelf.sl_id}>
+                                                    <label className="ml-2">
+                                                        {inventory.purchased_detail.item.item_name} - {inventory.purchased_detail.item.description} (Shelf: {shelf.shelf_location.sl_name}, Qty: {shelf.quantity})
+                                                    </label>
+                                                    <div className="flex items-center space-x-4">
+                                                        <div>
+                                                            <label className="block text-sm font-semibold">Quantity</label>
+                                                            <input
+                                                                type="number"
+                                                                value={localSelectedItems.find(selectedItem => selectedItem.bd_id === inventory.bd_id && selectedItem.sl_id === shelf.sl_id)?.quantity || ""}
+                                                                onChange={(e) => handleQuantityChange(inventory.bd_id, shelf.sl_id, e.target.value)}
+                                                                className={`border ${hasInteracted[inventory.bd_id] && isInvalidQuantity(inventory.bd_id, shelf.sl_id) ? 'border-red-500' : 'border-gray-300'} rounded px-3 py-1 w-48 focus:outline-none`}
+                                                                placeholder={`Max: ${String(shelf.quantity)}`}
+                                                                min={0}
+                                                                max={shelf.quantity}
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-semibold">New Location</label>
+                                                            <select
+                                                                value={localSelectedItems.find(selectedItem => selectedItem.bd_id === inventory.bd_id && selectedItem.sl_id === shelf.sl_id)?.newSlId || ""}
+                                                                onChange={(e) => handleLocationChange(inventory.bd_id, shelf.sl_id, Number(e.target.value))}
+                                                                className="border border-gray-300 rounded px-3 py-1 w-48 focus:outline-none"
+                                                            >
+                                                                <option value="" disabled>Select Location</option>
+                                                                {getFilteredLocations(shelf.shelf_location.sl_name, inventory.purchased_detail.item.category.category_name).map((location) => (
+                                                                    <option key={location.sl_id} value={location.sl_id}>{location.sl_name}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p>No items in inventory available for moving.</p>
+                            )}
+                        </div>
+                        <div className="mt-6">
+                            <Button type="submit" className="text-white px-4 py-2 rounded-md">
+                                Move Inventory
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+        </div>
+    );
+};
+
+export default MoveInventory;

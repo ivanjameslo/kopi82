@@ -1,515 +1,314 @@
-'use client'
+'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ChangeEvent } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { error } from 'console';
-import UpdateBackInventory from "./Update-BackInventory";
-import { format } from 'path';
+import AddShelfLocation from '@/components/Add-ShelfLocation';
+import AddBackInventory from '@/components/Add-BackInventory';
+import MoveInventory from '@/components/Move-Inventory';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from 'react-toastify';
+import { Button } from './ui/button';
+import { FaArrowRightArrowLeft } from "react-icons/fa6";
 
-interface BackInventoryData {
+interface ShelfLocation {
+  sl_id: number;
+  inv_type: "Front Inventory" | "Back Inventory";
+  sl_name: string;
+}
+
+interface BackInventory {
   bd_id: number;
-  item_id: number;
-  item_stocks: number;
-  unit_id: number;
-  category_id: number;
-  ls_id: number;
-  stock_in_date: string;
-  stock_damaged: number;
-  stock_out_date: string | null;
-  po_id: number | null;
-  expiry_date: string | null;
-  pd_id: number | null;
-};
-
-interface ItemData {
-  item_id: number;
-  item_name: string;
-}
-
-interface UnitData {
-  unit_id: number;
-  unit_name: string;
-}
-
-interface CategoryData {
-  category_id: number;
-  category_name: string;
-}
-
-interface LocationShelfData {
-  ls_id: number;
-  ls_name: string;
-}
-
-// interface PurchaseDetailsData {
-//   pd_id: number;
-//   item_id: number;
-//   quantity: number;
-//   expiry_date: string;
-//   po_id: number;
-// }
-
-const backInventory = () => {
-
-  const router = useRouter();
-
-  const [data, setData] = useState<BackInventoryData[]>([]);
-  const [items, setItems] = useState<ItemData[]>([]);
-  const [units, setUnits] = useState<UnitData[]>([]);
-  const [categories, setCategories] = useState<CategoryData[]>([]);
-  const [locationShelves, setLocationShelves] = useState<LocationShelfData[]>([]);
-
-  const [selectedItem, setSelectedItem] = useState<BackInventoryData | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
-  //READ DATA FROM VARIOUS ENDPOINTS
-  const fetchData = async (endpoint: string) => {
-    const response = await fetch(endpoint, { method: 'GET' });
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
+  purchased_detail: {
+    item: {
+      item_id: number;
+      item_name: string;
+      description: string;
+      unit: {
+        unit_name: string;
+      }
+      category: {
+        category_name: string;
+      }
     }
-    return response.json();
+    expiry_date: string;
   };
+  inventory_shelf: Array<{
+    sl_id: number;
+    quantity: number;
+    shelf_location: {
+      sl_id: number;
+      sl_name: string;
+      inv_type: "Front Inventory" | "Back Inventory";
+    };
+    hidden: boolean;
+  }>;
+}
 
-  const fetchAllData = async () => {
+const ViewBackInventory = () => {
+  const [shelfLocations, setShelfLocations] = useState<ShelfLocation[]>([]);
+  const [inventory, setInventory] = useState<BackInventory[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<number | string>("All");
+  const [selectedItemsForMove, setSelectedItemsForMove] = useState<BackInventory[]>([]);
+  const [isMoveModalOpen, setIsMoveModalOpen] = useState<boolean>(false);
+  const [isChecked, setIsChecked] = useState<Record<string, boolean>>({});
+  const [selectedInventoryType, setSelectedInventoryType] = useState<"Back Inventory" | "Front Inventory">("Back Inventory");
+
+  const fetchShelfLocations = async () => {
     try {
-      const [backInventoryData, itemData, unitData, categoryData, locationShelfData] = await Promise.all([
-        fetchData('/api/back_inventory'),
-        fetchData('/api/item'),
-        fetchData('/api/unit'),
-        fetchData('/api/category'),
-        fetchData('/api/location_shelf'),
-      ]);
-      setData(backInventoryData);
-      setItems(itemData);
-      setUnits(unitData);
-      setCategories(categoryData);
-      setLocationShelves(locationShelfData);
-    } catch (error) {
-      console.error('Failed to fetch data: ', error);
-    }
-  }
-
-  useEffect(() => {
-    fetchAllData().catch(error => console.error(error));
-  }, []);
-
-  //ADD NEW BACK INVENTORY
-  const handleAddNewBackInventory = async () => {
-    try {
-      const existingItemsIds = data.map(item => item.item_id);
-      const newItems = items.filter(item => !existingItemsIds.includes(item.item_id));
-
-      if (newItems.length === 0) {
-        toast.info('All items are already added to the back inventory.');
-        return;
-      }
-
-      const newBackInventoryItems = newItems.map(item => ({
-        item_id: item.item_id,
-        stock_in_date: null,
-        expiry_date: "N/A",
-        stock_damaged: 0,
-        stock_out_date: null,
-        po_id: null,
-      }));
-
-      const response = await fetch('/api/back_inventory', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newBackInventoryItems),
-      });
-
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const newBackInventory = await response.json();
-      setData([...data, ...newBackInventory]);
-      
-      router.refresh();
-    } catch (error: any) {
-      toast.error('Failed to add new back inventory: ', error.message);
-    }
-  };
-
-  const fetchPurchaseDetailsAndInventory = async () => {
-    return Promise.all([
-      fetch('/api/purchase_details/latest',{
-        method: 'GET',
-      }).then(response =>{
-        if (!response.ok) throw new Error('Failed to fetch purchase details');
-        return response.json();
-      }),
-      fetch('/api/back_inventory',{
-        method: 'GET',
-      }).then(response => {
-        if (!response.ok) throw new Error('Failed to fetch back inventory');
-        return response.json();
-      })
-    ])
-  }
-
-  const filterPurchasesByExpiryDate = (relevantPurchase: any[], now: number, daysThreshold: number = 30) => {
-    return relevantPurchase.filter((pd: { expiry_date: string | null}) => {
-      if (pd.expiry_date) {
-        const expiryDate = new Date(pd.expiry_date).getTime();
-        const daysDifference = (expiryDate - now) / (1000 * 60 * 60 * 24);
-        return daysDifference <= daysThreshold;
-      }
-      return false;
-    })
-  }
-
-  const getEarliestPurchaseDetail = (relevantPurchases: any[]) => {
-    return relevantPurchases.reduce((earliest, current) => {
-      const earliestDate = earliest.expiry_date ? new Date(earliest.expiry_date).getTime() : Infinity;
-      const currentDate = current.expiry_date ? new Date(current.expiry_date).getTime() : Infinity;
-      return currentDate < earliestDate ? current : earliest;
-    })
-  }
-
-  const checkIfAlreadyProcessed = async (pd_id: number) => {
-    try {
-      const response = await fetch(`/api/processed_purchase_details/${pd_id}`, {
-        method: 'GET',
-      });
-  
-      if (!response.ok) {
-        // If not ok, pd_id is not processed
-        return false;
-      }
-  
+      const response = await fetch("/api/shelf_location");
       const data = await response.json();
-      return data.processed; //  API returns { processed: true } or { processed: false }
+      setShelfLocations(data);
     } catch (error) {
-      console.error(`Error checking if purchase detail ID ${pd_id} is processed: `, error);
-      return false;
+      console.log("Error fetching shelf locations", error);
     }
   };
-  
 
-  const updateBackInventoryItem = async (item: BackInventoryData, purchaseToProcess: any) => {
-    const newItemStocks = item.item_stocks + (purchaseToProcess?.quantity || 0);
+  const fetchBackInventory = async (): Promise<BackInventory[]> => {
+    try {
+        const response = await fetch("/api/back_inventory");
+        const data = await response.json();
 
-    const response = await fetch(`/api/back_inventory/${item.bd_id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        stock_in_date: new Date().toISOString(),
-        expiry_date: purchaseToProcess?.expiry_date || null,
-        stock_damaged: 0,
-        po_id: purchaseToProcess?.po_id || null,
-        item_stocks: newItemStocks,
-        pd_id: purchaseToProcess?.pd_id,
-        stock_out_date: item.stock_out_date || null,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Error updating back inventory item with ID:', item.bd_id, errorData);
-      throw new Error(`Failed to update back inventory item with ID: ${item.bd_id}`);
-    }
-
-    await fetch('/api/processed_purchase_details', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        pd_id: purchaseToProcess.pd_id
-      }),
-    })
-   }
-
-   const handleStockIn = async () => {
-    try{
-      const [purchaseDetails, backInventory] = await fetchPurchaseDetailsAndInventory();
-      const now = new Date().getTime();
-
-      // Track if any items were updated
-      let itemsUpdated = false;
-
-      const updatePromises = backInventory.map(async (item: BackInventoryData) => {
-        const relevantPurchases = purchaseDetails.filter(
-          (pd: { item_id: any }) => pd.item_id === item.item_id
-        );
-
-        if (!relevantPurchases.length) {
-          console.log(`No matching purchases for item_id: ${item.item_id}`);
-          return;
-        }
-
-        const filteredPurchases = filterPurchasesByExpiryDate(relevantPurchases, now);
-
-        const purchaseToProcess = filteredPurchases.length
-          ? filteredPurchases[0]
-          : getEarliestPurchaseDetail(relevantPurchases);
-
-        const isAlreadyProcessed = await checkIfAlreadyProcessed(purchaseToProcess.pd_id);
-        if (isAlreadyProcessed) {
-          console.log(`PurchaseDetail ID ${purchaseToProcess.pd_id} already processed`);
-          return;
-        }
-
-        await updateBackInventoryItem(item, purchaseToProcess);
-        
-        // Set the flag to true when any update is made
-        itemsUpdated = true;
-      });
-
-      await Promise.all(updatePromises);
-
-      if (!itemsUpdated) {
-        toast.info('All purchase details are already processed.');
-      } else {
-        // Refresh the back inventory data if updates were made
-        const updatedBackInventoryResponse = await fetch('/api/back_inventory', {
-          method: 'GET',
+        const sortedData = data.sort((a: BackInventory, b: BackInventory) => {
+            const expiryA = new Date(a.purchased_detail.expiry_date).getTime();
+            const expiryB = new Date(b.purchased_detail.expiry_date).getTime();
+            return expiryA - expiryB;
         });
-  
-        if (!updatedBackInventoryResponse.ok) {
-          throw new Error('Failed to fetch updated back inventory');
-        }
-  
-        const updatedBackInventory = await updatedBackInventoryResponse.json();
-        setData(updatedBackInventory);
-  
-        router.refresh();
-      }
-    }catch(error: any){
-      toast.error('Failed to stock in items: ', error.message);
+
+        setInventory(sortedData);
+        return sortedData;
+    } catch (error) {
+        console.log("Error fetching back inventory", error);
+        return [];
     }
-   }
-
-    //-----------------------------------------
-
-   // Find the latest purchase detail for the current back inventory item
-  //   const latestPurchase = purchaseDetails
-  //   .filter((pd: { item_id: any; }) => pd.item_id === item.item_id)
-  //   .reduce((nearest: { expiry_date: string | number | Date; pd_id: number; }, current: { expiry_date: string | number | Date; pd_id: number; }) => {
-  //     const nearestExpiry = nearest.expiry_date ? new Date(nearest.expiry_date).getTime() : 0;
-  //     const currentExpiry = current.expiry_date ? new Date(current.expiry_date).getTime() : 0;
-
-  //     if (nearestExpiry === 0 && currentExpiry === 0) return current.pd_id > nearest.pd_id ? current : nearest;
-  //     if (nearestExpiry === 0) return current;
-  //     if (currentExpiry === 0) return nearest;
-
-  //     return Math.abs(currentExpiry - now) < Math.abs(nearestExpiry - now) ? current : nearest;
-  //   }, purchaseDetails[0]);
-  // }
-
-
-  //VIEW MODAL
-  const handleViewDetails = (item: BackInventoryData) => {
-    setSelectedItem(item);
-    setIsModalOpen(true);
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedItem(null);
+  const handleItemSelection = (inventory: BackInventory, sl_id: number, checked: boolean) => {
+    const key = `${inventory.bd_id}-${sl_id}`;  // Unique key combining bd_id and sl_id
+
+    // Update checked status
+    setIsChecked(prevChecked => ({ ...prevChecked, [key]: checked }));
+
+    // Update selected items based on the checked state
+    if (checked) {
+        // Add the selected item to the list, include sl_id for the specific shelf
+        setSelectedItemsForMove((prev) => [
+            ...prev,
+            { ...inventory, inventory_shelf: [inventory.inventory_shelf.find(shelf => shelf.sl_id === sl_id)!] }
+        ]);
+    } else {
+        // Remove the item from the selected items
+        setSelectedItemsForMove((prev) =>
+            prev.filter(
+                item => !(item.bd_id === inventory.bd_id && item.inventory_shelf.some(shelf => shelf.sl_id === sl_id))
+            )
+        );
+    }
   };
 
-  //EDIT MODAL
-  const handleEditDetails = (item: BackInventoryData) => {
-    setSelectedItem(item);
-    setIsEditModalOpen(true);
-  };
-
-  const handleSaveEdit = (updatedItem: BackInventoryData) => {
-    setData(data.map(item => item.bd_id === updatedItem.bd_id ? updatedItem : item));
-  };
-
-  const handleCloseEditModal = () => {
-    setIsEditModalOpen(false);
-    setSelectedItem(null);
-  };
-
-  //DELETE BACK INVENTORY
-  const handleDeleteItem = async (bd_id: number) => {
-    const isConfirmed = window.confirm("Are you sure you want to delete this item?");
-    if (!isConfirmed) {
+  const openMoveInventoryModal = () => {
+    if (selectedItemsForMove.length === 0) {
+      toast.error("Please select at least one item to move.");
       return;
     }
+    setIsMoveModalOpen(true);
+  };
 
-    try {
-      await fetch(`/api/back_inventory/${bd_id}`, {
-        method: 'DELETE',
-      });
+  const closeMoveInventoryModal = () => {
+    setIsMoveModalOpen(false);
+    setSelectedItemsForMove([]);
+    setIsChecked({});
+  };
 
-      setData(data.filter(item => item.bd_id !== bd_id));
-    } catch (error) {
-      console.error('Failed to delete item: ', error);
+  useEffect(() => {
+    fetchShelfLocations();
+    fetchBackInventory();
+  }, []);
+
+  const filteredShelfLocations = shelfLocations.filter(
+    (location) => location.inv_type === selectedInventoryType
+  );
+
+  const filteredInventory = selectedLocation === "All"
+  ? inventory.filter(inv => inv.inventory_shelf.some(shelf => {
+        // Ensure we find the corresponding shelf location and it matches the selected inventory type
+        const location = shelfLocations.find(loc => loc.sl_id === shelf.sl_id);
+        return location && location.inv_type === selectedInventoryType;  // Match by selected inventory type
+      }))
+  : inventory.flatMap(inv =>
+      inv.inventory_shelf
+        .filter(shelf => {
+          const location = shelfLocations.find(loc => loc.sl_id === shelf.sl_id);
+          // Match both shelf location and inventory type
+          return shelf.sl_id === selectedLocation && 
+                 shelf.quantity > 0 &&
+                 location?.inv_type === selectedInventoryType;  // Filter strictly by the selected inventory type
+        })
+        .map(shelf => ({
+          ...inv,
+          inventory_shelf: [shelf] // Only include the matching shelf
+        }))
+    );
+
+  const formatDateTime = (dateTimeString: string | null) => {
+    if (!dateTimeString || dateTimeString === "NA") {
+        return "NA";
     }
-  };
+    const expiryDate = new Date(dateTimeString);
+    const currentDate = new Date();
+    const oneWeekInMs = 7 * 24 * 60 * 60 * 1000;
 
-  // Helper functions to get names from IDs
-  const getItemName = (item_id: number) => {
-    const item = items.find(item => item.item_id === item_id);
-    return item ? item.item_name : 'Unknown Item';
-  };
+    const isExpiringSoon = expiryDate.getTime() - currentDate.getTime() <= oneWeekInMs;
 
-  const getUnitName = (unit_id: number) => {
-    const unit = units.find(unit => unit.unit_id === unit_id);
-    return unit ? unit.unit_name : 'Unknown Unit';
-  };
-
-  const getCategoryName = (category_id: number) => {
-    const category = categories.find(category => category.category_id === category_id);
-    return category ? category.category_name : 'Unknown Category';
-  };
-
-  const getLocationShelfName = (ls_id: number) => {
-    const locationShelf = locationShelves.find(ls => ls.ls_id === ls_id);
-    return locationShelf ? locationShelf.ls_name : 'Unknown Location Shelf';
-  };
-
-  //DATE FORMAT
-  const formatDateTime = (dateTimeString: string) => {
     const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+        year: "numeric",
+        month: "long",
+        day: "numeric",
     };
-    return new Date(dateTimeString).toLocaleString('en-US', options);
+
+    const formattedDate = expiryDate.toLocaleString("en-US", options);
+
+    return (
+      <span style={{ color: isExpiringSoon ? 'red' : 'inherit' }}>
+        {formattedDate}
+      </span>
+    )
   };
 
   return (
-    <div className="mt-24 ml-40 mr-40">
+    <div className="mt-24 ml-32 mr-32">
       <p className="flex text-3xl text-[#483C32] font-bold justify-center mb-2">
-        Back Inventory
+        Inventory
       </p>
 
-      <div className="flex justify-end mt-10 space-x-4">
-        <Button onClick={handleAddNewBackInventory}>Set Back Inventory</Button>
-        <Button onClick={handleStockIn}>Stock In</Button>
+      <div className="flex justify-center items-center mt-4 mb-4">
+        <span
+          onClick={() => setSelectedInventoryType("Back Inventory")}
+          className={`text-lg font-semibold cursor-pointer mr-6 ${
+            selectedInventoryType === "Back Inventory" ? "font-bold text-[#483C32]" : "text-[#6c757d]"
+          }`}
+        >
+          Back Inventory
+        </span>
+        <span
+          onClick={() => setSelectedInventoryType("Front Inventory")}
+          className={`text-lg font-semibold cursor-pointer ${
+            selectedInventoryType === "Front Inventory" ? "font-bold text-[#483C32]" : "text-[#6c757d]"
+          }`}
+        >
+          Front Inventory
+        </span>
       </div>
 
-      <div className="mt-10">
+      <div className="flex justify-center items-center mt-4 mb-4">
+        <div className="overflow-x-auto flex-1 flex items-center">
+          <span
+            className={`text-lg font-semibold mr-6 cursor-pointer relative group ${
+              selectedLocation === "All" ? "text-[#6c757d]" : "text-[#483C32]"
+            }`}
+            onClick={() => setSelectedLocation("All")}
+          >
+            All
+            <span className="absolute left-0 bottom-0 w-full h-[2px] bg-[#6c757d] scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
+          </span>
+          <span className="mx-4 h-6 w-[2px] bg-gray-300"></span>
+          <nav className="flex items-center overflow-x-auto whitespace-nowrap mr-3">
+            {filteredShelfLocations.length > 0 ? (
+              filteredShelfLocations.map((location, index) => (
+                <React.Fragment key={location.sl_id}>
+                  <span
+                    className={`text-m font-semibold cursor-pointer relative group ${
+                      selectedLocation === location.sl_id ? "text-[#6c757d]" : "text-[#483C32]"
+                    }`}
+                    onClick={() => setSelectedLocation(location.sl_id)}
+                  >
+                    {location.sl_name}
+                    <span className="absolute left-0 bottom-0 w-full h-[2px] bg-[#6c757d] scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
+                  </span>
+
+                  {index !== filteredShelfLocations.length - 1 && (
+                    <span className="mx-4 h-6 w-[2px] bg-gray-300"></span>
+                  )}
+                </React.Fragment>
+              ))
+            ) : (
+              <span className="text-lg text-gray-500">No shelf locations available</span>
+            )}
+        </nav>
+        </div>
+
+        <div className="ml-4 flex flex-row space-x-3">
+          <AddShelfLocation onModalClose={fetchShelfLocations} />
+          <AddBackInventory onModalClose={fetchBackInventory} />
+          <Button onClick={openMoveInventoryModal} className="btn-primary">
+            Move Inventory
+          </Button>
+          {isMoveModalOpen && (
+            <MoveInventory
+              onModalClose={closeMoveInventoryModal}
+              selectedItems={selectedItemsForMove}
+              refreshInventory={fetchBackInventory}
+            />
+          )}
+        </div>
+      </div>
+
+      <div className="mt-12">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-center">ID</TableHead>
+              <TableHead className="text-center">Select</TableHead>
+              <TableHead className="text-center">Item ID</TableHead>
               <TableHead className="text-center">Item Name</TableHead>
-              <TableHead className="text-center">Item Stocks</TableHead>
+              <TableHead className="text-center">Description</TableHead>
+              <TableHead className="text-center">Quantity</TableHead>
               <TableHead className="text-center">Unit</TableHead>
               <TableHead className="text-center">Category</TableHead>
-              <TableHead className="text-center">Location Shelf</TableHead>
+              <TableHead className="text-center">Shelf Location</TableHead>
+              <TableHead className="text-center">Location Type</TableHead>
               <TableHead className="text-center">Expiry Date</TableHead>
-              <TableHead className="text-center">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((item) => (
-              <TableRow key={item.bd_id}>
-                <TableCell className="text-center">{item.bd_id}</TableCell>
-                <TableCell className="text-center">{getItemName(item.item_id)}</TableCell>
-                <TableCell className="text-center">{item.item_stocks}</TableCell>
-                <TableCell className="text-center">{getUnitName(item.unit_id)}</TableCell>
-                <TableCell className="text-center">{getCategoryName(item.category_id)}</TableCell>
-                <TableCell className="text-center">{getLocationShelfName(item.ls_id)}</TableCell>
-                <TableCell className="text-center">{item.expiry_date ? formatDateTime(item.expiry_date) : 'N/A'}</TableCell>
-                <TableCell className="text-center">
-                  <Button variant="outline" className="mx-1" onClick={() => handleViewDetails(item)}>
-                    View
-                  </Button>
-                  <Button variant="outline" className="mx-1" onClick={() => handleEditDetails(item)}>
-                    Stock Out
-                  </Button>
-                  <Button variant="outline" className="mx-1" onClick={() => handleDeleteItem(item.bd_id)}>
-                    Delete
-                  </Button>
+            {filteredInventory.length > 0 ? (
+              filteredInventory.map((inventory) =>
+                inventory.inventory_shelf
+                  .filter(shelf => shelf.quantity > 0)  // Ensure only items with quantity > 0 are shown
+                  .map((shelf) => (
+                    <React.Fragment key={`${inventory.bd_id}-${shelf.sl_id}`}>
+                      <TableRow key={`${inventory.bd_id}-${shelf.sl_id}`}>
+                        <TableCell className="text-center">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(isChecked[`${inventory.bd_id}-${shelf.sl_id}`])}
+                            onChange={(e) =>
+                              handleItemSelection(inventory, shelf.sl_id, e.target.checked)
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="text-center">{inventory.purchased_detail.item.item_id}</TableCell>
+                        <TableCell className="text-center">{inventory.purchased_detail.item.item_name}</TableCell>
+                        <TableCell className="text-center">{inventory.purchased_detail.item.description}</TableCell>
+                        <TableCell className="text-center">{shelf.quantity}</TableCell>
+                        <TableCell className="text-center">{inventory.purchased_detail.item.unit.unit_name}</TableCell>
+                        <TableCell className="text-center">{inventory.purchased_detail.item.category.category_name}</TableCell>
+                        <TableCell className="text-center">{shelf.shelf_location.sl_name}</TableCell>
+                        <TableCell className="text-center">{shelf.shelf_location.inv_type}</TableCell>
+                        <TableCell className="text-center">{formatDateTime(inventory.purchased_detail.expiry_date)}</TableCell>
+                      </TableRow>
+                    </React.Fragment>
+                  ))
+              )
+            ) : (
+              <TableRow>
+                <TableCell colSpan={9} className="text-center">
+                  No inventory available.
                 </TableCell>
               </TableRow>
-            ))}
-            </TableBody>
+            )}
+          </TableBody>
         </Table>
-
-      {/* MODAL */}
       </div>
-      {isModalOpen && selectedItem &&(
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-        <div className="bg-white p-8 rounded-md shadow-md min-h-[50vh] max-h-[80vh] overflow-y-auto">
-          <h2 className="text-2xl font-bold mb-4">Item Details</h2>
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <tbody className="bg-white divide-y divide-gray-200">
-              <tr>
-                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">ID:</td>
-                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.bd_id}</td>
-              </tr>
-              <tr>
-                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Item Name:</td>
-                <td className="px-5 py-3 whitespace-nowrap">{getItemName(selectedItem.item_id)}</td>
-              </tr>
-              <tr>
-                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Stocks:</td>
-                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.item_stocks}</td>
-              </tr>
-              <tr>
-                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Unit:</td>
-                <td className="px-5 py-3 whitespace-nowrap">{getUnitName(selectedItem.unit_id)}</td>
-              </tr>
-              <tr>
-                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Category:</td>
-                <td className="px-5 py-3 whitespace-nowrap">{getCategoryName(selectedItem.category_id)}</td>
-              </tr>
-              <tr>
-                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Location Shelf:</td>
-                <td className="px-5 py-3 whitespace-nowrap">{getLocationShelfName(selectedItem.ls_id)}</td>
-              </tr>
-              <tr>
-                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Stock-In Date:</td>
-                <td className="px-5 py-3 whitespace-nowrap">{formatDateTime(selectedItem.stock_in_date)}</td>
-              </tr>
-              <tr>
-                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Expiry Date:</td>
-                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.expiry_date ? formatDateTime(selectedItem.expiry_date) : 'N/A'}</td>
-              </tr>
-              <tr>
-                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Stock Damaged:</td>
-                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.stock_damaged}</td>
-              </tr>
-              <tr>
-                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Stock Out Date:</td>
-                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.stock_out_date ? formatDateTime(selectedItem.stock_out_date) : 'N/A'}</td>
-              </tr>
-              <tr>
-                <td className="px-5 py-3 whitespace-nowrap font-medium text-gray-900">Recent PO ID:</td>
-                <td className="px-5 py-3 whitespace-nowrap">{selectedItem.po_id}</td>
-              </tr>
-            </tbody>
-          </table>
-          <Button onClick={handleCloseModal} className="mt-4">Close</Button>
-        </div>
-      </div>
-      )}
-
-      {isEditModalOpen && selectedItem && (
-        <UpdateBackInventory
-          selectedItem={selectedItem}
-          onSave={handleSaveEdit}
-          onClose={handleCloseEditModal}
-        />
-      )}
     </div>
   );
-}
-export default backInventory;
+};
+
+export default ViewBackInventory;

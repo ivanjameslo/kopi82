@@ -3,33 +3,40 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider  = "mysql"
+  url       = env("DATABASE_URL")
+  // directUrl = env("DIRECT_URL")
+}
+        
+
+model employee {
+  employee_id      Int                @id @default(autoincrement())
+  username         String
+  password         String
+  role             String
+  last_name        String
+  first_name       String
+  middle_name      String
+  // purchase_request purchase_request[]
 }
 
 //INVENTORY
 
 model back_inventory {
-  bd_id           Int              @id @default(autoincrement())
-  item_id         Int
-  item_stocks     Int
-  unit_id         Int
-  category_id     Int
-  ls_id           Int
-  stock_in_date   DateTime?
-  stock_out_date  DateTime?
-  stock_damaged   Int
-  po_id           Int?
-  expiry_date     DateTime?
-  pd_id           Int?
-  // purchase_order purchase_order[]
-  item            item             @relation(fields: [item_id], references: [item_id])
-  unit            unit             @relation(fields: [unit_id], references: [unit_id])
-  category        category         @relation(fields: [category_id], references: [category_id])
-  location_shelf  location_shelf   @relation(fields: [ls_id], references: [ls_id])
-  front_inventory front_inventory?
-  purchase_order  purchase_order?   @relation(fields: [po_id], references: [po_id])
-  purchase_details purchase_details? @relation(fields: [pd_id], references: [pd_id])
+  bd_id                   Int               @id @default(autoincrement())
+  item_id                 Int
+  pd_id                   Int 
+  pi_id                   Int?         
+  stock_in_date           DateTime?
+  stock_out_date          DateTime?
+  stock_damaged           Int
+  stock_used              Int
+  front_inventory         front_inventory?
+  purchased_item          purchased_item?   @relation(fields: [pi_id], references: [pi_id])
+  purchased_detail        purchased_detail? @relation(fields: [pd_id], references: [pd_id])
+  inventory_shelf         inventory_shelf[]
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
 }
 
 model front_inventory {
@@ -42,73 +49,115 @@ model front_inventory {
   stock_out_date DateTime?
   product_id     Int?
   back_inventory back_inventory @relation(fields: [bd_id], references: [bd_id])
-  product        product?        @relation(fields: [product_id], references: [product_id])
+  product        product?       @relation(fields: [product_id], references: [product_id])
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
   //product product[]
 }
 
-model purchase_order {
-  po_id            Int                @id @default(autoincrement())
+// model purchase_request {
+//   pr_id        Int      @id @default(autoincrement())
+//   item_id      Int
+//   quantity     Int
+//   employee_id  Int
+//   date_ordered DateTime @default(now())
+//   status       String
+//   item         item     @relation(fields: [item_id], references: [item_id])
+//   employee     employee @relation(fields: [employee_id], references: [employee_id])
+//   createdAt    DateTime @default(now())
+// }
+
+model purchased_item {
+  pi_id            Int                @id @default(autoincrement())
   receipt_no       Int
   purchase_date    DateTime           @default(now())
-  purchase_details purchase_details[]
+  purchased_detail purchased_detail[]
   back_inventory   back_inventory[]
+  createdAt        DateTime           @default(now())
 }
 
-model purchase_details {
-  pd_id          Int            @id @default(autoincrement())
-  po_id          Int
-  item_id        Int
-  quantity       Int
-  unit_id        Int
-  price          Float
-  expiry_date    DateTime
-  purchase_order purchase_order @relation(fields: [po_id], references: [po_id])
-  item           item           @relation(fields: [item_id], references: [item_id])
-  unit           unit           @relation(fields: [unit_id], references: [unit_id])
-  back_inventory back_inventory[]
+model purchased_detail {
+  pd_id                      Int                        @id @default(autoincrement())
+  pi_id                      Int
+  item_id                    Int
+  quantity                   Int
+  unit_id                    Int
+  category_id                Int
+  price                      Float
+  expiry_date                DateTime?
+  supplier_id                Int
+  purchased_item             purchased_item             @relation(fields: [pi_id], references: [pi_id])
+  item                       item                       @relation(fields: [item_id], references: [item_id])
+  unit                       unit                       @relation(fields: [unit_id], references: [unit_id])
+  category                   category                   @relation(fields: [category_id], references: [category_id])
+  back_inventory             back_inventory[]
   processed_purchase_details ProcessedPurchaseDetails[]
+  supplier                   supplier                   @relation(fields: [supplier_id], references: [supplier_id])
+  createdAt                  DateTime                   @default(now())
 }
 
 model ProcessedPurchaseDetails {
-  ppd_id         Int            @id @default(autoincrement())
-  pd_id          Int            @unique
-  processed_at   DateTime       @default(now())
-  purchase_details purchase_details @relation(fields: [pd_id], references: [pd_id])
+  ppd_id           Int              @id @default(autoincrement())
+  pd_id            Int              @unique
+  processed_at     DateTime         @default(now())
+  purchased_detail purchased_detail @relation(fields: [pd_id], references: [pd_id])
 }
 
 model unit {
-  unit_id   Int    @id @default(autoincrement())
-  unit_name String 
-  item      item[]
-  purchase_details purchase_details[]
-  back_inventory back_inventory[]
+  unit_id          Int                @id @default(autoincrement())
+  unit_name        String
+  item             item[]
+  purchased_detail purchased_detail[]
+  // back_inventory back_inventory[]
 }
 
 model category {
   category_id   Int    @id @default(autoincrement())
-  category_name String 
+  category_name String
   item          item[]
-  back_inventory back_inventory[]
+  purchased_detail purchased_detail[]
+  // back_inventory back_inventory[]
 }
 
-model location_shelf {
-  ls_id   Int    @id @default(autoincrement())
-  ls_name String 
-  item    item[]
-  back_inventory back_inventory[]
+model shelf_location {
+  sl_id   Int    @id @default(autoincrement())
+  sl_name String
+  inv_type String
+  inventory_shelf inventory_shelf[]
+}
+
+model inventory_shelf {
+  is_id   Int    @id @default(autoincrement())
+  bd_id  Int
+  sl_id  Int
+  quantity Int
+  hidden      Boolean  @default(false)
+  shelf_location shelf_location @relation(fields: [sl_id], references: [sl_id])
+  back_inventory back_inventory @relation(fields: [bd_id], references: [bd_id])
+  @@unique([bd_id, sl_id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model item {
   item_id          Int                @id @default(autoincrement())
-  item_name        String             
-  unit_id          Int                
-  category_id      Int                
-  ls_id            Int                
+  item_name        String
+  description      String
+  unit_id          Int
+  category_id      Int
   unit             unit               @relation(fields: [unit_id], references: [unit_id])
   category         category           @relation(fields: [category_id], references: [category_id])
-  location_shelf   location_shelf     @relation(fields: [ls_id], references: [ls_id])
-  back_inventory   back_inventory[]
-  purchase_details purchase_details[]
+  purchased_detail purchased_detail[]
+  // purchase_request purchase_request[]
+  createdAt        DateTime           @default(now())
+}
+
+model supplier {
+  supplier_id   Int    @id @default(autoincrement())
+  supplier_name String
+  contact_no    String
+  address       String
+  purchased_detail purchased_detail[]
 }
 
 //PRODUCT
@@ -125,6 +174,8 @@ model product {
   status          String
   description     String
   image_url       String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
   //fd_id Int @unique
   //front_inventory front_inventory @relation(fields: [fd_id], references: [fd_id])
   front_inventory front_inventory[]

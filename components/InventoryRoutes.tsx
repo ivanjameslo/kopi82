@@ -17,7 +17,7 @@ const InventoryRoutes = () => {
   return (
     <div className="bg-[url('/darkbackground.png')] bg-cover bg-center min-h-screen">
       <div className="flex justify-center gap-3">
-        <Card className="mt-96 bg-black border-none">
+        {/* <Card className="mt-96 bg-black border-none">
           <CardHeader>
             <CardTitle className="text-white">Front Inventory</CardTitle>
             <CardDescription className="text-white font-light">
@@ -33,13 +33,13 @@ const InventoryRoutes = () => {
               </Link>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         <Card className="mt-96 bg-black border-none">
           <CardHeader>
-            <CardTitle className="text-white">Back Inventory</CardTitle>
+            <CardTitle className="text-white">Inventory</CardTitle>
             <CardDescription className="text-white font-light">
-              Make changes to your Back Inventory.
+              Make changes to your Inventory.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -55,14 +55,14 @@ const InventoryRoutes = () => {
 
         <Card className="mt-96 bg-black border-none">
           <CardHeader>
-            <CardTitle className="text-white">Purchase Order</CardTitle>
+            <CardTitle className="text-white">Purchased Item</CardTitle>
             <CardDescription className="text-white font-light">
-              View your Purchase Order archive.
+              View your Purchased Item archive.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex justify-center gap-5">
-              <Link href="/PurchaseOrder">
+              <Link href="/PurchasedItem">
                 <Button variant="outline" className="pl-28 pr-28">
                   View
                 </Button>
