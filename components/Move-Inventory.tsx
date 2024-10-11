@@ -39,12 +39,15 @@ interface BackInventory {
 interface MoveInventoryProps {
     onModalClose?: () => void;
     selectedItems: BackInventory[];  // Pass selected items from the table
+    refreshInventory: () => void;
 }
 
-const MoveInventory = ({ onModalClose, selectedItems }: MoveInventoryProps) => {
+const MoveInventory = ({ onModalClose, selectedItems, refreshInventory }: MoveInventoryProps) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [localSelectedItems, setLocalSelectedItems] = useState<Array<{bd_id: number; sl_id: number; quantity: number | null; newSlId: number | null}>>([]);
     const [shelfLocations, setShelfLocations] = useState<ShelfLocation[]>([]);
+    const [isSubmitting, setIsSubmitting] = useState(false); // New state to track form submission
+    const [hasInteracted, setHasInteracted] = useState<Record<number, boolean>>({}); // Track user interaction
 
     // Fetch shelf locations (example API)
     const fetchShelfLocations = async () => {
@@ -85,6 +88,11 @@ const MoveInventory = ({ onModalClose, selectedItems }: MoveInventoryProps) => {
         setLocalSelectedItems(
             localSelectedItems.map(item => item.bd_id === bd_id && item.sl_id === sl_id ? { ...item, quantity } : item)
         );
+         // Mark the input as "interacted" when the user types into it
+         setHasInteracted((prev) => ({
+            ...prev,
+            [bd_id]: true,
+        }));
     };
 
     const isInvalidQuantity = (bd_id: number, sl_id: number) => {
@@ -94,58 +102,85 @@ const MoveInventory = ({ onModalClose, selectedItems }: MoveInventoryProps) => {
       };
 
     // Handle location change
-    const handleLocationChange = (bd_id: number, sl_id: number, newSlId: number) => {
+    const handleLocationChange = (bd_id: number, sl_id: number, newShelfId: number) => {
+        console.log(`Updating shelf location for bd_id: ${bd_id}, sl_id: ${sl_id}, newShelfId: ${newShelfId}`);
         setLocalSelectedItems(
-            localSelectedItems.map(item => item.bd_id === bd_id && item.sl_id === sl_id ? { ...item, newSlId } : item)
+            localSelectedItems.map(item =>
+                item.bd_id === bd_id && item.sl_id === sl_id
+                    ? { ...item, newSlId: newShelfId }  // Store new shelf ID separately
+                    : item
+            )
         );
     };
-
+    
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        for (const item of localSelectedItems) {
+        setIsSubmitting(true); // Mark the form as submitting
+    
+        // Construct the payload expected by the API
+        const movements = localSelectedItems.map(item => {
             const originalItem = selectedItems.find(inv => inv.bd_id === item.bd_id);
-            const shelfEntry = originalItem?.inventory_shelf.find(
-                shelf => shelf.sl_id === item.sl_id
-            );
-            if (!shelfEntry || !item.quantity || item.quantity > shelfEntry.quantity) {
-                toast.error(`Invalid quantity for ${originalItem?.purchased_detail.item.item_name}`);
-                return;
-            }
-            if (!item.newSlId) {
-                toast.error(`Please select a new location for ${originalItem?.purchased_detail.item.item_name}`);
-                return;
-            }
-        }
-
+            const isMovedBackToOriginal = item.newSlId === item.sl_id;
+    
+            return {
+                bd_id: item.bd_id,
+                source_sl_id: item.sl_id,
+                destination_sl_id: item.newSlId,
+                quantity: item.quantity,
+                hidden: isMovedBackToOriginal ? false : true  // Use false if moved back to original shelf
+            };
+        });
+    
+        // Log the exact payload being sent to the backend
+        console.log("Submitting movements: ", movements);
+    
         try {
             const response = await fetch("/api/move_inventory", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ items: localSelectedItems }),
+                body: JSON.stringify({ movements }),
             });
+    
             if (!response.ok) throw new Error("Failed to move inventory");
-
+    
             toast.success("Inventory moved successfully!");
-            setLocalSelectedItems([]); // Clear selected items after submission
+            setLocalSelectedItems([]);
+            setIsSubmitting(false);
+    
             if (onModalClose) onModalClose();
-            setIsModalOpen(false); // Close modal
+            setIsModalOpen(false);
+            await refreshInventory(); // Refresh the inventory table
         } catch (error: any) {
             toast.error(error.message);
         }
     };
-
+    
     // Function to filter locations
-    const getFilteredLocations = (shelfName: string) => {
-        // If the item is in "Raw Meat", only allow it to be moved to "Meat Prep"
-        if (shelfName === "Raw Meat") {
+    const getFilteredLocations = (shelfName: string, categoryName: string) => {
+        if (categoryName === "Meat" && shelfName === "Raw Meat") {
             return shelfLocations.filter(location => location.sl_name === "Meat Prep");
         }
-        return shelfLocations; // Otherwise, allow all locations
+        if (categoryName === "Seafood" && shelfName === "Raw Seafood") {
+            return shelfLocations.filter(location => location.sl_name === "Seafood Prep");
+        }
+        return shelfLocations.filter(location => 
+            location.sl_name !== "Raw Meat" &&
+            location.sl_name !== "Raw Seafood" &&
+            location.sl_name !== "Meat Prep" &&
+            location.sl_name !== "Seafood Prep"
+        );
     };
 
     return (
         <div>
-            <Dialog open={isModalOpen} onOpenChange={() => { setIsModalOpen(!isModalOpen); setLocalSelectedItems([]); }}>
+            <Dialog open={isModalOpen} onOpenChange={(isOpen) => {
+                if (!isOpen) {
+                    setIsModalOpen(false);
+                    setLocalSelectedItems([]); // Reset local state
+                    setIsSubmitting(false); // Reset the submission state
+                    if (onModalClose) onModalClose(); // Notify parent
+                }
+            }}>
                 <DialogContent className="w-full max-w-5xl max-h-[80vh] overflow-y-auto p-6">
                     <DialogHeader>
                         <DialogTitle className="text-2xl font-bold">Move Inventory</DialogTitle>
@@ -169,7 +204,7 @@ const MoveInventory = ({ onModalClose, selectedItems }: MoveInventoryProps) => {
                                                                 type="number"
                                                                 value={localSelectedItems.find(selectedItem => selectedItem.bd_id === inventory.bd_id && selectedItem.sl_id === shelf.sl_id)?.quantity || ""}
                                                                 onChange={(e) => handleQuantityChange(inventory.bd_id, shelf.sl_id, e.target.value)}
-                                                                className={`border ${isInvalidQuantity(inventory.bd_id, shelf.sl_id) ? 'border-red-500' : 'border-gray-300'} rounded px-3 py-1 w-48 focus:outline-none`}
+                                                                className={`border ${hasInteracted[inventory.bd_id] && isInvalidQuantity(inventory.bd_id, shelf.sl_id) ? 'border-red-500' : 'border-gray-300'} rounded px-3 py-1 w-48 focus:outline-none`}
                                                                 placeholder={`Max: ${String(shelf.quantity)}`}
                                                                 min={0}
                                                                 max={shelf.quantity}
@@ -178,12 +213,12 @@ const MoveInventory = ({ onModalClose, selectedItems }: MoveInventoryProps) => {
                                                         <div>
                                                             <label className="block text-sm font-semibold">New Location</label>
                                                             <select
+                                                                value={localSelectedItems.find(selectedItem => selectedItem.bd_id === inventory.bd_id && selectedItem.sl_id === shelf.sl_id)?.newSlId || ""}
                                                                 onChange={(e) => handleLocationChange(inventory.bd_id, shelf.sl_id, Number(e.target.value))}
                                                                 className="border border-gray-300 rounded px-3 py-1 w-48 focus:outline-none"
                                                             >
                                                                 <option value="" disabled>Select Location</option>
-                                                                {/* Use filtered locations based on the current shelf */}
-                                                                {getFilteredLocations(shelf.shelf_location.sl_name).map((location) => (
+                                                                {getFilteredLocations(shelf.shelf_location.sl_name, inventory.purchased_detail.item.category.category_name).map((location) => (
                                                                     <option key={location.sl_id} value={location.sl_id}>{location.sl_name}</option>
                                                                 ))}
                                                             </select>

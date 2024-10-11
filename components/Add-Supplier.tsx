@@ -22,6 +22,8 @@ const AddSupplier = () => {
   });
   const [suppliers, setSuppliers] = useState<SupplierData[]>([]);
   const [selectedSupplier, setSelectedSupplier] = useState<SupplierData | null>(null); // For edit mode
+  const [isContactInvalid, setIsContactInvalid] = useState(false);
+  const [toastShown, setToastShown] = useState(false);
 
   // Fetch suppliers when modal opens
   useEffect(() => {
@@ -53,10 +55,19 @@ const AddSupplier = () => {
     const { name, value } = e.target;
     setSupplierForm({ ...supplierForm, [name]: value });
 
-    if (name === "contact_number") {
-      const isContactNumeric = /^\d*$/.test(value);
-      if (!isContactNumeric) {
-        toast.error("Contact number must contain only numbers!");
+    if (name === "contact_no") {
+      const isContactValid = /^[\d+]*$/.test(value); // Allow digits and '+'
+      setIsContactInvalid(!isContactValid);
+    
+      // Show toast only once if input is invalid
+      if (!isContactValid && !toastShown) {
+        toast.error("Contact number must contain only numbers and '+'!");
+        setToastShown(true);
+      }
+    
+      // Reset toast if input becomes valid again
+      if (isContactValid) {
+        setToastShown(false);
       }
     }
   };
@@ -178,16 +189,17 @@ const AddSupplier = () => {
               placeholder="Contact Number"
               value={supplierForm.contact_no}
               onChange={handleSupplierChange}
-              className="peer border border-[#C4C4C4] rounded-lg h-10 pl-2 w-full 
-                placeholder-transparent focus:outline-none focus:ring-2 focus:ring-[#6c757d] pt-4 pb-4 mb-1"
+              className={`peer border ${isContactInvalid ? 'border-red-500 focus:ring-[#dd5454]'  : 'border-[#C4C4C4]'} rounded-lg h-10 pl-2 w-full 
+                placeholder-transparent focus:outline-none focus:ring-2 focus:ring-[#6c757d] pt-4 pb-4 mb-1`} 
             />
             <label
-                htmlFor="contact_no"
-                className={`absolute left-2 text-gray-500 transition-all 
-                  ${supplierForm.contact_no ? '-top-4 text-sm text-[#6c757d]' : 'top-2 text-base text-gray-400'} 
-                  peer-focus:-top-4 peer-focus:text-sm peer-focus:text-[#6c757d] bg-white px-1`}
-                >
-                Contact Number
+              htmlFor="contact_no"
+              className={`absolute left-2 text-gray-500 transition-all 
+                ${supplierForm.contact_no ? '-top-4 text-sm' : 'top-2 text-base'} 
+                ${isContactInvalid ? 'text-red-500' : 'text-[#6c757d]'}
+                peer-focus:-top-4 peer-focus:text-sm peer-focus:${isContactInvalid ? 'text-red-500' : 'text-[#6c757d]'} bg-white px-1`}
+            >
+              Contact Number
             </label>
           </div>
           <div className="relative w-full mb-4">

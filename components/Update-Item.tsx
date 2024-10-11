@@ -37,23 +37,25 @@ const UpdateItemModal: React.FC<EditItemModalProps> = ({ selectedItem, unitOptio
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        console.log(`Field changed: ${name}, New Value: ${value}`);
+        setFormData({ ...formData, [name]: name === 'unit_id' || name === 'category_id' ? Number(value) : value });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        // Build updated item object based on form data
-        const updatedData = {
+    
+        console.log('Submitting form data:', formData);
+    
+        const updatedData: ItemData = {
             ...selectedItem,
             item_name: formData.item_name,
             description: formData.description,
-            unit: unitOptions.find(u => u.unit_id === parseInt(formData.unit_id.toString()))!, // Map back to unit object
-            category: categoryOptions.find(c => c.category_id === parseInt(formData.category_id.toString()))!, // Map back to category object
+            unit: { unit_id: formData.unit_id, unit_name: unitOptions.find(u => u.unit_id === formData.unit_id)?.unit_name || '' },
+            category: { category_id: formData.category_id, category_name: categoryOptions.find(c => c.category_id === formData.category_id)?.category_name || '' },
         };
-
-        onSave(updatedData);  // Pass updated item to parent component
-    };
+    
+        onSave(updatedData);  
+    };     
 
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
@@ -84,29 +86,29 @@ const UpdateItemModal: React.FC<EditItemModalProps> = ({ selectedItem, unitOptio
                         <label className="block mb-1 font-medium">Unit:</label>
                         <select
                             name="unit_id"
-                            value={formData.unit_id.toString()}
+                            value={formData.unit_id}
                             onChange={handleChange}
                             className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"
                         >
-                            <option value="" disabled hidden>Select Unit</option>
-                            {unitOptions.map((unit) => (
-                                <option key={unit.unit_id} value={unit.unit_id.toString()}>
-                                    {unit.unit_name}
-                                </option>
-                            ))}
+                        <option value="" disabled>Select Unit</option>
+                        {unitOptions.map((unit) => (
+                            <option key={unit.unit_id} value={unit.unit_id}>
+                            {unit.unit_name}
+                            </option>
+                        ))}
                         </select>
                     </div>
                     <div className="mb-4">
                         <label className="block mb-1 font-medium">Category:</label>
                         <select
                             name="category_id"
-                            value={formData.category_id.toString()}
+                            value={formData.category_id}
                             onChange={handleChange}
                             className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"
                         >
-                            <option value="" disabled hidden>Select Category</option>
+                            <option value="" disabled>Select Category</option>
                             {categoryOptions.map((category) => (
-                                <option key={category.category_id} value={category.category_id.toString()}>
+                                <option key={category.category_id} value={category.category_id}>
                                     {category.category_name}
                                 </option>
                             ))}

@@ -4,10 +4,14 @@ import React, { useEffect, useState } from 'react';
 import AddShelfLocation from '@/components/Add-ShelfLocation';
 import AddBackInventory from '@/components/Add-BackInventory';
 import MoveInventory from '@/components/Move-Inventory';
-import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { toast } from 'react-toastify';
+import { Button } from './ui/button';
+import { FaArrowRightArrowLeft } from "react-icons/fa6";
 
 interface ShelfLocation {
   sl_id: number;
+  inv_type: "Front Inventory" | "Back Inventory";
   sl_name: string;
 }
 
@@ -31,18 +35,22 @@ interface BackInventory {
     sl_id: number;
     quantity: number;
     shelf_location: {
+      sl_id: number;
       sl_name: string;
+      inv_type: "Front Inventory" | "Back Inventory";
     };
+    hidden: boolean;
   }>;
 }
 
-
 const ViewBackInventory = () => {
   const [shelfLocations, setShelfLocations] = useState<ShelfLocation[]>([]);
-  const [backInventory, setBackInventory] = useState<BackInventory[]>([]);
-  const [selectedLocation, setSelectedLocation] = useState<string>("All");
-  const [selectedItems, setSelectedItems] = useState<Array<BackInventory>>([]);
+  const [inventory, setInventory] = useState<BackInventory[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<number | string>("All");
   const [selectedItemsForMove, setSelectedItemsForMove] = useState<BackInventory[]>([]);
+  const [isMoveModalOpen, setIsMoveModalOpen] = useState<boolean>(false);
+  const [isChecked, setIsChecked] = useState<Record<string, boolean>>({});
+  const [selectedInventoryType, setSelectedInventoryType] = useState<"Back Inventory" | "Front Inventory">("Back Inventory");
 
   const fetchShelfLocations = async () => {
     try {
@@ -54,23 +62,60 @@ const ViewBackInventory = () => {
     }
   };
 
-  const fetchBackInventory = async () => {
+  const fetchBackInventory = async (): Promise<BackInventory[]> => {
     try {
         const response = await fetch("/api/back_inventory");
         const data = await response.json();
 
-        // Sort the backInventory by expiry_date from nearest to farthest
         const sortedData = data.sort((a: BackInventory, b: BackInventory) => {
             const expiryA = new Date(a.purchased_detail.expiry_date).getTime();
             const expiryB = new Date(b.purchased_detail.expiry_date).getTime();
-            return expiryA - expiryB; // Nearest expiry date first
+            return expiryA - expiryB;
         });
 
-        console.log('Sorted Back Inventory Data:', sortedData);
-        setBackInventory(sortedData);
+        setInventory(sortedData);
+        return sortedData;
     } catch (error) {
         console.log("Error fetching back inventory", error);
+        return [];
     }
+  };
+
+  const handleItemSelection = (inventory: BackInventory, sl_id: number, checked: boolean) => {
+    const key = `${inventory.bd_id}-${sl_id}`;  // Unique key combining bd_id and sl_id
+
+    // Update checked status
+    setIsChecked(prevChecked => ({ ...prevChecked, [key]: checked }));
+
+    // Update selected items based on the checked state
+    if (checked) {
+        // Add the selected item to the list, include sl_id for the specific shelf
+        setSelectedItemsForMove((prev) => [
+            ...prev,
+            { ...inventory, inventory_shelf: [inventory.inventory_shelf.find(shelf => shelf.sl_id === sl_id)!] }
+        ]);
+    } else {
+        // Remove the item from the selected items
+        setSelectedItemsForMove((prev) =>
+            prev.filter(
+                item => !(item.bd_id === inventory.bd_id && item.inventory_shelf.some(shelf => shelf.sl_id === sl_id))
+            )
+        );
+    }
+  };
+
+  const openMoveInventoryModal = () => {
+    if (selectedItemsForMove.length === 0) {
+      toast.error("Please select at least one item to move.");
+      return;
+    }
+    setIsMoveModalOpen(true);
+  };
+
+  const closeMoveInventoryModal = () => {
+    setIsMoveModalOpen(false);
+    setSelectedItemsForMove([]);
+    setIsChecked({});
   };
 
   useEffect(() => {
@@ -78,21 +123,30 @@ const ViewBackInventory = () => {
     fetchBackInventory();
   }, []);
 
-  const handleItemSelection = (inventory: BackInventory, checked: boolean) => {
-    if (checked) {
-      setSelectedItemsForMove([...selectedItemsForMove, inventory]);
-    } else {
-      setSelectedItemsForMove(
-        selectedItemsForMove.filter(item => item.bd_id !== inventory.bd_id)
-      );
-    }
-  };
+  const filteredShelfLocations = shelfLocations.filter(
+    (location) => location.inv_type === selectedInventoryType
+  );
 
   const filteredInventory = selectedLocation === "All"
-    ? backInventory
-    : backInventory.filter(inventory =>
-        inventory.inventory_shelf.some(shelf => shelf.shelf_location.sl_name === selectedLocation)
-      );
+  ? inventory.filter(inv => inv.inventory_shelf.some(shelf => {
+        // Ensure we find the corresponding shelf location and it matches the selected inventory type
+        const location = shelfLocations.find(loc => loc.sl_id === shelf.sl_id);
+        return location && location.inv_type === selectedInventoryType;  // Match by selected inventory type
+      }))
+  : inventory.flatMap(inv =>
+      inv.inventory_shelf
+        .filter(shelf => {
+          const location = shelfLocations.find(loc => loc.sl_id === shelf.sl_id);
+          // Match both shelf location and inventory type
+          return shelf.sl_id === selectedLocation && 
+                 shelf.quantity > 0 &&
+                 location?.inv_type === selectedInventoryType;  // Filter strictly by the selected inventory type
+        })
+        .map(shelf => ({
+          ...inv,
+          inventory_shelf: [shelf] // Only include the matching shelf
+        }))
+    );
 
   const formatDateTime = (dateTimeString: string | null) => {
     if (!dateTimeString || dateTimeString === "NA") {
@@ -119,14 +173,31 @@ const ViewBackInventory = () => {
     )
   };
 
-
   return (
-    <div className="mt-24 ml-40 mr-40">
+    <div className="mt-24 ml-32 mr-32">
       <p className="flex text-3xl text-[#483C32] font-bold justify-center mb-2">
-        Back Inventory
+        Inventory
       </p>
 
-      {/* Layout for Add Shelf Location Button and Scrollable Nav */}
+      <div className="flex justify-center items-center mt-4 mb-4">
+        <span
+          onClick={() => setSelectedInventoryType("Back Inventory")}
+          className={`text-lg font-semibold cursor-pointer mr-6 ${
+            selectedInventoryType === "Back Inventory" ? "font-bold text-[#483C32]" : "text-[#6c757d]"
+          }`}
+        >
+          Back Inventory
+        </span>
+        <span
+          onClick={() => setSelectedInventoryType("Front Inventory")}
+          className={`text-lg font-semibold cursor-pointer ${
+            selectedInventoryType === "Front Inventory" ? "font-bold text-[#483C32]" : "text-[#6c757d]"
+          }`}
+        >
+          Front Inventory
+        </span>
+      </div>
+
       <div className="flex justify-center items-center mt-4 mb-4">
         <div className="overflow-x-auto flex-1 flex items-center">
           <span
@@ -139,22 +210,21 @@ const ViewBackInventory = () => {
             <span className="absolute left-0 bottom-0 w-full h-[2px] bg-[#6c757d] scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
           </span>
           <span className="mx-4 h-6 w-[2px] bg-gray-300"></span>
-
-          <nav className="flex items-center">
-            {shelfLocations.length > 0 ? (
-              shelfLocations.map((location, index) => (
+          <nav className="flex items-center overflow-x-auto whitespace-nowrap mr-3">
+            {filteredShelfLocations.length > 0 ? (
+              filteredShelfLocations.map((location, index) => (
                 <React.Fragment key={location.sl_id}>
                   <span
-                    className={`text-lg font-semibold cursor-pointer relative group ${
-                      selectedLocation === location.sl_name ? "text-[#6c757d]" : "text-[#483C32]"
+                    className={`text-m font-semibold cursor-pointer relative group ${
+                      selectedLocation === location.sl_id ? "text-[#6c757d]" : "text-[#483C32]"
                     }`}
-                    onClick={() => setSelectedLocation(location.sl_name)}
+                    onClick={() => setSelectedLocation(location.sl_id)}
                   >
                     {location.sl_name}
                     <span className="absolute left-0 bottom-0 w-full h-[2px] bg-[#6c757d] scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
                   </span>
 
-                  {index !== shelfLocations.length - 1 && (
+                  {index !== filteredShelfLocations.length - 1 && (
                     <span className="mx-4 h-6 w-[2px] bg-gray-300"></span>
                   )}
                 </React.Fragment>
@@ -162,17 +232,25 @@ const ViewBackInventory = () => {
             ) : (
               <span className="text-lg text-gray-500">No shelf locations available</span>
             )}
-          </nav>
+        </nav>
         </div>
 
         <div className="ml-4 flex flex-row space-x-3">
           <AddShelfLocation onModalClose={fetchShelfLocations} />
           <AddBackInventory onModalClose={fetchBackInventory} />
-          <MoveInventory onModalClose={fetchBackInventory} selectedItems={selectedItemsForMove}/>
+          <Button onClick={openMoveInventoryModal} className="btn-primary">
+            Move Inventory
+          </Button>
+          {isMoveModalOpen && (
+            <MoveInventory
+              onModalClose={closeMoveInventoryModal}
+              selectedItems={selectedItemsForMove}
+              refreshInventory={fetchBackInventory}
+            />
+          )}
         </div>
       </div>
 
-      {/* Table */}
       <div className="mt-12">
         <Table>
           <TableHeader>
@@ -185,33 +263,45 @@ const ViewBackInventory = () => {
               <TableHead className="text-center">Unit</TableHead>
               <TableHead className="text-center">Category</TableHead>
               <TableHead className="text-center">Shelf Location</TableHead>
+              <TableHead className="text-center">Location Type</TableHead>
               <TableHead className="text-center">Expiry Date</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredInventory.length > 0 ? (
-              filteredInventory.map((inventory) => (
-                <React.Fragment key={inventory.bd_id}>
-                  {inventory.inventory_shelf.map((shelf) => (
-                    <TableRow key={shelf.sl_id}>
-                      <TableCell className="text-center">
-                        <input type="checkbox" onChange={(e) => handleItemSelection(inventory, e.target.checked)}/>
-                      </TableCell>
-                      <TableCell className="text-center">{inventory.purchased_detail.item.item_id}</TableCell>
-                      <TableCell className="text-center">{inventory.purchased_detail.item.item_name}</TableCell>
-                      <TableCell className="text-center">{inventory.purchased_detail.item.description}</TableCell>
-                      <TableCell className="text-center">{shelf.quantity}</TableCell>
-                      <TableCell className="text-center">{inventory.purchased_detail.item.unit.unit_name}</TableCell>
-                      <TableCell className="text-center">{inventory.purchased_detail.item.category.category_name}</TableCell>
-                      <TableCell className="text-center">{shelf.shelf_location.sl_name}</TableCell>
-                      <TableCell className="text-center">{formatDateTime(inventory.purchased_detail.expiry_date)}</TableCell>
-                    </TableRow>
-                  ))}
-                </React.Fragment>
-              ))
+              filteredInventory.map((inventory) =>
+                inventory.inventory_shelf
+                  .filter(shelf => shelf.quantity > 0)  // Ensure only items with quantity > 0 are shown
+                  .map((shelf) => (
+                    <React.Fragment key={`${inventory.bd_id}-${shelf.sl_id}`}>
+                      <TableRow key={`${inventory.bd_id}-${shelf.sl_id}`}>
+                        <TableCell className="text-center">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(isChecked[`${inventory.bd_id}-${shelf.sl_id}`])}
+                            onChange={(e) =>
+                              handleItemSelection(inventory, shelf.sl_id, e.target.checked)
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="text-center">{inventory.purchased_detail.item.item_id}</TableCell>
+                        <TableCell className="text-center">{inventory.purchased_detail.item.item_name}</TableCell>
+                        <TableCell className="text-center">{inventory.purchased_detail.item.description}</TableCell>
+                        <TableCell className="text-center">{shelf.quantity}</TableCell>
+                        <TableCell className="text-center">{inventory.purchased_detail.item.unit.unit_name}</TableCell>
+                        <TableCell className="text-center">{inventory.purchased_detail.item.category.category_name}</TableCell>
+                        <TableCell className="text-center">{shelf.shelf_location.sl_name}</TableCell>
+                        <TableCell className="text-center">{shelf.shelf_location.inv_type}</TableCell>
+                        <TableCell className="text-center">{formatDateTime(inventory.purchased_detail.expiry_date)}</TableCell>
+                      </TableRow>
+                    </React.Fragment>
+                  ))
+              )
             ) : (
               <TableRow>
-                <TableCell colSpan={9} className="text-center">No back inventory available.</TableCell>
+                <TableCell colSpan={9} className="text-center">
+                  No inventory available.
+                </TableCell>
               </TableRow>
             )}
           </TableBody>

@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/db'; // Assuming you have a prisma instance
+import prisma from '@/lib/db';
 
 export async function POST(request: NextRequest) {
     try {
-        const { movements } = await request.json(); // Get the movements from the request body
-        
-        // Validate the movements array
-        if (!movements || !Array.isArray(movements) || movements.length === 0) {
+        const body = await request.json();  // Get the body of the request
+        const { movements } = body;
+
+        // Log the received movements to check the payload
+        console.log("Received movements: ", movements);
+
+        if (!movements || !Array.isArray(movements)) {
             return NextResponse.json({ error: "No movements provided or invalid format" }, { status: 400 });
         }
 
-        // Process each movement
         for (const move of movements) {
-            const { bd_id, source_sl_id, destination_sl_id, quantity } = move;
+            const { bd_id, source_sl_id, destination_sl_id, quantity, hidden } = move;
 
-            // Fetch the current inventory for the original location
             const sourceInventory = await prisma.inventory_shelf.findFirst({
                 where: {
                     bd_id,
@@ -26,7 +27,20 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ error: `Invalid quantity for movement from shelf ${source_sl_id}` }, { status: 400 });
             }
 
-            // Check if the destination already has an entry for this item
+            // Log the hidden value before making updates
+            console.log(`Updating item with bd_id: ${bd_id}, hidden: ${hidden}`);
+
+            if (source_sl_id === destination_sl_id) {
+                await prisma.inventory_shelf.update({
+                    where: { is_id: sourceInventory.is_id },
+                    data: {
+                        quantity: sourceInventory.quantity + quantity,
+                        hidden: false  // Ensure hidden updates correctly
+                    },
+                });
+                continue;
+            }
+
             let destinationInventory = await prisma.inventory_shelf.findFirst({
                 where: {
                     bd_id,
@@ -35,7 +49,6 @@ export async function POST(request: NextRequest) {
             });
 
             if (destinationInventory) {
-                // If destination shelf already has this item, update the quantity
                 await prisma.inventory_shelf.update({
                     where: { is_id: destinationInventory.is_id },
                     data: {
@@ -43,7 +56,6 @@ export async function POST(request: NextRequest) {
                     },
                 });
             } else {
-                // If destination shelf doesn't have this item, create a new entry
                 await prisma.inventory_shelf.create({
                     data: {
                         bd_id,
@@ -53,18 +65,15 @@ export async function POST(request: NextRequest) {
                 });
             }
 
-            // Update the original shelf by reducing the quantity
             if (sourceInventory.quantity === quantity) {
-                // If all quantity is moved, mark the entry as hidden instead of deleting it
                 await prisma.inventory_shelf.update({
                     where: { is_id: sourceInventory.is_id },
                     data: {
-                        quantity: 0,  // Set the quantity to 0
-                        hidden: true  // Mark as hidden (you would need to add this field in the database schema)
+                        quantity: 0,
+                        hidden: true,
                     },
                 });
             } else {
-                // Otherwise, reduce the quantity
                 await prisma.inventory_shelf.update({
                     where: { is_id: sourceInventory.is_id },
                     data: {

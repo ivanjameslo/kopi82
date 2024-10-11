@@ -87,13 +87,41 @@ const ViewItem = () => {
     };
 
     // Handle Save Edit
-    const handleSaveEdit = (updatedItem: ItemData) => {
-        // Update the specific item in the data array
-        setData(prevData =>
-            prevData.map(item => (item.item_id === updatedItem.item_id ? updatedItem : item))
-        );
+    const handleSaveEdit = async (updatedItem: ItemData) => {
+        try {
+            // Run multiple async tasks concurrently
+            const [updateResponse, updatedUnits, updatedCategories] = await Promise.all([
+                fetch(`/api/item/${updatedItem.item_id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updatedItem),
+                }),
+                fetch('/api/unit'), // Fetch the updated unit list
+                fetch('/api/category'), // Fetch the updated category list
+            ]);
+    
+            if (updateResponse.ok) {
+                const updatedItemFromServer = await updateResponse.json();
+    
+                // Update local data
+                setData(prevData =>
+                    prevData.map(item => (item.item_id === updatedItemFromServer.item_id ? updatedItemFromServer : item))
+                );
+    
+                // Optionally update units and categories if necessary
+                setUnit(await updatedUnits.json());
+                setCategory(await updatedCategories.json());
+            } else {
+                console.error('Failed to save updated item');
+            }
+        } catch (error) {
+            console.error('Error updating item:', error);
+        }
         setIsEditModalOpen(false); // Close the modal
     };
+
 
     // Handle Delete
     const handleDelete = async (item_id: number) => {
@@ -106,6 +134,11 @@ const ViewItem = () => {
         } catch (error) {
             console.error('Failed to delete item', error);
         }
+    };
+
+    const findUnitNameById = (unit_id: number, units: UnitData[]): string => {
+        const unit = units.find(u => u.unit_id === unit_id);
+        return unit ? unit.unit_name : 'Unknown Unit';
     };
 
     return (
@@ -138,7 +171,7 @@ const ViewItem = () => {
                                 <TableCell className="text-center">{items.item_id}</TableCell>
                                 <TableCell className="text-center">{items.item_name}</TableCell>
                                 <TableCell className="text-center">{items.description}</TableCell>
-                                <TableCell className="text-center">{items.unit.unit_name}</TableCell>
+                                <TableCell className="text-center">{findUnitNameById(items.unit.unit_id, unit)}</TableCell>
                                 <TableCell className="text-center">{items.category.category_name}</TableCell>
                                 <TableCell className="text-center">
                                     <div className="flex items-center justify-center space-x-2">
