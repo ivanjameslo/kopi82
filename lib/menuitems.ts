@@ -118,7 +118,7 @@ export const allDayBreakfast = [
   },
   {
     productName: "Sausilog",
-    productPrice: "Bistek Tagalog",
+    productPrice: "200",
     productImage: "/picapica/calamares.png",
   },
   {
