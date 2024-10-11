@@ -1,4 +1,4 @@
-## EMI's Kopi 82 Online Menu and Inventory System
+## EMI's Kopi 82 Online Menu, Inventory System, and Sales Tracker
 
 - Du, Ellyanna Nicole
 - Lo, Ivan James
