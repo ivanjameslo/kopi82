@@ -156,20 +156,30 @@ const MoveInventory = ({ onModalClose, selectedItems, refreshInventory }: MoveIn
     };
     
     // Function to filter locations
-    const getFilteredLocations = (shelfName: string, categoryName: string) => {
+    const getFilteredLocations = (shelfName: string, categoryName: string, currentSlId: number) => {
+        // If the item is already at Meat Prep or Seafood Prep, return an empty array (no further moves possible)
+        if ((shelfName === "Meat Prep" && categoryName === "Meat") || 
+            (shelfName === "Seafood Prep" && categoryName === "Seafood")) {
+            return [];
+        }
+        
         if (categoryName === "Meat" && shelfName === "Raw Meat") {
-            return shelfLocations.filter(location => location.sl_name === "Meat Prep");
+            return shelfLocations.filter(location => location.sl_name === "Meat Prep" && location.sl_id !== currentSlId);
         }
         if (categoryName === "Seafood" && shelfName === "Raw Seafood") {
-            return shelfLocations.filter(location => location.sl_name === "Seafood Prep");
+            return shelfLocations.filter(location => location.sl_name === "Seafood Prep" && location.sl_id !== currentSlId);
         }
+        
+        // Exclude locations related to meat/seafood raw/prep and current location
         return shelfLocations.filter(location => 
             location.sl_name !== "Raw Meat" &&
             location.sl_name !== "Raw Seafood" &&
             location.sl_name !== "Meat Prep" &&
-            location.sl_name !== "Seafood Prep"
+            location.sl_name !== "Seafood Prep" &&
+            location.sl_id !== currentSlId
         );
     };
+    
 
     return (
         <div>
@@ -216,11 +226,18 @@ const MoveInventory = ({ onModalClose, selectedItems, refreshInventory }: MoveIn
                                                                 value={localSelectedItems.find(selectedItem => selectedItem.bd_id === inventory.bd_id && selectedItem.sl_id === shelf.sl_id)?.newSlId || ""}
                                                                 onChange={(e) => handleLocationChange(inventory.bd_id, shelf.sl_id, Number(e.target.value))}
                                                                 className="border border-gray-300 rounded px-3 py-1 w-48 focus:outline-none"
+                                                                disabled={getFilteredLocations(shelf.shelf_location.sl_name, inventory.purchased_detail.item.category.category_name, shelf.sl_id).length === 0}
                                                             >
-                                                                <option value="" disabled>Select Location</option>
-                                                                {getFilteredLocations(shelf.shelf_location.sl_name, inventory.purchased_detail.item.category.category_name).map((location) => (
-                                                                    <option key={location.sl_id} value={location.sl_id}>{location.sl_name}</option>
-                                                                ))}
+                                                                {getFilteredLocations(shelf.shelf_location.sl_name, inventory.purchased_detail.item.category.category_name, shelf.sl_id).length === 0 ? (
+                                                                    <option value="" disabled>No available locations</option>
+                                                                ) : (
+                                                                    <>
+                                                                        <option value="" disabled>Select Location</option>
+                                                                        {getFilteredLocations(shelf.shelf_location.sl_name, inventory.purchased_detail.item.category.category_name, shelf.sl_id).map((location) => (
+                                                                            <option key={location.sl_id} value={location.sl_id}>{location.sl_name}</option>
+                                                                        ))}
+                                                                    </>
+                                                                )}
                                                             </select>
                                                         </div>
                                                     </div>
