@@ -10,7 +10,7 @@ export default function Home() {
     <main className="bg-[url('/darkbackground.png')] bg-cover bg-fixed min-h-screen flex flex-col justify-between">
       <div className="flex-grow flex items-center justify-center">
         <p className="text-white text-7xl font-extrabold drop-shadow-2xl">
-          Welcome, Admin!
+          Hello pu
         </p>
       </div>
       <footer className="p-4">
