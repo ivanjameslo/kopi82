@@ -42,3 +42,5 @@ SAD Issues/Updates (Aug 25, 2024)
 September 2, 2024
 - Setup Supabase 
 - Password: Group3M1!051220
+
+Grp3M1!051220

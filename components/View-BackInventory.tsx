@@ -4,10 +4,12 @@ import React, { useEffect, useState } from 'react';
 import AddShelfLocation from '@/components/Add-ShelfLocation';
 import AddBackInventory from '@/components/Add-BackInventory';
 import MoveInventory from '@/components/Move-Inventory';
+import StockOut from '@/components/Stock-Out-Inventory';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from 'react-toastify';
 import { Button } from './ui/button';
 import { FaArrowRightArrowLeft } from "react-icons/fa6";
+import { set } from 'react-hook-form';
 
 interface ShelfLocation {
   sl_id: number;
@@ -48,7 +50,9 @@ const ViewBackInventory = () => {
   const [inventory, setInventory] = useState<BackInventory[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<number | string>("All");
   const [selectedItemsForMove, setSelectedItemsForMove] = useState<BackInventory[]>([]);
+  const [selectedItemsForStockOut, setSelectedItemsForStockOut] = useState<BackInventory[]>([]);
   const [isMoveModalOpen, setIsMoveModalOpen] = useState<boolean>(false);
+  const [isStockOutModalOpen, setIsStockOutModalOpen] = useState<boolean>(false);
   const [isChecked, setIsChecked] = useState<Record<string, boolean>>({});
   const [selectedInventoryType, setSelectedInventoryType] = useState<"Back Inventory" | "Front Inventory">("Back Inventory");
 
@@ -118,6 +122,30 @@ const ViewBackInventory = () => {
     setIsChecked({});
   };
 
+  // Mapping BackInventory[] to the required structure
+  const mappedItemsForStockOut = inventory.flatMap(inv => 
+    inv.inventory_shelf.map(shelf => ({
+      bd_id: inv.bd_id,
+      item_name: inv.purchased_detail.item.item_name,
+      quantity: shelf.quantity,
+      unit_name: inv.purchased_detail.item.unit.unit_name,
+    }))
+  );
+
+  const openStockOutModal = () => {
+    if (selectedItemsForMove.length === 0) {
+      toast.error("Please select at least one item to stock out.");
+      return;
+    }
+    setIsStockOutModalOpen(true);
+  }
+
+  const closeStockOutModal = () => {
+    setIsStockOutModalOpen(false);
+    setSelectedItemsForStockOut([]);
+    setIsChecked({});
+  }
+
   useEffect(() => {
     fetchShelfLocations();
     fetchBackInventory();
@@ -179,35 +207,74 @@ const ViewBackInventory = () => {
         Inventory
       </p>
 
-      <div className="flex justify-center items-center mt-4 mb-4">
-        <span
-          onClick={() => setSelectedInventoryType("Back Inventory")}
-          className={`text-lg font-semibold cursor-pointer mr-6 ${
-            selectedInventoryType === "Back Inventory" ? "font-bold text-[#483C32]" : "text-[#6c757d]"
-          }`}
-        >
-          Back Inventory
-        </span>
-        <span
-          onClick={() => setSelectedInventoryType("Front Inventory")}
-          className={`text-lg font-semibold cursor-pointer ${
-            selectedInventoryType === "Front Inventory" ? "font-bold text-[#483C32]" : "text-[#6c757d]"
-          }`}
-        >
-          Front Inventory
-        </span>
-      </div>
+      <div className="flex justify-between items-center mt-9 mb-4">
+        <div className="flex justify-start items-center">
+          <span
+            onClick={() => setSelectedInventoryType("Back Inventory")}
+            className={`text-lg font-semibold cursor-pointer mr-6 relative group ${
+              selectedInventoryType === "Back Inventory" ? "font-bold text-[#603e20]" : "text-[#6c757d]"
+            }`}
+          >
+            Back Inventory
+            {/* Show the line when "Back Inventory" is selected or hovered */}
+            <span
+              className={`absolute left-0 bottom-0 w-full h-[2px] bg-[#603e20] transition-transform origin-left ${
+                selectedInventoryType === "Back Inventory" ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+              }`}
+            ></span>
+          </span>
 
-      <div className="flex justify-center items-center mt-4 mb-4">
-        <div className="overflow-x-auto flex-1 flex items-center">
+          <span
+            onClick={() => setSelectedInventoryType("Front Inventory")}
+            className={`text-lg font-semibold cursor-pointer relative group ${
+              selectedInventoryType === "Front Inventory" ? "font-bold text-[#603e20]" : "text-[#6c757d]"
+            }`}
+          >
+            Front Inventory
+            {/* Show the line when "Front Inventory" is selected or hovered */}
+            <span
+              className={`absolute left-0 bottom-0 w-full h-[2px] bg-[#603e20] transition-transform origin-left ${
+                selectedInventoryType === "Front Inventory" ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+              }`}
+            ></span>
+          </span>
+        </div>
+        
+        <div className="ml-4 flex flex-row space-x-3 justify-end">
+          <AddShelfLocation onModalClose={fetchShelfLocations} />
+          <AddBackInventory onModalClose={fetchBackInventory} />
+          <Button onClick={openMoveInventoryModal} className="btn-primary">
+            Move Inventory
+          </Button>
+          {isMoveModalOpen && (
+            <MoveInventory
+              onModalClose={closeMoveInventoryModal}
+              selectedItems={selectedItemsForMove}
+              refreshInventory={fetchBackInventory}
+            />
+          )}
+          <Button onClick={openStockOutModal} className="btn-danger">
+            Stock Out
+          </Button>
+          {isStockOutModalOpen && (
+            <StockOut
+              isOpen={isStockOutModalOpen}
+              onClose={closeStockOutModal}
+              selectedItems={mappedItemsForStockOut}
+              refreshInventory={fetchBackInventory}
+            />
+          )}
+        </div>
+      </div>
+      <div className="overflow-x-auto flex-1 flex justify-start items-center mt-9">
           <span
             className={`text-lg font-semibold mr-6 cursor-pointer relative group ${
-              selectedLocation === "All" ? "text-[#6c757d]" : "text-[#483C32]"
+              selectedLocation === "All" ?  "text-[#603e20]" : "text-[#6c757d]"
             }`}
             onClick={() => setSelectedLocation("All")}
           >
             All
-            <span className="absolute left-0 bottom-0 w-full h-[2px] bg-[#6c757d] scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
+            <span className="absolute left-0 bottom-0 w-full h-[2px] bg-[#603e20] scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
           </span>
           <span className="mx-4 h-6 w-[2px] bg-gray-300"></span>
           <nav className="flex items-center overflow-x-auto whitespace-nowrap mr-3">
@@ -216,12 +283,12 @@ const ViewBackInventory = () => {
                 <React.Fragment key={location.sl_id}>
                   <span
                     className={`text-m font-semibold cursor-pointer relative group ${
-                      selectedLocation === location.sl_id ? "text-[#6c757d]" : "text-[#483C32]"
+                      selectedLocation === location.sl_id ? "text-[#603e20]" : "text-[#6c757d]"
                     }`}
                     onClick={() => setSelectedLocation(location.sl_id)}
                   >
                     {location.sl_name}
-                    <span className="absolute left-0 bottom-0 w-full h-[2px] bg-[#6c757d] scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
+                    <span className="absolute left-0 bottom-0 w-full h-[2px] bg-[#603e20] scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
                   </span>
 
                   {index !== filteredShelfLocations.length - 1 && (
@@ -235,23 +302,7 @@ const ViewBackInventory = () => {
         </nav>
         </div>
 
-        <div className="ml-4 flex flex-row space-x-3">
-          <AddShelfLocation onModalClose={fetchShelfLocations} />
-          <AddBackInventory onModalClose={fetchBackInventory} />
-          <Button onClick={openMoveInventoryModal} className="btn-primary">
-            Move Inventory
-          </Button>
-          {isMoveModalOpen && (
-            <MoveInventory
-              onModalClose={closeMoveInventoryModal}
-              selectedItems={selectedItemsForMove}
-              refreshInventory={fetchBackInventory}
-            />
-          )}
-        </div>
-      </div>
-
-      <div className="mt-12">
+      <div className="mt-9">
         <Table>
           <TableHeader>
             <TableRow>
@@ -299,7 +350,7 @@ const ViewBackInventory = () => {
               )
             ) : (
               <TableRow>
-                <TableCell colSpan={9} className="text-center">
+                <TableCell colSpan={10} className="text-center">
                   No inventory available.
                 </TableCell>
               </TableRow>

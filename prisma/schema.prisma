@@ -108,6 +108,7 @@ model unit {
   unit_name        String
   item             item[]
   purchased_detail purchased_detail[]
+  inventory_shelf inventory_shelf[]
   // back_inventory back_inventory[]
 }
 
@@ -131,8 +132,10 @@ model inventory_shelf {
   bd_id  Int
   sl_id  Int
   quantity Int
+  unit_id Int
   hidden      Boolean  @default(false)
   shelf_location shelf_location @relation(fields: [sl_id], references: [sl_id])
+  unit unit @relation(fields: [unit_id], references: [unit_id])
   back_inventory back_inventory @relation(fields: [bd_id], references: [bd_id])
   @@unique([bd_id, sl_id])
   createdAt DateTime @default(now())

@@ -13,6 +13,10 @@ interface Item {
         category_id: number;
         category_name: string;
     }
+    unit: {
+        unit_id: number;
+        unit_name: string;
+    }
 }
 
 interface PurchasedItem {
@@ -67,6 +71,9 @@ const AddBackInventory = ({ onModalClose }: AddBackInventoryProps) => {
         item_id: number;
         sl_id: string | number | readonly string[] | undefined;
         quantity: number;
+        unit_id: number;
+        pi_id: number; // Include pi_id
+        unit_name: string; // Include unit_name
         isInvalid: boolean;
     }>>([]);
     const [shelfLocations, setShelfLocations] = useState<ShelfLocationProps[]>([]);
@@ -193,24 +200,40 @@ const AddBackInventory = ({ onModalClose }: AddBackInventoryProps) => {
     // Handle Item Selection
     const handleItemSelection = (pd_id: number, checked: boolean) => {
         const selectedDetail = purchasedDetails.find((detail) => detail.pd_id === pd_id);
-
+    
         if (checked && selectedDetail) {
+            console.log("Selected item details:", selectedDetail);
+    
+            const isCake = selectedDetail.item?.category?.category_name?.toLowerCase() === "cake";
             setSelectedItems([...selectedItems, {
                 pd_id: selectedDetail.pd_id,
                 item_id: selectedDetail.item_id, 
                 sl_id: "",
-                quantity: selectedDetail.quantity,
+                quantity: isCake ? 0 : selectedDetail.quantity, 
+                unit_id: selectedDetail.unit.unit_id,
+                pi_id: selectedDetail.pi_id,
+                unit_name: selectedDetail.unit.unit_name,
                 isInvalid: false,
             }]);
         } else {
-            // Remove item from selectedItems when unchecked
             setSelectedItems(selectedItems.filter((item) => item.pd_id !== pd_id));
         }
-    };
+    };    
 
     const isItemSelected = (pd_id: number) => {
         return selectedItems.some(item => item.pd_id === pd_id);
     }
+
+    const handleQuantityChange = (pd_id: number, value: string) => {
+        const quantity = parseInt(value, 10);
+        if (isNaN(quantity) || quantity < 0) {
+            toast.error("Invalid quantity");
+            return;
+        }
+        setSelectedItems(
+            selectedItems.map(item => item.pd_id === pd_id ? { ...item, quantity } : item)
+        );
+    };
 
     // Handle Shelf Location change
     const handleShelfLocationChange = (pd_id: number, value: string) => {
@@ -222,50 +245,56 @@ const AddBackInventory = ({ onModalClose }: AddBackInventoryProps) => {
     // Handle Submission
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
+    
+        const invalidItems = selectedItems.filter(item => !item.sl_id || item.quantity <= 0);
+        if (invalidItems.length > 0) {
+            toast.error("Please select a valid shelf location and quantity for all items.");
+            return;
+        }
+    
         try {
-            // Prepare the payload with pd_id, item_id, sl_id, and quantity
+            const payload = selectedItems.map(item => {
+                console.log("Submitting item:", item); // Log each item being submitted
+                return {
+                    pd_id: item.pd_id,
+                    item_id: item.item_id,
+                    sl_id: item.sl_id,
+                    quantity: item.quantity,
+                    pi_id: item.pi_id,
+                    unit_id: item.unit_id,
+                    unit_name: item.unit_name,
+                };
+            });
+    
             const response = await fetch("/api/back_inventory", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ items: selectedItems.map(item => ({ 
-                    pd_id: item.pd_id, 
-                    item_id: item.item_id, 
-                    sl_id: item.sl_id, 
-                    quantity: item.quantity 
-                })) }),
+                body: JSON.stringify({ items: payload }),
             });
     
             if (!response.ok) {
-                throw new Error("Failed to add back inventory");
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Failed to add back inventory");
             }
     
             toast.success("Back Inventory added successfully!");
     
-            // Use Promise.all to mark all items as processed
             await markAllAsProcessed(selectedItems);
-    
-            // Refetch the back inventory and processed purchase orders
             await fetchBackInventory();
             await fetchProcessedPurchaseOrders();
     
-            // Update the purchasedDetails to remove the added items
-            setPurchasedDetails(prev => prev.filter(detail => 
-                !selectedItems.some(item => item.pd_id === detail.pd_id)
-            ));
-    
-            // Clear the selected items and close the modal
+            setPurchasedDetails(prev => prev.filter(detail => !selectedItems.some(item => item.pd_id === detail.pd_id)));
             setSelectedItems([]);
             setIsModalOpen(false);
             if (onModalClose) onModalClose();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to add back inventory:", error);
-            toast.error("Failed to add back inventory");
+            toast.error(`Failed to add back inventory: ${error.message}`);
         }
     };
     
-
     const markAllAsProcessed = async (selectedItems: any[]) => {
         try {
             // Fetch all processed pd_ids in one request
@@ -353,7 +382,6 @@ const AddBackInventory = ({ onModalClose }: AddBackInventoryProps) => {
                                                                 required
                                                             >
                                                                 <option value="" disabled>Select Location</option>
-                                                                {/* Use getCategoryNameById to show the filtered shelf options */}
                                                                 {getFilteredShelfLocations(getCategoryNameById(item.category_id)).map((location) => (
                                                                     <option key={location.sl_id} value={location.sl_id}>
                                                                         {location.sl_name}
@@ -362,13 +390,15 @@ const AddBackInventory = ({ onModalClose }: AddBackInventoryProps) => {
                                                             </select>
                                                         </div>
                                                         <div>
-                                                            <label className="block text-sm font-semibold">Quantity</label>
+                                                            <label className="block text-sm font-semibold">
+                                                                Quantity ({getCategoryNameById(item.category_id).toLowerCase() === "cake" ? "Slice" : item.unit.unit_name})
+                                                            </label>
                                                             <input
                                                                 type="number"
-                                                                name="quantity"
-                                                                value={item.quantity}
-                                                                className={`border ${selectedItems.find(selectedItem => selectedItem.pd_id === item.pd_id)?.isInvalid ? 'border-red-500 focus:border-red-500' : 'border-gray-300'} rounded px-3 py-1 w-48 focus:outline-none`}
-                                                                readOnly
+                                                                value={selectedItems.find(selectedItem => selectedItem.pd_id === item.pd_id)?.quantity || ""}
+                                                                onChange={(e) => handleQuantityChange(item.pd_id, e.target.value)}
+                                                                className="border border-gray-300 rounded px-3 py-1 w-24"
+                                                                required
                                                             />
                                                         </div>
                                                     </div>
@@ -393,4 +423,5 @@ const AddBackInventory = ({ onModalClose }: AddBackInventoryProps) => {
         </div>
     );
 };
+
 export default AddBackInventory;
