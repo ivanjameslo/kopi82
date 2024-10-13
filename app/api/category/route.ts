@@ -17,25 +17,30 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const res = await request.json();
-    
-    // Log the incoming request data for debugging
-    console.log("Received request body:", res);
-
     const { category_name } = res;
 
     // Validate category_name input
     if (!category_name || typeof category_name !== 'string') {
       console.log("Invalid category_name:", category_name);
-      return NextResponse.json({ error: "Invalid category name" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid Category Name" }, { status: 400 });
     }
 
-    const normalizedCategoryName = category_name.toLowerCase();
+    // const normalizedCategoryName = category_name.toLowerCase();
 
-    // Fetch all categories to perform a manual case-insensitive comparison
-    const allCategories = await prisma.category.findMany();
-    const existingCategory = allCategories.find(
-      category => category.category_name.toLowerCase() === normalizedCategoryName
-    );
+    // // Fetch all categories to perform a manual case-insensitive comparison
+    // const allCategories = await prisma.category.findMany();
+    // const existingCategory = allCategories.find(
+    //   category => category.category_name.toLowerCase() === normalizedCategoryName
+    // );
+
+    const existingCategory = await prisma.category.findFirst({
+      where: {
+        category_name: {
+          equals: category_name,
+          mode: 'insensitive', // Perform a case-insensitive comparison
+        },
+      },
+    });
 
     // Check if a category with the same normalized name exists
     if (existingCategory) {

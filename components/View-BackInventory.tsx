@@ -8,6 +8,7 @@ import StockOut from '@/components/Stock-Out-Inventory';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from 'react-toastify';
 import { Button } from './ui/button';
+import { useRouter } from 'next/navigation';
 import { FaArrowRightArrowLeft } from "react-icons/fa6";
 import { set } from 'react-hook-form';
 
@@ -46,6 +47,9 @@ interface BackInventory {
 }
 
 const ViewBackInventory = () => {
+
+  const router = useRouter();
+
   const [shelfLocations, setShelfLocations] = useState<ShelfLocation[]>([]);
   const [inventory, setInventory] = useState<BackInventory[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<number | string>("All");
@@ -264,6 +268,9 @@ const ViewBackInventory = () => {
               refreshInventory={fetchBackInventory}
             />
           )}
+          <Button onClick={() => router.push("/Back&FrontInventory/History")} className="btn-secondary">
+            History
+          </Button>
         </div>
       </div>
       <div className="overflow-x-auto flex-1 flex justify-start items-center mt-9">

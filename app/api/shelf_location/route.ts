@@ -19,7 +19,8 @@ export async function POST(request: NextRequest) {
     const existingLocationShelf = await prisma.shelf_location.findFirst({
       where: {
         sl_name: {
-          equals: sl_name.toLowerCase(), // Normalize the input
+          equals: sl_name,
+          mode: 'insensitive', // Perform a case-insensitive comparison
         },
       },
     });

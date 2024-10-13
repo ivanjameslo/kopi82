@@ -91,13 +91,13 @@ export default function AddProduct() {
         imageUrl = publicUrlData.publicUrl;
       }
 
-      const response = await fetch("/api/products", {
+      const response = await fetch("/api/product", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          image: imageUrl,
+          image_url: imageUrl,
           category: formData.category,
           product_name: formData.product_name,
           type: formData.type,

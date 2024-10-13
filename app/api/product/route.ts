@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   try {
     const res = await request.json();
     const {
-      image,
+      image_url,
       category,
       product_name,
       type,
@@ -26,31 +26,31 @@ export async function POST(request: NextRequest) {
       description,
     } = res;
 
-    let image_url = res.image_url;
+    // let image_url = res.image_url;
 
     // Handle image upload with Supabase
-    if (image) {
-      const { data, error } = await supabase.storage
-        .from("ProductImages")
-        .upload(
-          `${Date.now()}-${product_name}.png`,
-          Buffer.from(image.split(",")[1], "base64"),
-          {
-            contentType: "image/png",
-          }
-        );
+    // if (image) {
+    //   const { data, error } = await supabase.storage
+    //     .from("ProductImages")
+    //     .upload(
+    //       `${Date.now()}-${product_name}.png`,
+    //       Buffer.from(image.split(",")[1], "base64"),
+    //       {
+    //         contentType: "image/png",
+    //       }
+    //     );
 
-      if (error) {
-        console.error("Supabase upload error:", error);
-        throw new Error("Failed to upload image");
-      }
+    //   if (error) {
+    //     console.error("Supabase upload error:", error);
+    //     throw new Error("Failed to upload image");
+    //   }
 
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("ProductImages").getPublicUrl(data.path);
+    //   const {
+    //     data: { publicUrl },
+    //   } = supabase.storage.from("ProductImages").getPublicUrl(data.path);
 
-      image_url = publicUrl;
-    }
+    //   image_url = publicUrl;
+    // }
 
     // Create product using Prisma
     const created = await prisma.product.create({

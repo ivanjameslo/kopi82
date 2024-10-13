@@ -54,23 +54,24 @@ const AddSupplier = () => {
   const handleSupplierChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setSupplierForm({ ...supplierForm, [name]: value });
-
+  
     if (name === "contact_no") {
-      const isContactValid = /^[\d+]*$/.test(value); // Allow digits and '+'
+      // Validate that the input is only digits and has a maximum length of 11
+      const isContactValid = /^\d{0,11}$/.test(value);
       setIsContactInvalid(!isContactValid);
-    
+  
       // Show toast only once if input is invalid
       if (!isContactValid && !toastShown) {
-        toast.error("Contact number must contain only numbers and '+'!");
+        toast.error("Contact number must contain only numbers and be 11 digits or less.");
         setToastShown(true);
       }
-    
+  
       // Reset toast if input becomes valid again
       if (isContactValid) {
         setToastShown(false);
       }
     }
-  };
+  };  
 
   // Add or Update Supplier
   const handleSupplierSubmit = async () => {

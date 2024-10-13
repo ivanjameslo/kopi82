@@ -27,8 +27,14 @@ export async function POST(request: NextRequest) {
     // Check if the supplier already exists (case-insensitive comparison for name and address)
     const existingSupplier = await prisma.supplier.findFirst({
       where: {
-        supplier_name: supplier_name.toLowerCase(),
-        address: address.toLowerCase(),
+        supplier_name: {
+          equals: supplier_name,
+          mode: 'insensitive', // Perform a case-insensitive comparison
+        },
+        address: {
+          equals: address,
+          mode: 'insensitive', // Perform a case-insensitive comparison
+        },
         contact_no: contact_no, // This is now a string comparison
       },
     });

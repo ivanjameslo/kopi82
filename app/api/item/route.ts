@@ -33,8 +33,14 @@ export async function POST(request: NextRequest) {
       // Validate: Check if the `item_name` is unique in the database
       const existingItem = await prisma.item.findFirst({
         where: { 
-          item_name: item_name.toLowerCase(),
-          description: description.toLowerCase(),
+          item_name: {
+            equals: item_name,
+            mode: 'insensitive', // Perform a case-insensitive comparison
+          },
+          description: {
+            equals: description,
+            mode: 'insensitive', // Perform a case-insensitive comparison
+          },
           unit_id: Number(unit_id),
           category_id: Number(category_id),
         },

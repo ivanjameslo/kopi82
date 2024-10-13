@@ -44,7 +44,7 @@ const InventoryRoutes = () => {
           </CardHeader>
           <CardContent>
             <div className="flex justify-center gap-5">
-              <Link href="/BackInventory">
+              <Link href="/Back&FrontInventory">
                 <Button variant="outline" className="pl-28 pr-28">
                   View
                 </Button>

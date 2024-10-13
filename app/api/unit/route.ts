@@ -15,6 +15,11 @@ export async function POST(request: NextRequest) {
     const res = await request.json();
     const { unit_name } = res;
 
+    if (!unit_name || typeof unit_name !== 'string') {
+      console.log("Invalid unit_name:", unit_name);
+      return NextResponse.json({ error: "Invalid Unit Name" }, { status: 400 });
+    }
+
     // Fetch the unit case-insensitively
     const existingUnit = await prisma.unit.findFirst({
       where: {

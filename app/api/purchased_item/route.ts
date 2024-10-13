@@ -23,6 +23,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const existingReceiptNumber = await prisma.purchased_item.findFirst({
+    where: {
+      receipt_no: Number(receipt_no),
+    },
+  });
+
+  if (existingReceiptNumber) {
+    return NextResponse.json(
+      { error: `A Purchase Order with the same Receipt Number already exists.` },
+      { status: 400 }
+    );
+  }
+
   try {
     const created = await prisma.purchased_item.create({
       data: {
