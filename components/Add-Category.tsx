@@ -16,7 +16,7 @@ interface AddUnitProps {
     onModalClose?: () => void;  
 }
 
-const AddCategory = ( { onModalClose }: AddUnitProps) => {
+const AddCategory = ( { onModalClose }: AddUnitProps ) => {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [categoryName, setCategoryName] = useState<string>("");

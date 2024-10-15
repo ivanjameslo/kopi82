@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from "@/components/ui/button";
+import Link from 'next/link';
 
 interface InventoryHistory {
   bd_id: number;
@@ -32,9 +34,27 @@ const InventoryHistoryPage = () => {
     fetchInventoryHistory();
   }, []);
 
+  const formatDateTime = (dateTimeString: string | null) => {
+    if (!dateTimeString || dateTimeString === "NA") {
+      return "NA";
+    }
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    };
+    return new Date(dateTimeString).toLocaleString('en-US', options);
+  };
+
   return (
     <div className="mt-24 ml-32 mr-32">
       <p className="text-3xl font-bold text-[#483C32] text-center mb-6">Inventory History</p>
+      
+      <div className="flex justify-end mt-10">
+          <Link href="/Back&FrontInventory">
+              <Button>Back</Button>
+          </Link>
+      </div>
 
       <Table>
         <TableHeader>
@@ -54,8 +74,8 @@ const InventoryHistoryPage = () => {
                 {record.movements.map((move, index) => (
                   <TableRow key={`${record.bd_id}-${index}`}>
                     <TableCell>{record.item_name}</TableCell>
-                    <TableCell>{new Date(record.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell>{new Date(move.date_moved).toLocaleDateString()}</TableCell>
+                    <TableCell>{formatDateTime(record.created_at)}</TableCell>
+                    <TableCell>{formatDateTime(move.date_moved)}</TableCell>
                     <TableCell>{move.quantity}</TableCell>
                     <TableCell>{move.from_location}</TableCell>
                     <TableCell>{move.to_location}</TableCell>

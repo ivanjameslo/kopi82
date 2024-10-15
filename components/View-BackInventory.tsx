@@ -18,6 +18,11 @@ interface ShelfLocation {
   sl_name: string;
 }
 
+interface Unit {
+  unit_id: number;
+  unit_name: string;
+}
+
 interface BackInventory {
   bd_id: number;
   purchased_detail: {
@@ -25,13 +30,11 @@ interface BackInventory {
       item_id: number;
       item_name: string;
       description: string;
-      unit: {
-        unit_name: string;
-      }
+      unit: Unit; // Expecting both unit_id and unit_name
       category: {
         category_name: string;
       }
-    }
+    };
     expiry_date: string;
   };
   inventory_shelf: Array<{
@@ -45,6 +48,7 @@ interface BackInventory {
     hidden: boolean;
   }>;
 }
+
 
 const ViewBackInventory = () => {
 
@@ -90,25 +94,19 @@ const ViewBackInventory = () => {
   };
 
   const handleItemSelection = (inventory: BackInventory, sl_id: number, checked: boolean) => {
-    const key = `${inventory.bd_id}-${sl_id}`;  // Unique key combining bd_id and sl_id
+    const key = `${inventory.bd_id}-${sl_id}`;
 
-    // Update checked status
     setIsChecked(prevChecked => ({ ...prevChecked, [key]: checked }));
 
-    // Update selected items based on the checked state
     if (checked) {
-        // Add the selected item to the list, include sl_id for the specific shelf
-        setSelectedItemsForMove((prev) => [
-            ...prev,
-            { ...inventory, inventory_shelf: [inventory.inventory_shelf.find(shelf => shelf.sl_id === sl_id)!] }
-        ]);
+      const newItem = { ...inventory, inventory_shelf: [inventory.inventory_shelf.find(shelf => shelf.sl_id === sl_id)!] };
+      setSelectedItemsForMove(prev => [...prev, newItem]);
+      setSelectedItemsForStockOut(prev => [...prev, newItem]);
     } else {
-        // Remove the item from the selected items
-        setSelectedItemsForMove((prev) =>
-            prev.filter(
-                item => !(item.bd_id === inventory.bd_id && item.inventory_shelf.some(shelf => shelf.sl_id === sl_id))
-            )
-        );
+      const filterFn = (item: BackInventory) => 
+        !(item.bd_id === inventory.bd_id && item.inventory_shelf.some(shelf => shelf.sl_id === sl_id));
+      setSelectedItemsForMove(prev => prev.filter(filterFn));
+      setSelectedItemsForStockOut(prev => prev.filter(filterFn));
     }
   };
 
@@ -123,11 +121,24 @@ const ViewBackInventory = () => {
   const closeMoveInventoryModal = () => {
     setIsMoveModalOpen(false);
     setSelectedItemsForMove([]);
-    setIsChecked({});
+    // Reset checkboxes for moved items
+    setIsChecked(prev => {
+      const newChecked = { ...prev };
+      selectedItemsForMove.forEach(item => {
+        item.inventory_shelf.forEach(shelf => {
+          delete newChecked[`${item.bd_id}-${shelf.sl_id}`];
+        });
+      });
+      return newChecked;
+    });
+    // Remove moved items from selectedItemsForStockOut
+    setSelectedItemsForStockOut(prev => 
+      prev.filter(item => !selectedItemsForMove.some(moveItem => moveItem.bd_id === item.bd_id))
+    );
   };
 
   // Mapping BackInventory[] to the required structure
-  const mappedItemsForStockOut = inventory.flatMap(inv => 
+  const mappedItemsForStockOut = selectedItemsForStockOut.flatMap(inv => 
     inv.inventory_shelf.map(shelf => ({
       bd_id: inv.bd_id,
       item_name: inv.purchased_detail.item.item_name,
@@ -137,18 +148,30 @@ const ViewBackInventory = () => {
   );
 
   const openStockOutModal = () => {
-    if (selectedItemsForMove.length === 0) {
+    if (selectedItemsForStockOut.length === 0) {
       toast.error("Please select at least one item to stock out.");
       return;
     }
     setIsStockOutModalOpen(true);
-  }
+  };
 
   const closeStockOutModal = () => {
     setIsStockOutModalOpen(false);
     setSelectedItemsForStockOut([]);
-    setIsChecked({});
-  }
+    setIsChecked(prev => {
+      const newChecked = { ...prev };
+      selectedItemsForStockOut.forEach(item => {
+        item.inventory_shelf.forEach(shelf => {
+          delete newChecked[`${item.bd_id}-${shelf.sl_id}`];
+        });
+      });
+      return newChecked;
+    });
+
+    setSelectedItemsForMove(prev =>
+      prev.filter(item => !selectedItemsForStockOut.some(stockOutItem => stockOutItem.bd_id === item.bd_id))
+    )
+  };
 
   useEffect(() => {
     fetchShelfLocations();

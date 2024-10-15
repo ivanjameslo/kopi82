@@ -19,6 +19,7 @@ interface BackInventory {
         item_name: string;
         description: string;
         unit: {
+          unit_id: number;
           unit_name: string;
         }
         category: {
@@ -38,16 +39,22 @@ interface BackInventory {
 
 interface MoveInventoryProps {
     onModalClose?: () => void;
-    selectedItems: BackInventory[];  // Pass selected items from the table
+    selectedItems: BackInventory[];
     refreshInventory: () => void;
 }
 
 const MoveInventory = ({ onModalClose, selectedItems, refreshInventory }: MoveInventoryProps) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [localSelectedItems, setLocalSelectedItems] = useState<Array<{bd_id: number; sl_id: number; quantity: number | null; newSlId: number | null}>>([]);
+    const [localSelectedItems, setLocalSelectedItems] = useState<Array<{
+        bd_id: number;
+        sl_id: number;
+        quantity: number | null;
+        newSlId: number | null;
+        unit_id: number; // Add unit_id to localSelectedItems
+    }>>([]);
     const [shelfLocations, setShelfLocations] = useState<ShelfLocation[]>([]);
-    const [isSubmitting, setIsSubmitting] = useState(false); // New state to track form submission
-    const [hasInteracted, setHasInteracted] = useState<Record<number, boolean>>({}); // Track user interaction
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [hasInteracted, setHasInteracted] = useState<Record<number, boolean>>({});
 
     // Fetch shelf locations (example API)
     const fetchShelfLocations = async () => {
@@ -71,9 +78,11 @@ const MoveInventory = ({ onModalClose, selectedItems, refreshInventory }: MoveIn
                     bd_id: item.bd_id,
                     sl_id: shelf.sl_id,
                     quantity: null, // Quantity starts as null, placeholder will be shown
-                    newSlId: null
+                    newSlId: null,
+                    unit_id: item.purchased_detail.item.unit.unit_id // Ensure this is the correct numeric `unit_id`
                 }))
             );
+                     
             setLocalSelectedItems(initialSelectedItems);
         }
     }, [selectedItems]);
@@ -115,43 +124,48 @@ const MoveInventory = ({ onModalClose, selectedItems, refreshInventory }: MoveIn
     
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setIsSubmitting(true); // Mark the form as submitting
-    
-        // Construct the payload expected by the API
-        const movements = localSelectedItems.map(item => {
-            const originalItem = selectedItems.find(inv => inv.bd_id === item.bd_id);
-            const isMovedBackToOriginal = item.newSlId === item.sl_id;
-    
-            return {
+        setIsSubmitting(true);
+
+        const movements = localSelectedItems
+            .filter(item => item.quantity !== null && item.quantity > 0 && item.newSlId !== null)
+            .map(item => ({
                 bd_id: item.bd_id,
                 source_sl_id: item.sl_id,
-                destination_sl_id: item.newSlId,
-                quantity: item.quantity,
-                hidden: isMovedBackToOriginal ? false : true  // Use false if moved back to original shelf
-            };
-        });
-    
-        // Log the exact payload being sent to the backend
+                destination_sl_id: item.newSlId!,
+                quantity: item.quantity!,
+                hidden: item.newSlId === item.sl_id ? false : true,
+                unit_id: item.unit_id
+            }));
+
+        if (movements.length === 0) {
+            toast.error("No valid movements to submit");
+            setIsSubmitting(false);
+            return;
+        }
+
         console.log("Submitting movements: ", movements);
-    
+
         try {
             const response = await fetch("/api/move_inventory", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ movements }),
             });
-    
-            if (!response.ok) throw new Error("Failed to move inventory");
-    
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Failed to move inventory");
+            }
+
             toast.success("Inventory moved successfully!");
             setLocalSelectedItems([]);
             setIsSubmitting(false);
-    
             if (onModalClose) onModalClose();
             setIsModalOpen(false);
-            await refreshInventory(); // Refresh the inventory table
+            await refreshInventory();
         } catch (error: any) {
             toast.error(error.message);
+            setIsSubmitting(false);
         }
     };
     
@@ -186,9 +200,9 @@ const MoveInventory = ({ onModalClose, selectedItems, refreshInventory }: MoveIn
             <Dialog open={isModalOpen} onOpenChange={(isOpen) => {
                 if (!isOpen) {
                     setIsModalOpen(false);
-                    setLocalSelectedItems([]); // Reset local state
-                    setIsSubmitting(false); // Reset the submission state
-                    if (onModalClose) onModalClose(); // Notify parent
+                    setLocalSelectedItems([]);
+                    setIsSubmitting(false);
+                    if (onModalClose) onModalClose();
                 }
             }}>
                 <DialogContent className="w-full max-w-5xl max-h-[80vh] overflow-y-auto p-6">
@@ -251,8 +265,8 @@ const MoveInventory = ({ onModalClose, selectedItems, refreshInventory }: MoveIn
                             )}
                         </div>
                         <div className="mt-6">
-                            <Button type="submit" className="text-white px-4 py-2 rounded-md">
-                                Move Inventory
+                            <Button type="submit" disabled={isSubmitting} className="text-white px-4 py-2 rounded-md">
+                                {isSubmitting ? "Moving..." : "Move Inventory"}
                             </Button>
                         </div>
                     </form>
