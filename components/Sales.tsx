@@ -51,7 +51,7 @@ const initialItems: MenuItem[] = [
     { id: 1, name: "Cappuccino", price: 150, category: "Drinks" },
     { id: 2, name: "Latte", price: 160, category: "Drinks" },
     { id: 3, name: "Espresso", price: 120, category: "Drinks" },
-    { id: 4, name: "Croissant", price: 80, category: "Pastries" },
+    { id: 4, name: "Cake", price: 80, category: "Pastries" },
     { id: 5, name: "Muffin", price: 70, category: "Pastries" },
 ];
 
