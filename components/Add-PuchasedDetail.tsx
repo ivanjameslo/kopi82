@@ -31,7 +31,6 @@ const AddPurchaseDetails = () => {
     quantity: string;
     price: string;
     expiry_date: string | null; 
-    supplier_id: string;
     noExpiry: boolean;
   }>>([{
     pd_id: uuidv4(),
@@ -42,7 +41,6 @@ const AddPurchaseDetails = () => {
     quantity: "",
     price: "",
     expiry_date: getExpiryDate(false), 
-    supplier_id: "",
     noExpiry: false,
   }]);
 
@@ -52,8 +50,8 @@ const AddPurchaseDetails = () => {
 }[]>([]);
   const [units, setUnits] = useState<{ unit_id: any; unit_name: string }[]>([]);
   const [categories, setCategories] = useState<{ category_id: any; category_name: string }[]>([]);
-  const [suppliers, setSupplier] = useState<{ supplier_id: any; supplier_name: string }[]>([]);
   const [error, setError] = useState<string>("");
+  const [supplier, setSupplier] = useState<{ supplier_id: string; supplier_name: string }[]>([]);
 
   useEffect(() => {
     const fetchRecentPoId = async () => {
@@ -74,7 +72,6 @@ const AddPurchaseDetails = () => {
             quantity: "",
             price: "",
             expiry_date: getExpiryDate(),
-            supplier_id: "",
             noExpiry: false,
           },
         ]);
@@ -85,26 +82,23 @@ const AddPurchaseDetails = () => {
 
     const fetchItemDeets = async () => {
       try {
-        const [itemsResponse, unitsResponse, categoriesResponse, supplierResponse] = await Promise.all([
+        const [itemsResponse, unitsResponse, categoriesResponse] = await Promise.all([
           fetch("/api/item"),
           fetch("/api/unit"),
           fetch("/api/category"),
-          fetch("/api/supplier"),
         ]);
 
-        if (!itemsResponse.ok || !unitsResponse.ok || !categoriesResponse.ok || !supplierResponse.ok) {
+        if (!itemsResponse.ok || !unitsResponse.ok || !categoriesResponse.ok) {
           throw new Error("Network response was not ok");
         }
 
         const itemsData = await itemsResponse.json();
         const unitsData = await unitsResponse.json();
         const categoryData = await categoriesResponse.json();
-        const supplierData = await supplierResponse.json();
 
         setItems(itemsData);
         setUnits(unitsData);
         setCategories(categoryData);
-        setSupplier(supplierData);
       } catch (error) {
         console.log(error);
       }
@@ -147,26 +141,12 @@ const AddPurchaseDetails = () => {
     }
   };
 
-  const handleSupplierChange = (index: number, e: ChangeEvent<HTMLSelectElement>) => {
-    const selectedItem = suppliers.find(
-      (supplier) => supplier.supplier_id === parseInt(e.target.value)
-    );
-    if (selectedItem) {
-      const newFormDataArray = [...formDataArray];
-      newFormDataArray[index] = {
-        ...newFormDataArray[index],
-        supplier_id: selectedItem.supplier_id.toString(),
-      };
-      setFormDataArray(newFormDataArray);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
   
     // Frontend validation for empty fields
     for (const formData of formDataArray) {
-      if (!formData.item_id || !formData.unit_id || !formData.quantity || !formData.price || !formData.supplier_id || !formData.category_id) {
+      if (!formData.item_id || !formData.unit_id || !formData.quantity || !formData.price || !formData.category_id) {
           toast.error("Please fill in all fields.");
           return;
       }
@@ -186,7 +166,6 @@ const AddPurchaseDetails = () => {
         quantity: Number(formData.quantity),
         price: parseFloat(formData.price),
         expiry_date: formData.noExpiry ? null : new Date(formData.expiry_date as string).toISOString(),
-        supplier_id: Number(formData.supplier_id),
       }));
 
       const response = await fetch(`/api/purchased_detail`, {
@@ -221,7 +200,6 @@ const AddPurchaseDetails = () => {
         quantity: "",
         price: "",
         expiry_date: getExpiryDate(false),
-        supplier_id: "",
         noExpiry: false,
       }]);
     } else {
@@ -239,28 +217,23 @@ const AddPurchaseDetails = () => {
     return category ? category.category_name : '';
   }
 
-  const getSupplierName = (supplier_id: any) => {
-    const supplier = suppliers.find((supplier: { supplier_id: any; supplier_name: string }) => supplier.supplier_id === supplier_id);
-    return supplier ? supplier.supplier_name : '';
-  }
-
   const removeRow = (index: number) => {
     const newFormDataArray = formDataArray.filter((_, i) => i !== index);
     setFormDataArray(newFormDataArray);
   };
 
-  const refreshSuppliers = async () => {
-    try {
-      const response = await fetch("/api/supplier");
-      if (!response.ok) {
-        throw new Error("Failed to fetch supplier list.");
-      }
-      const supplierData = await response.json();
-      setSupplier(supplierData); // Update supplier list
-    } catch (error) {
-      console.log("Error refreshing suppliers:", error);
-    }
-  };
+  // const refreshSuppliers = async () => {
+  //   try {
+  //     const response = await fetch("/api/supplier");
+  //     if (!response.ok) {
+  //       throw new Error("Failed to fetch supplier list.");
+  //     }
+  //     const supplierData = await response.json();
+  //     setSupplier(supplierData); // Update supplier list
+  //   } catch (error) {
+  //     console.log("Error refreshing suppliers:", error);
+  //   }
+  // };
 
   return (
     <div className="mt-24 ml-16 mr-16">
@@ -274,13 +247,12 @@ const AddPurchaseDetails = () => {
             <TableRow>
               <TableHead className="w-20">ID</TableHead>
               <TableHead className="w-96">Item Name</TableHead>
-              <TableHead className="w-32">Quantity</TableHead>
-              <TableHead className="w-32">Unit</TableHead>
-              <TableHead className="w-32">Category</TableHead>
-              <TableHead className="w-32">Price</TableHead>
+              <TableHead className="w-40">Quantity</TableHead>
+              <TableHead className="w-40">Unit</TableHead>
+              <TableHead className="w-40">Category</TableHead>
+              <TableHead className="w-40">Price</TableHead>
               <TableHead className="w-40">Expiry Date</TableHead>
-              <TableHead className="w-16">No Expiry?</TableHead>
-              <TableHead className="w-48">Supplier</TableHead>
+              <TableHead className="w-20">No Expiry?</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -367,23 +339,6 @@ const AddPurchaseDetails = () => {
                     checked={formData.noExpiry}
                     onChange={() => handleExpiryToggle(index)}  // Toggle expiry on checkbox change
                   />
-                </TableCell>
-                <TableCell>
-                <select
-                    name="supplier_id"
-                    value={formData.supplier_id}
-                    onChange={(e) => handleSupplierChange(index, e)}
-                    className="w-full p-0.5"
-                  >
-                    <option value="" disabled hidden>
-                      Select Supplier
-                    </option>
-                    {suppliers.map((supplier) => (
-                      <option key={supplier.supplier_id} value={supplier.supplier_id}>
-                        {supplier.supplier_name}
-                      </option>
-                    ))}
-                  </select>
                 </TableCell>
                 <TableCell className="text-center">
                     {formDataArray.length > 1 ? (

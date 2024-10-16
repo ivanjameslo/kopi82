@@ -13,7 +13,11 @@ interface SupplierData {
   address: string;
 }
 
-const AddSupplier = () => {
+interface AddSupplierProps {
+  onSupplierAdded: () => void; // Declare onSupplierAdded prop as a function
+}
+
+const AddSupplier: React.FC<AddSupplierProps> = ({ onSupplierAdded }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [supplierForm, setSupplierForm] = useState({
     supplier_name: "",
@@ -77,8 +81,8 @@ const AddSupplier = () => {
   const handleSupplierSubmit = async () => {
     const { contact_no, supplier_name, address } = supplierForm;
   
-    if (!supplier_name || !contact_no || !address) {
-      toast.error("All fields are required!");
+    if (!supplier_name || !address) {
+      toast.error("Supplier name and address are required!");
       return;
     }
   
@@ -116,6 +120,11 @@ const AddSupplier = () => {
       fetchSuppliers();
       setSupplierForm({ supplier_name: "", contact_no: "", address: "" });
       setSelectedSupplier(null); // Reset after editing
+
+      if (!selectedSupplier) {
+        onSupplierAdded(); // Call only when a new supplier is added
+      }
+      
     } catch (error: any) {
       console.error("Error saving supplier:", error.message); // Log the exact error
       toast.error(`Error: ${error.message}`);

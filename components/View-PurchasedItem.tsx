@@ -19,6 +19,7 @@ interface PurchasedItemData {
   pi_id: number;
   receipt_no: number;
   purchase_date: string;
+  supplier: SupplierData;
 }
 
 interface PurchasedDetailData {
@@ -30,7 +31,6 @@ interface PurchasedDetailData {
   category_id: number;
   price: number;
   expiry_date: string;
-  supplier_id: number;
 }
 
 interface ItemDate {
@@ -220,6 +220,7 @@ const ViewPurchaseOrder = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="text-center">Receipt Number</TableHead>
+              <TableHead className="text-center">Supplier</TableHead>
               <TableHead className="text-center">Purchase Date</TableHead>
               <TableHead className="text-center">Purchase Details</TableHead>
             </TableRow>
@@ -228,6 +229,7 @@ const ViewPurchaseOrder = () => {
             {data.map((purchasedItem) => (
               <TableRow key={purchasedItem.pi_id}>
                 <TableCell className="text-center">{purchasedItem.receipt_no}</TableCell>
+                <TableCell className="text-center">{purchasedItem.supplier.supplier_name}</TableCell>
                 <TableCell className="text-center">{formatDateTime(purchasedItem.purchase_date)}</TableCell>
                 <TableCell className="text-center">
                 <div className="flex items-center justify-center space-x-6">
@@ -255,7 +257,6 @@ const ViewPurchaseOrder = () => {
                     <TableHead className="text-center w-32">Unit</TableHead>
                     <TableHead className="text-center w-32">Category</TableHead>
                     <TableHead className="text-center w-32">Expiry Date</TableHead>
-                    <TableHead className="text-center w-32">Supplier</TableHead>
                     <TableHead className="text-center w-32">Price</TableHead>
                     <TableHead className="text-center w-32">Subtotal</TableHead>
                   </TableRow>
@@ -270,14 +271,13 @@ const ViewPurchaseOrder = () => {
                         <TableCell className="text-center">{getUnitName(detail.unit_id)}</TableCell>
                         <TableCell className="text-center">{getCategoryName(detail.category_id)}</TableCell>
                         <TableCell className="text-center whitespace-nowrap">{formatDateTime(detail.expiry_date)}</TableCell>
-                        <TableCell className="text-center">{getSupplierName(detail.supplier_id)}</TableCell> 
                         <TableCell className="text-center">{phpFormatter.format(detail.price)}</TableCell>
                         <TableCell className="text-center">{phpFormatter.format(total)}</TableCell>
                       </TableRow>
                     );
                   })}
                   <TableRow>
-                    <TableCell colSpan={7} className="text-right font-bold">Grand Total</TableCell>
+                    <TableCell colSpan={6} className="text-right font-bold">Grand Total</TableCell>
                     <TableCell className="font-bold text-center">
                       {phpFormatter.format(
                         selectedPurchasedDetail.reduce((acc, detail) => acc + detail.quantity * detail.price, 0)

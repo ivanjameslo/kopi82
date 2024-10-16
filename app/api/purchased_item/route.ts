@@ -5,7 +5,11 @@ import { NextResponse } from "next/server";
 
 // GET function to fetch all data from Purchase Order model
 export async function GET(request: NextRequest) {
-  const purchased_item = await prisma.purchased_item.findMany();
+  const purchased_item = await prisma.purchased_item.findMany({
+    include: {
+      supplier: true,
+    }
+  });
   console.log(purchased_item);
   return NextResponse.json(purchased_item);
 }
@@ -14,7 +18,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
 
   const res = await request.json();
-  const { receipt_no, purchase_date } = res;
+  const { receipt_no, purchase_date, supplier_id } = res;
 
   if (!receipt_no) {
     return NextResponse.json(
@@ -41,6 +45,7 @@ export async function POST(request: NextRequest) {
       data: {
         receipt_no: Number(receipt_no),
         purchase_date,
+        supplier_id: Number(supplier_id),
       }
     });
     return NextResponse.json(created, { status: 201 });

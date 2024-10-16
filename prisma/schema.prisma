@@ -35,28 +35,11 @@ model back_inventory {
   stock_out_date          DateTime?
   stock_damaged           Int
   stock_used              Int
-  front_inventory         front_inventory?
   purchased_item          purchased_item?   @relation(fields: [pi_id], references: [pi_id])
   purchased_detail        purchased_detail? @relation(fields: [pd_id], references: [pd_id])
   inventory_shelf         inventory_shelf[]
   createdAt               DateTime          @default(now())
   updatedAt               DateTime          @updatedAt
-}
-
-model front_inventory {
-  fd_id          Int            @id @default(autoincrement())
-  bd_id          Int            @unique
-  in_stock       Int
-  stock_used     Int
-  stock_damaged  Int
-  stock_in_date  DateTime?
-  stock_out_date DateTime?
-  product_id     Int?
-  back_inventory back_inventory @relation(fields: [bd_id], references: [bd_id])
-  product        product?       @relation(fields: [product_id], references: [product_id])
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  //product product[]
 }
 
 // model purchase_request {
@@ -74,8 +57,10 @@ model front_inventory {
 model purchased_item {
   pi_id            Int                @id @default(autoincrement())
   receipt_no       Int
+  supplier_id      Int
   purchase_date    DateTime           @default(now())
   purchased_detail purchased_detail[]
+  supplier         supplier           @relation(fields: [supplier_id], references: [supplier_id])
   back_inventory   back_inventory[]
   createdAt        DateTime           @default(now())
 }
@@ -89,14 +74,12 @@ model purchased_detail {
   category_id                Int
   price                      Float
   expiry_date                DateTime?
-  supplier_id                Int
   purchased_item             purchased_item             @relation(fields: [pi_id], references: [pi_id])
   item                       item                       @relation(fields: [item_id], references: [item_id])
   unit                       unit                       @relation(fields: [unit_id], references: [unit_id])
   category                   category                   @relation(fields: [category_id], references: [category_id])
   back_inventory             back_inventory[]
   processed_purchase_details ProcessedPurchaseDetails[]
-  supplier                   supplier                   @relation(fields: [supplier_id], references: [supplier_id])
   createdAt                  DateTime                   @default(now())
 }
 
@@ -162,9 +145,9 @@ model item {
 model supplier {
   supplier_id   Int    @id @default(autoincrement())
   supplier_name String
-  contact_no    String
+  contact_no    String?
   address       String
-  purchased_detail purchased_detail[]
+  purchased_item purchased_item[]
 }
 
 //PRODUCT
@@ -185,7 +168,6 @@ model product {
   updatedAt       DateTime          @updatedAt
   //fd_id Int @unique
   //front_inventory front_inventory @relation(fields: [fd_id], references: [fd_id])
-  front_inventory front_inventory[]
   order_details   order_details[]
   // ProductOrderDetails ProductOrderDetails[] (!!!!for many-to-many relation)
 }

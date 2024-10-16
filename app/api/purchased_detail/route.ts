@@ -26,11 +26,11 @@ export async function POST(request: NextRequest) {
     console.log("Received formDataArray:", formDataArray);
 
     for (const formData of formDataArray) {
-      const { item_id, quantity, unit_id, price, supplier_id } = formData;
+      const { item_id, quantity, unit_id, price } = formData;
 
-      if (!item_id || !quantity || !unit_id || !price || !supplier_id) {
+      if (!item_id || !quantity || !unit_id || !price) {
         return NextResponse.json(
-          { error: "All fields (item, quantity, unit, price, supplier) are required." },
+          { error: "All fields (item, quantity, unit, price) are required." },
           { status: 400 }
         );
       }
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     }
 
     const created = await prisma.purchased_detail.createMany({
-      data: formDataArray.map((formData: { pi_id: any; item_id: any; quantity: any; unit_id: any; category_id: any; price: any; expiry_date: any; supplier_id: any }) => ({
+      data: formDataArray.map((formData: { pi_id: any; item_id: any; quantity: any; unit_id: any; category_id: any; price: any; expiry_date: any }) => ({
         pi_id: parseInt(formData.pi_id),
         item_id: parseInt(formData.item_id),
         quantity: Number(formData.quantity),
@@ -53,7 +53,6 @@ export async function POST(request: NextRequest) {
         category_id: parseInt(formData.category_id),
         price: Number(formData.price),
         expiry_date: formData.expiry_date,
-        supplier_id: parseInt(formData.supplier_id),
       })),
     });
     return NextResponse.json(created, { status: 201 });

@@ -7,6 +7,11 @@ import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 import AddSupplier from "@/components/Add-Supplier";
 
+interface Supplier {
+  supplier_id: string;
+  supplier_name: string;
+}
+
 const AddPurchasedItem = () => {
   const router = useRouter();
 
@@ -18,48 +23,49 @@ const AddPurchasedItem = () => {
   const [formData, setFormData] = useState({
     receipt_no: "",
     purchase_date: getCurrentDate(),
+    supplier_id: "",
   });
 
   const [receiptError, setReceiptError] = useState(false);
   const [toastShown, setToastShown] = useState(false);
 
-  // Supplier modal state
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [supplierForm, setSupplierForm] = useState({
-    supplier_name: "",
-    contact_number: "",
-    address: "",
-  });
-  const [suppliers, setSuppliers] = useState([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
 
-  // Fetch suppliers when modal opens
   useEffect(() => {
-    if (isModalOpen) {
-      // Fetch supplier data from the API
-      fetch("/api/get_suppliers")
-        .then((res) => res.json())
-        .then((data) => setSuppliers(data))
-        .catch((err) => toast.error("Failed to load suppliers"));
-    }
-  }, [isModalOpen]);
+    fetchSuppliers();
+  }, []);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const fetchSuppliers = async () => {
+    try {
+      const response = await fetch("/api/supplier");
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const data = await response.json();
+      console.log("Suppliers data:", data); // Log response for debugging
+      setSuppliers(data);
+    } catch (err) {
+      console.error("Error loading suppliers:", err);
+      toast.error("Failed to load suppliers");
+    }
+  };
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
     if (name === "receipt_no") {
-      const isReceiptNumeric = /^\d*$/.test(value); // Allow empty input (user can delete input)
-      
+      const isReceiptNumeric = /^\d*$/.test(value);
+
       if (!isReceiptNumeric && !toastShown) {
         toast.error("Receipt number must contain only numbers!");
         setToastShown(true);
       }
-      
-      // If user corrects the input, reset the toast
+
       if (isReceiptNumeric && toastShown) {
         setToastShown(false);
       }
 
-      setReceiptError(!isReceiptNumeric); // Set error state if input is not numeric
+      setReceiptError(!isReceiptNumeric);
     }
 
     setFormData({ ...formData, [name]: value });
@@ -75,7 +81,7 @@ const AddPurchasedItem = () => {
 
     const isNumeric = /^\d+$/.test(formData.receipt_no);
     if (!isNumeric) {
-      toast.error('Receipt number must contain only numbers!');
+      toast.error("Receipt number must contain only numbers!");
       return;
     }
 
@@ -88,19 +94,22 @@ const AddPurchasedItem = () => {
         body: JSON.stringify({
           receipt_no: formData.receipt_no,
           purchase_date: formData.purchase_date + "T00:00:00Z",
+          supplier_id: formData.supplier_id,
         }),
       });
 
-      //Fetch the most recent pi_id
       const response = await fetch("/api/get_recent_pi_id");
       const data = await response.json();
       const recentPoId = data.pi_id;
 
-      //Redirect to the Add-PuchaseDetails page with the recent pi_id
       router.push(`/PurchasedDetail`);
     } catch (error) {
       toast.error("Failed to create Purchase Order");
     }
+  };
+
+  const handleSupplierAdded = () => {
+    fetchSuppliers();
   };
 
   return (
@@ -109,29 +118,70 @@ const AddPurchasedItem = () => {
         Purchased Item
       </p>
       <div className="flex justify-end mt-4">
-        <AddSupplier />
+        <AddSupplier onSupplierAdded={handleSupplierAdded} />
       </div>
       <form onSubmit={handleSubmit}>
-        <div className="mb-4 mt-5 flex items-center space-x-4 justify-center">
-          <label>Receipt Number: </label>
+        {/* Flex container to ensure label and input alignment */}
+        <div className="flex items-center justify-center space-x-4 mb-8 mt-9">
+          {/* Receipt Number Input with floating placeholder */}
+          <div className="relative flex-grow">
+            <input
+              type="text"
+              id="receipt_no"
+              name="receipt_no"
+              value={formData.receipt_no}
+              onChange={handleChange}
+              className={`peer border ${receiptError ? 'border-red-500 focus:ring-[#dd5454]' : 'border-[#C4C4C4]'} rounded-lg h-10 pl-2 w-full 
+              placeholder-transparent focus:outline-none focus:ring-2 focus:ring-[#6c757d] pt-4 pb-4`}
+              placeholder="Receipt Number"
+            />
+            <label
+              htmlFor="receipt_no"
+              className={`absolute left-2 text-gray-500 transition-all 
+                ${formData.receipt_no ? '-top-4 text-sm text-[#6c757d]' : 'top-2 text-base text-gray-400'} 
+                peer-focus:-top-4 peer-focus:text-sm peer-focus:text-[#6c757d] bg-white px-1`}
+            >
+              Receipt Number
+            </label>
+          </div>
 
-          <input
-            type="text"
-            id="receipt_no"
-            name="receipt_no"
-            value={formData.receipt_no}
-            onChange={handleChange}
-            className={`mt-1 w-1/2 px-3 py-2 border ${
-              receiptError ? "border-red-500" : "border-gray-300"
-            } rounded-md shadow-sm focus:outline-none sm:text-sm`}
-          />
+          {/* Supplier Select Input with floating placeholder */}
+          <div className="relative flex-grow">
+            <select
+              name="supplier_id"
+              value={formData.supplier_id}
+              onChange={handleChange}
+              className="peer border border-[#C4C4C4] rounded-lg h-10 pl-2 w-full focus:outline-none focus:ring-2 focus:ring-[#6c757d] py-2"
+            >
+              <option value="" disabled hidden>
+                Select Supplier
+              </option>
+              {suppliers.map((supplier) => (
+                <option key={supplier.supplier_id} value={supplier.supplier_id}>
+                  {supplier.supplier_name}
+                </option>
+              ))}
+            </select>
+            <label
+              htmlFor="supplier_id"
+              className={`absolute left-2 transition-all bg-white px-1 ${
+                formData.supplier_id !== "" ? "-top-4 text-sm text-[#6c757d]" : "top-2 text-base text-gray-400"
+              } peer-focus:-top-4 peer-focus:text-sm peer-focus:text-[#6c757d]`}
+            >
+              Select Supplier
+            </label>
+          </div>
 
-          <Button
-            type="submit"
-            className="bg-black text-white hover:bg-slate-900"
-          >
-            Submit
-          </Button>
+          {/* Submit Button */}
+          <div className="flex">
+            <Button
+              type="submit"
+              className="bg-black text-white hover:bg-slate-900 text-sm px-4 py-2"
+              style={{ width: 'fit-content' }}
+            >
+              Submit
+            </Button>
+          </div>
         </div>
       </form>
     </div>
