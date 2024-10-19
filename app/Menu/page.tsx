@@ -32,7 +32,7 @@ const MenuPage = () => {
   return (
     <>
       <div className="ml-10 mr-10">
-        <div className="mt-20 flex justify-end ">
+        <div className="mt-10 flex justify-end ">
           <Button variant="outline">
             <Link href="/Menu/AddProducts">Add Product</Link>
           </Button>

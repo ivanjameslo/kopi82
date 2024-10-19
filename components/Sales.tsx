@@ -1,20 +1,10 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
-import { Calendar } from "@/components/ui/calendar";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import {
-    ChartContainer,
-    ChartTooltip,
-    ChartTooltipContent,
-} from "@/components/ui/chart";
+import { useState } from 'react'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
     Table,
     TableBody,
@@ -22,296 +12,217 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarIcon, Download, Plus } from "lucide-react";
-import { format } from "date-fns";
+} from "@/components/ui/table"
+import { Calendar } from "@/components/ui/calendar"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import * as XLSX from 'xlsx'
 
-interface SalesData {
+type SalesEntry = {
     date: string;
-    total: number;
+    orders: number;
+    revenue: number;
+    expenses: number;
 }
 
-interface MenuItem {
-    id: number;
-    name: string;
-    price: number;
-    category: string;
-}
+export default function SalesPage() {
+    const [salesData, setSalesData] = useState<SalesEntry[]>([])
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
+    const [orders, setOrders] = useState('')
+    const [revenue, setRevenue] = useState('')
+    const [expenses, setExpenses] = useState('')
 
-const initialItems: MenuItem[] = [
-    { id: 1, name: "Cappuccino", price: 150, category: "Drinks" },
-    { id: 2, name: "Latte", price: 160, category: "Drinks" },
-    { id: 3, name: "Espresso", price: 120, category: "Drinks" },
-    { id: 4, name: "Cake", price: 80, category: "Pastries" },
-    { id: 5, name: "Muffin", price: 70, category: "Pastries" },
-];
-
-const initialSalesData: SalesData[] = [
-    { date: "2023-05-01", total: 4500 },
-    { date: "2023-05-02", total: 5200 },
-    { date: "2023-05-03", total: 4800 },
-    { date: "2023-05-04", total: 6000 },
-    { date: "2023-05-05", total: 7500 },
-    { date: "2023-05-06", total: 8200 },
-    { date: "2023-05-07", total: 9000 },
-];
-
-export default function Sales() {
-    const [date, setDate] = useState<Date | undefined>(new Date());
-    const [items, setItems] = useState<MenuItem[]>(initialItems);
-    const [salesData, setSalesData] = useState<SalesData[]>(initialSalesData);
-    const [newItem, setNewItem] = useState({ name: "", price: "", category: "" });
-
-    const totalSales = salesData.reduce((sum, day) => sum + day.total, 0);
-    const averageSale = totalSales / salesData.length;
-
-    const addItem = () => {
-        if (newItem.name && newItem.price && newItem.category) {
-            setItems([
-                ...items,
-                { ...newItem, id: items.length + 1, price: Number(newItem.price) },
-            ]);
-            setNewItem({ name: "", price: "", category: "" });
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        const newEntry: SalesEntry = {
+            date: selectedDate ? selectedDate.toISOString().split('T')[0] : '',
+            orders: parseInt(orders),
+            revenue: parseFloat(revenue),
+            expenses: parseFloat(expenses)
         }
-    };
+        setSalesData([...salesData, newEntry])
+        setOrders('')
+        setRevenue('')
+        setExpenses('')
+    }
 
-    const generateReport = () => {
-        const csvContent = [
-            ["Date", "Total Sales"],
-            ...salesData.map((day) => [day.date, day.total.toString()]),
+    const calculateTotals = () => {
+        const totalOrders = salesData.reduce((sum, entry) => sum + entry.orders, 0)
+        const totalRevenue = salesData.reduce((sum, entry) => sum + entry.revenue, 0)
+        const totalExpenses = salesData.reduce((sum, entry) => sum + entry.expenses, 0)
+        const grossProfit = totalRevenue - totalExpenses
+        const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
+        return { totalOrders, totalRevenue, totalExpenses, grossProfit, averageOrderValue }
+    }
+
+    const { totalOrders, totalRevenue, totalExpenses, grossProfit, averageOrderValue } = calculateTotals()
+
+    const extractExcelReport = () => {
+        const worksheet = XLSX.utils.json_to_sheet(salesData)
+        const workbook = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Sales Data")
+
+        const summaryData = [
+            { label: "Total Orders", value: totalOrders },
+            { label: "Total Revenue", value: totalRevenue },
+            { label: "Total Expenses", value: totalExpenses },
+            { label: "Gross Profit", value: grossProfit },
+            { label: "Average Order Value", value: averageOrderValue }
         ]
-            .map((row) => row.join(","))
-            .join("\n");
+        const summarySheet = XLSX.utils.json_to_sheet(summaryData)
+        XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary")
 
-        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-        const link = document.createElement("a");
-        if (link.download !== undefined) {
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", "cafe_sales_report.csv");
-            link.style.visibility = "hidden";
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    };
+        XLSX.writeFile(workbook, "sales_report.xlsx")
+    }
 
     return (
-        <div className="min-h-screen p-8 text-whitesmoke">
-            <h1 className="text-3xl font-bold mb-6 text-white">
-                Cafe Sales Dashboard
-            </h1>
-            <Tabs defaultValue="dashboard">
-                <TabsList className="mb-4">
-                    <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                    <TabsTrigger value="admin">Admin</TabsTrigger>
-                </TabsList>
-                <TabsContent value="dashboard">
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        <Card className="bg-black text-white">
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">₱{totalSales.toLocaleString()}</div>
-                                <p className="text-xs text-gray-400">For the last 7 days</p>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="bg-black text-white">
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">
-                                    Average Daily Sales
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">₱{averageSale.toFixed(2)}</div>
-                                <p className="text-xs text-gray-400">Per day</p>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="bg-black text-white">
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">
-                                    Top Selling Item
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">Cappuccino</div>
-                                <p className="text-xs text-gray-400">32 sold today</p>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="bg-black text-white">
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">
-                                    Customer Satisfaction
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">4.8/5</div>
-                                <p className="text-xs text-gray-400">Based on 120 reviews</p>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    <div className="mt-4">
-                        <Card className="bg-black text-white">
-                            <CardHeader>
-                                <CardTitle>Sales Overview</CardTitle>
-                            </CardHeader>
-                            <CardContent className="pl-2">
-                                <ChartContainer
-                                    config={{
-                                        total: {
-                                            label: "Total Sales",
-                                            color: "hsl(var(--chart-1))",
-                                        },
-                                    }}
-                                    className="h-[300px]"
-                                >
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={salesData}>
-                                            <XAxis
-                                                dataKey="date"
-                                                stroke="#ffffff"
-                                                fontSize={12}
-                                                tickLine={false}
-                                                axisLine={false}
-                                            />
-                                            <YAxis
-                                                stroke="#ffffff"
-                                                fontSize={12}
-                                                tickLine={false}
-                                                axisLine={false}
-                                                tickFormatter={(value: number) => `₱${value}`}
-                                            />
-                                            <ChartTooltip content={<ChartTooltipContent />} />
-                                            <Bar dataKey="total" fill="#FAEED1" radius={[4, 4, 0, 0]} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </ChartContainer>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    <div className="mt-4">
-                        <Card className="bg-black text-white">
-                            <CardHeader>
-                                <CardTitle>Menu Items</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Name</TableHead>
-                                            <TableHead>Category</TableHead>
-                                            <TableHead className="text-right">Price</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {items.map((item) => (
-                                            <TableRow key={item.id}>
-                                                <TableCell>{item.name}</TableCell>
-                                                <TableCell>{item.category}</TableCell>
-                                                <TableCell className="text-right">₱{item.price.toFixed(2)}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    <div className="mt-4 flex justify-between items-center">
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant={"outline"}
-                                    className={
-                                        date
-                                            ? "text-left font-normal text-black"
-                                            : "text-left font-normal text-gray-500"
-                                    }
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {date ? format(date, "PPP") : <span>Pick a date</span>}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={date}
-                                    onSelect={setDate}
-                                    initialFocus
-                                />
-                            </PopoverContent>
-                        </Popover>
-                        <Button onClick={generateReport}>
-                            <Download className="mr-2 h-4 w-4" />
-                            Generate Report
-                        </Button>
-                    </div>
-                </TabsContent>
-
-                <TabsContent value="admin">
-                    <Card className="bg-black text-white">
-                        <CardHeader>
-                            <CardTitle>Add New Item</CardTitle>
+        <div className="min-h-screen flex items-center justify-center">
+            <div className="container mx-auto p-2 max-w-5xl">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <Card className="md:col-span-2">
+                        <CardHeader className="p-3">
+                            <CardTitle className="text-lg">Upload Sales Data</CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <div className="grid w-full items-center gap-4">
-                                <div className="flex flex-col space-y-1.5">
-                                    <Label htmlFor="name">Name</Label>
-                                    <Input
-                                        id="name"
-                                        placeholder="Item name"
-                                        value={newItem.name}
-                                        onChange={(e) =>
-                                            setNewItem({ ...newItem, name: e.target.value })
-                                        }
-                                    />
+                        <CardContent className="p-3">
+                            <form onSubmit={handleSubmit} className="space-y-3">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="col-span-2">
+                                        <Label htmlFor="date" className="text-sm">Date</Label>
+                                        <Input
+                                            id="date"
+                                            type="date"
+                                            value={selectedDate ? selectedDate.toISOString().split('T')[0] : ''}
+                                            onChange={(e) => setSelectedDate(new Date(e.target.value))}
+                                            required
+                                            className="h-8 text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="orders" className="text-sm">Orders</Label>
+                                        <Input
+                                            id="orders"
+                                            type="number"
+                                            value={orders}
+                                            onChange={(e) => setOrders(e.target.value)}
+                                            required
+                                            className="h-8 text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="revenue" className="text-sm">Revenue ($)</Label>
+                                        <Input
+                                            id="revenue"
+                                            type="number"
+                                            step="0.01"
+                                            value={revenue}
+                                            onChange={(e) => setRevenue(e.target.value)}
+                                            required
+                                            className="h-8 text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="expenses" className="text-sm">Expenses ($)</Label>
+                                        <Input
+                                            id="expenses"
+                                            type="number"
+                                            step="0.01"
+                                            value={expenses}
+                                            onChange={(e) => setExpenses(e.target.value)}
+                                            required
+                                            className="h-8 text-sm"
+                                        />
+                                    </div>
                                 </div>
-                                <div className="flex flex-col space-y-1.5">
-                                    <Label htmlFor="price">Price</Label>
-                                    <Input
-                                        id="price"
-                                        placeholder="Price in PHP"
-                                        value={newItem.price}
-                                        onChange={(e) =>
-                                            setNewItem({ ...newItem, price: e.target.value })
-                                        }
-                                    />
-                                </div>
-                                <div className="flex flex-col space-y-1.5">
-                                    <Label htmlFor="category">Category</Label>
-                                    <Input
-                                        id="category"
-                                        placeholder="Category"
-                                        value={newItem.category}
-                                        onChange={(e) =>
-                                            setNewItem({ ...newItem, category: e.target.value })
-                                        }
-                                    />
-                                </div>
-                                <Button onClick={addItem}>
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Add Item
+                                <Button type="submit" className="w-full h-8 text-sm">
+                                    Upload Sales Data
                                 </Button>
-                            </div>
+                            </form>
                         </CardContent>
                     </Card>
-                </TabsContent>
-            </Tabs>
+
+                    <Card>
+                        <CardHeader className="p-3">
+                            <CardTitle className="text-lg">Select Date</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-3">
+                            <Calendar
+                                mode="single"
+                                selected={selectedDate}
+                                onSelect={setSelectedDate}
+                                className="rounded-md border"
+                            />
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <Card>
+                    <CardHeader className="p-3">
+                        <CardTitle className="text-lg">Sales Data and Analysis</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-3">
+                        <Tabs defaultValue="table">
+                            <TabsList className="mb-3">
+                                <TabsTrigger value="table" className="text-sm">Table</TabsTrigger>
+                                <TabsTrigger value="chart" className="text-sm">Chart</TabsTrigger>
+                                <TabsTrigger value="summary" className="text-sm">Summary</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="table">
+                                <div className="max-h-64 overflow-auto">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead className="text-xs">Date</TableHead>
+                                                <TableHead className="text-xs">Orders</TableHead>
+                                                <TableHead className="text-xs">Revenue</TableHead>
+                                                <TableHead className="text-xs">Expenses</TableHead>
+                                                <TableHead className="text-xs">Profit</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {salesData.map((entry, index) => (
+                                                <TableRow key={index}>
+                                                    <TableCell className="text-xs">{entry.date}</TableCell>
+                                                    <TableCell className="text-xs">{entry.orders}</TableCell>
+                                                    <TableCell className="text-xs">${entry.revenue.toFixed(2)}</TableCell>
+                                                    <TableCell className="text-xs">${entry.expenses.toFixed(2)}</TableCell>
+                                                    <TableCell className="text-xs">${(entry.revenue - entry.expenses).toFixed(2)}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </TabsContent>
+                            <TabsContent value="chart">
+                                <ResponsiveContainer width="100%" height={200}>
+                                    <BarChart data={salesData}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                                        <YAxis yAxisId="left" orientation="left" stroke="#8884d8" tick={{ fontSize: 10 }} />
+                                        <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" tick={{ fontSize: 10 }} />
+                                        <Tooltip />
+                                        <Legend wrapperStyle={{ fontSize: '10px' }} />
+                                        <Bar yAxisId="left" dataKey="revenue" fill="#8884d8" name="Revenue ($)" />
+                                        <Bar yAxisId="left" dataKey="expenses" fill="#82ca9d" name="Expenses ($)" />
+                                        <Bar yAxisId="right" dataKey="orders" fill="#ffc658" name="Orders" />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </TabsContent>
+                            <TabsContent value="summary">
+                                <div className="space-y-1 text-sm">
+                                    <p>Total Orders: {totalOrders}</p>
+                                    <p>Total Revenue: ${totalRevenue.toFixed(2)}</p>
+                                    <p>Total Expenses: ${totalExpenses.toFixed(2)}</p>
+                                    <p>Gross Profit: ${grossProfit.toFixed(2)}</p>
+                                    <p>Average Order Value: ${averageOrderValue.toFixed(2)}</p>
+                                    <Button onClick={extractExcelReport} className="mt-3 h-8 text-sm">
+                                        Extract Excel Report
+                                    </Button>
+                                </div>
+                            </TabsContent>
+                        </Tabs>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
-    );
+    )
 }

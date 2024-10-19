@@ -8,7 +8,7 @@ const config = {
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
     './globals.css',
-	],
+  ],
   prefix: "",
   theme: {
     container: {
@@ -72,6 +72,10 @@ const config = {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+      },
+
+      spacing: {
+        '96': '1830px',  // Another example custom spacing value
       },
     },
   },
