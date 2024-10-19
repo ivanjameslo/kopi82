@@ -109,7 +109,7 @@ export default function SalesPage() {
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor="revenue" className="text-sm">Revenue ($)</Label>
+                                        <Label htmlFor="revenue" className="text-sm">Revenue (PHP)</Label>
                                         <Input
                                             id="revenue"
                                             type="number"
