@@ -17,6 +17,7 @@ interface ItemData {
     description: string;
     unit: UnitData;
     category: CategoryData;
+    isUsed: boolean;
 }
 
 interface EditItemModalProps {
@@ -24,7 +25,7 @@ interface EditItemModalProps {
     unitOptions: UnitData[];
     categoryOptions: CategoryData[];
     onClose: () => void;
-    onSave: (updatedItem: ItemData) => void;
+    onSave: (updatedItem: ItemData) => Promise<void>;
 }
 
 const UpdateItemModal: React.FC<EditItemModalProps> = ({ selectedItem, unitOptions, categoryOptions, onClose, onSave }) => {

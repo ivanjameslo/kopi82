@@ -11,6 +11,7 @@ interface SupplierData {
   supplier_name: string;
   contact_no: number;
   address: string;
+  isUsed: boolean;
 }
 
 interface AddSupplierProps {
@@ -261,12 +262,14 @@ const AddSupplier: React.FC<AddSupplierProps> = ({ onSupplierAdded }) => {
                           style={{ color: "#3d3130" }}
                           onClick={() => handleEdit(supplier)}
                         />
-                        <MdDelete
-                          size={25}
-                          className="cursor-pointer"
-                          style={{ color: "#d00000" }}
-                          onClick={() => handleDelete(supplier.supplier_id)}
-                        />
+                        {!supplier.isUsed && (
+                          <MdDelete
+                            size={25}
+                            className="cursor-pointer"
+                            style={{ color: "#d00000" }}
+                            onClick={() => handleDelete(supplier.supplier_id)}
+                          />
+                        )}
                       </td>
                     </tr>
                   ))

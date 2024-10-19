@@ -3,13 +3,43 @@ import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 // GET function to fetch all data from the Purchase Details model
-export async function GET(request: NextRequest) {
+// export async function GET(request: NextRequest) {
+//   try {
+//     const categories = await prisma.category.findMany();
+//     return NextResponse.json(categories);
+//   } catch (error) {
+//     console.log("Error fetching categories", error);
+//     return NextResponse.json({ error: "Failed to fetch categories" }, { status: 500 });
+//   }
+// }
+export async function GET(req: Request) {
   try {
-    const categories = await prisma.category.findMany();
-    return NextResponse.json(categories);
+      // Fetch all categories and check if they are related to any items
+      const categories = await prisma.category.findMany({
+          select: {
+              category_id: true,
+              category_name: true,
+              item: true,
+              purchased_detail: true,
+          },
+      });
+
+      // Modify the data to include isUsed field
+      const data = categories.map((category) => ({
+          category_id: category.category_id,
+          category_name: category.category_name,
+          isUsed: 
+            category.item.length > 0 ||
+            category.purchased_detail.length > 0, // If category has related items, mark it as in use
+      }));
+
+      return new Response(JSON.stringify(data), {
+          headers: { "Content-Type": "application/json" },
+      });
   } catch (error) {
-    console.log("Error fetching categories", error);
-    return NextResponse.json({ error: "Failed to fetch categories" }, { status: 500 });
+      return new Response(JSON.stringify({ error: "Failed to fetch categories." }), {
+          status: 500,
+      });
   }
 }
 
@@ -24,14 +54,6 @@ export async function POST(request: NextRequest) {
       console.log("Invalid category_name:", category_name);
       return NextResponse.json({ error: "Invalid Category Name" }, { status: 400 });
     }
-
-    // const normalizedCategoryName = category_name.toLowerCase();
-
-    // // Fetch all categories to perform a manual case-insensitive comparison
-    // const allCategories = await prisma.category.findMany();
-    // const existingCategory = allCategories.find(
-    //   category => category.category_name.toLowerCase() === normalizedCategoryName
-    // );
 
     const existingCategory = await prisma.category.findFirst({
       where: {

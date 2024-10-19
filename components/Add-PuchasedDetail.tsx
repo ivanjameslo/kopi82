@@ -7,7 +7,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "react-toastify";
 import { MdCancel } from "react-icons/md";
-import AddSupplier from "./Add-Supplier";
 
 const AddPurchaseDetails = () => {
 
@@ -47,11 +46,10 @@ const AddPurchaseDetails = () => {
   const [recentPiId, setRecentPiId] = useState<number | null>(null);
   const [items, setItems] = useState<{
     description: any; item_name: any; unit_id: any; item_id: number; category_id: any;
-}[]>([]);
+  }[]>([]);
   const [units, setUnits] = useState<{ unit_id: any; unit_name: string }[]>([]);
   const [categories, setCategories] = useState<{ category_id: any; category_name: string }[]>([]);
   const [error, setError] = useState<string>("");
-  const [supplier, setSupplier] = useState<{ supplier_id: string; supplier_name: string }[]>([]);
 
   useEffect(() => {
     const fetchRecentPoId = async () => {
@@ -96,7 +94,16 @@ const AddPurchaseDetails = () => {
         const unitsData = await unitsResponse.json();
         const categoryData = await categoriesResponse.json();
 
-        setItems(itemsData);
+        const newItems = itemsData.map((item: any) => ({
+          description: item.description,
+          item_name: item.item_name,
+          unit_id: item.unit.unit_id,
+          item_id: item.item_id,
+          category_id: item.category.category_id,
+        }));
+        
+        setItems(newItems);
+        console.log("Items: ", items)
         setUnits(unitsData);
         setCategories(categoryData);
       } catch (error) {
@@ -138,6 +145,7 @@ const AddPurchaseDetails = () => {
         category_id: selectedItem.category_id ? selectedItem.category_id.toString() : "",
       };
       setFormDataArray(newFormDataArray);
+      console.log(formDataArray)
     }
   };
 
@@ -221,19 +229,6 @@ const AddPurchaseDetails = () => {
     const newFormDataArray = formDataArray.filter((_, i) => i !== index);
     setFormDataArray(newFormDataArray);
   };
-
-  // const refreshSuppliers = async () => {
-  //   try {
-  //     const response = await fetch("/api/supplier");
-  //     if (!response.ok) {
-  //       throw new Error("Failed to fetch supplier list.");
-  //     }
-  //     const supplierData = await response.json();
-  //     setSupplier(supplierData); // Update supplier list
-  //   } catch (error) {
-  //     console.log("Error refreshing suppliers:", error);
-  //   }
-  // };
 
   return (
     <div className="mt-24 ml-16 mr-16">

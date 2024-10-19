@@ -3,13 +3,46 @@ import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 // GET function to fetch all data from Supplier model
-export async function GET(request: NextRequest) {
+// export async function GET(request: NextRequest) {
+//   try {
+//     const suppliers = await prisma.supplier.findMany();
+//     return NextResponse.json(suppliers);
+//   } catch (error) {
+//     console.log("Error fetching suppliers", error);
+//     return NextResponse.json({ error: "Failed to fetch suppliers" }, { status: 500 });
+//   }
+// }
+
+export async function GET(req: Request) {
   try {
-    const suppliers = await prisma.supplier.findMany();
-    return NextResponse.json(suppliers);
+      // Fetch all suppliers and check if they are associated with any purchased_items
+      const suppliers = await prisma.supplier.findMany({
+          select: {
+              supplier_id: true,
+              supplier_name: true,
+              contact_no: true,
+              address: true,
+              purchased_item: true, // Assuming "purchased_item" is the related model
+          },
+      });
+
+      // Modify the data to include isUsed field
+      const data = suppliers.map((supplier) => ({
+          supplier_id: supplier.supplier_id,
+          supplier_name: supplier.supplier_name,
+          contact_no: supplier.contact_no,
+          address: supplier.address,
+          isUsed: supplier.purchased_item.length > 0, // If the supplier is linked to any purchased_items
+      }));
+
+      return new Response(JSON.stringify(data), {
+          headers: { "Content-Type": "application/json" },
+      });
   } catch (error) {
-    console.log("Error fetching suppliers", error);
-    return NextResponse.json({ error: "Failed to fetch suppliers" }, { status: 500 });
+    console.error("Error fetching suppliers with purchased_item:", error); // Log the detailed error
+    return new Response(JSON.stringify({ error: "Failed to fetch suppliers." }), {
+      status: 500,
+      });
   }
 }
 

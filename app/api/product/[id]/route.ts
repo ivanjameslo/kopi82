@@ -2,6 +2,17 @@ import prisma from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/initSupabase";
 
+//GET function for fetching a single product
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const id = params.id
+  const product = await prisma.product.findUnique({
+      where: {
+          product_id: Number(id)
+      }
+  });
+  return NextResponse.json(product);
+}
+
 // PATCH function for updating an existing product
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -41,5 +52,21 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   } catch (error) {
     console.error("Error updating product", error);
     return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
+  }
+}
+
+// DELETE function for deleting a product
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const product_id = params.id;
+    const product = await prisma.product.delete({
+      where: { 
+        product_id: Number(product_id) 
+      },
+    });
+    return NextResponse.json(product, { status: 200 });
+  } catch (error) {
+    console.error("Error deleting product", error);
+    return NextResponse.json({ error: "Failed to delete product" }, { status: 500 });
   }
 }

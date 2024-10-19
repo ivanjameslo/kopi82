@@ -21,6 +21,7 @@ interface ItemData {
         category_id: number;
         category_name: string;
     };
+    isUsed: boolean;
 }
 
 interface UnitData {
@@ -89,6 +90,7 @@ const ViewItem = () => {
     // Handle Save Edit
     const handleSaveEdit = async (updatedItem: ItemData) => {
         try {
+            const updatedItemWithIsUsed = { ...updatedItem, isUsed: selectedItem?.isUsed || false };
             // Run multiple async tasks concurrently
             const [updateResponse, updatedUnits, updatedCategories] = await Promise.all([
                 fetch(`/api/item/${updatedItem.item_id}`, {
@@ -96,7 +98,7 @@ const ViewItem = () => {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(updatedItem),
+                    body: JSON.stringify(updatedItemWithIsUsed),
                 }),
                 fetch('/api/unit'), // Fetch the updated unit list
                 fetch('/api/category'), // Fetch the updated category list
@@ -176,7 +178,9 @@ const ViewItem = () => {
                                 <TableCell className="text-center">
                                     <div className="flex items-center justify-center space-x-2">
                                         <MdEdit size={25} style={{ color: "#3d3130" }} className="cursor-pointer" onClick={() => handleEdit(items)} />
-                                        <MdDelete size={25} style={{ color: "#d00000" }} className="cursor-pointer" onClick={() => handleDelete(items.item_id)} />
+                                        {!items.isUsed && (
+                                            <MdDelete size={25} style={{ color: "#d00000" }} className="cursor-pointer" onClick={() => handleDelete(items.item_id)} />
+                                        )}
                                     </div>
                                 </TableCell>
                             </TableRow>

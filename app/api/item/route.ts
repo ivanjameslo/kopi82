@@ -3,15 +3,58 @@ import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { parse } from "path";
 
-export async function GET(request: NextRequest) {
-  const item = await prisma.item.findMany({
-    include: {
-        category: true,
-        unit: true,
-    }
-  });
-  console.log(item);
-  return NextResponse.json(item);
+// export async function GET(request: NextRequest) {
+//   const item = await prisma.item.findMany({
+//     include: {
+//         category: true,
+//         unit: true,
+//     }
+//   });
+//   console.log(item);
+//   return NextResponse.json(item);
+// }
+export async function GET(req: Request) {
+  try {
+      // Fetch all items and check if they are part of purchased_detail or back_inventory
+      const items = await prisma.item.findMany({
+          select: {
+              item_id: true,
+              item_name: true,
+              description: true,
+              unit: {
+                  select: {
+                      unit_id: true,
+                      unit_name: true,
+                  },
+              },
+              category: {
+                  select: {
+                      category_id: true,
+                      category_name: true,
+                  },
+              },
+              purchased_detail: true, // Check if related to purchased_detail
+          },
+      });
+
+      // Modify the data to include isUsed field
+      const data = items.map((item) => ({
+          item_id: item.item_id,
+          item_name: item.item_name,
+          description: item.description,
+          unit: item.unit,
+          category: item.category,
+          isUsed: item.purchased_detail.length > 0, // If the item is part of purchased_detail or back_inventory
+      }));
+
+      return new Response(JSON.stringify(data), {
+          headers: { "Content-Type": "application/json" },
+      });
+  } catch (error) {
+      return new Response(JSON.stringify({ error: "Failed to fetch items." }), {
+          status: 500,
+      });
+  }
 }
 
 export async function POST(request: NextRequest) {

@@ -7,7 +7,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const item = await prisma.item.findUnique({
         where: {
             item_id: Number(id)
-        }
+        },
+        include: {
+            unit: true,
+            category: true,
+        },
     });
     return NextResponse.json(item);
 }
