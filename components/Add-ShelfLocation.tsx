@@ -11,6 +11,7 @@ interface ShelfLocationData {
   sl_id: number;
   sl_name: string;
   inv_type: string;
+  isUsed: boolean;
 }
 interface AddShelfLocationProps {
     onModalClose?: () => void;  // Add the callback prop
@@ -205,12 +206,14 @@ const AddShelfLocation = ({ onModalClose }: AddShelfLocationProps) => {
                           style={{ color: "#3d3130" }}
                           onClick={() => handleEdit(location)}
                         />
-                        <MdDelete
-                          size={25}
-                          className="cursor-pointer"
-                          style={{ color: "#d00000" }}
-                          onClick={() => handleDelete(location.sl_id)}
-                        />
+                        {!location.isUsed && (
+                          <MdDelete
+                            size={25}
+                            className="cursor-pointer"
+                            style={{ color: "#d00000" }}
+                            onClick={() => handleDelete(location.sl_id)}
+                          />
+                        )}
                       </td>
                     </tr>
                   ))}

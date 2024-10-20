@@ -4,9 +4,32 @@ import { NextResponse } from "next/server";
 
 // GET function to fetch all data from Purchase Details model
 export async function GET(request: NextRequest) {
-  const shelf_location = await prisma.shelf_location.findMany();
-  console.log(shelf_location);
-  return NextResponse.json(shelf_location);
+
+  try {
+    const shelf_location = await prisma.shelf_location.findMany({
+      select: {
+        sl_id: true,
+        sl_name: true,
+        inv_type: true,
+        inventory_shelf: true
+      }
+    });
+
+    const data = shelf_location.map((location) => ({
+      sl_id: location.sl_id,
+      sl_name: location.sl_name,
+      inv_type: location.inv_type,
+      isUsed: location.inventory_shelf.length > 0,
+    }));
+
+    return new Response(JSON.stringify(data), {
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: "Failed to fetch supplier." }), {
+      status: 500,
+    });
+  }
 }
 
 // POST function to create a new Category

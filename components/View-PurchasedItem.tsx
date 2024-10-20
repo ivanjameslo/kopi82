@@ -20,6 +20,7 @@ interface PurchasedItemData {
   receipt_no: number;
   purchase_date: string;
   supplier: SupplierData;
+  isUsed: boolean;
 }
 
 interface PurchasedDetailData {
@@ -229,13 +230,15 @@ const ViewPurchaseOrder = () => {
             {data.map((purchasedItem) => (
               <TableRow key={purchasedItem.pi_id}>
                 <TableCell className="text-center">{purchasedItem.receipt_no}</TableCell>
-                <TableCell className="text-center">{purchasedItem.supplier.supplier_name}</TableCell>
+                <TableCell className="text-center">{purchasedItem.supplier?.supplier_name || "No Supplier"}</TableCell>
                 <TableCell className="text-center">{formatDateTime(purchasedItem.purchase_date)}</TableCell>
                 <TableCell className="text-center">
                 <div className="flex items-center justify-center space-x-6">
                   <HiClipboardDocumentList size={25} className="cursor-pointer" style={{color: '3d3130'}} onClick={() => handleViewDetails(purchasedItem.pi_id)} />
-                  <MdDelete size={25} className="cursor-pointer" style={{color: 'd00000'}} onClick={() => handleDelete(purchasedItem.pi_id)} />
-                </div>
+                  {!purchasedItem.isUsed && (
+                    <MdDelete size={25} className="cursor-pointer" style={{color: 'd00000'}} onClick={() => handleDelete(purchasedItem.pi_id)} />
+                  )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

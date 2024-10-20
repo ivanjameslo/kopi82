@@ -5,13 +5,36 @@ import { NextResponse } from "next/server";
 
 // GET function to fetch all data from Purchase Order model
 export async function GET(request: NextRequest) {
-  const purchased_item = await prisma.purchased_item.findMany({
-    include: {
-      supplier: true,
-    }
+  try{
+    const purchased_item = await prisma.purchased_item.findMany({
+      include: {
+        supplier: true,
+        purchased_detail: true,
+        back_inventory: true,
+      }
+    });
+
+    const data = purchased_item.map((purchased) => ({
+      pi_id: purchased.pi_id,
+      receipt_no: purchased.receipt_no,
+      purchase_date: purchased.purchase_date,
+      supplier: {
+        supplier_id: purchased.supplier.supplier_id,
+        supplier_name: purchased.supplier.supplier_name, // Include supplier name
+        address: purchased.supplier.address, // If you want to include more details, you can add them here
+        contact_no: purchased.supplier.contact_no,
+      },
+      isUsed: purchased.purchased_detail.length > 0,
+    }));
+
+    return new Response(JSON.stringify(data), {
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: "Failed to fetch purchased item." }), {
+      status: 500,
   });
-  console.log(purchased_item);
-  return NextResponse.json(purchased_item);
+  }
 }
 
 // POST function to create a new Purchase Order
