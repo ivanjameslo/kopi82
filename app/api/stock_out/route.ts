@@ -3,19 +3,16 @@ import prisma from "@/lib/db";
 
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();  // Parse request body
+        const body = await request.json();
         const { items } = body;
 
-        // Check if items are provided
         if (!items || !Array.isArray(items) || items.length === 0) {
             return NextResponse.json({ error: "No items provided or invalid format" }, { status: 400 });
         }
 
-        // Iterate through each item to update the stock
         for (const item of items) {
-            const { bd_id, action, quantity } = item;
+            const { bd_id, action, quantity, sl_id } = item;
 
-            // Fetch the back_inventory item with its associated inventory_shelf
             const backInventory = await prisma.back_inventory.findUnique({
                 where: { bd_id },
                 include: {
@@ -27,13 +24,15 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ error: `Back inventory with bd_id ${bd_id} not found` }, { status: 404 });
             }
 
-            // Check if the quantity exceeds available stock
-            const totalStock = backInventory.inventory_shelf.reduce((sum, shelf) => sum + shelf.quantity, 0);
-            if (quantity > totalStock) {
-                return NextResponse.json({ error: `Quantity exceeds available stock for bd_id ${bd_id}` }, { status: 400 });
+            const selectedShelf = backInventory.inventory_shelf.find(shelf => shelf.sl_id === parseInt(sl_id));
+            if (!selectedShelf) {
+                return NextResponse.json({ error: `Shelf location with sl_id ${sl_id} not found for bd_id ${bd_id}` }, { status: 404 });
             }
 
-            // Update inventory_shelf based on the selected action (stock used or stock damaged)
+            if (quantity > selectedShelf.quantity) {
+                return NextResponse.json({ error: `Quantity exceeds available stock for bd_id ${bd_id} in the selected location` }, { status: 400 });
+            }
+
             if (action === "used") {
                 await prisma.back_inventory.update({
                     where: { bd_id },
@@ -41,14 +40,18 @@ export async function POST(request: NextRequest) {
                         stock_used: {
                             increment: quantity,
                         },
+                        stock_out_date: new Date(),
                         inventory_shelf: {
-                            updateMany: {
+                            update: {
                                 where: {
-                                    bd_id: backInventory.bd_id,
+                                    bd_id_sl_id: {
+                                        bd_id: backInventory.bd_id,
+                                        sl_id: parseInt(sl_id),
+                                    },
                                 },
                                 data: {
                                     quantity: {
-                                        decrement: quantity,  // Reduce quantity
+                                        decrement: quantity,
                                     },
                                 },
                             },
@@ -62,14 +65,18 @@ export async function POST(request: NextRequest) {
                         stock_damaged: {
                             increment: quantity,
                         },
+                        stock_out_date: new Date(),
                         inventory_shelf: {
-                            updateMany: {
+                            update: {
                                 where: {
-                                    bd_id: backInventory.bd_id,
+                                    bd_id_sl_id: {
+                                        bd_id: backInventory.bd_id,
+                                        sl_id: parseInt(sl_id),
+                                    },
                                 },
                                 data: {
                                     quantity: {
-                                        decrement: quantity,  // Reduce quantity
+                                        decrement: quantity,
                                     },
                                 },
                             },

@@ -5,16 +5,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
 
+interface InventoryMovement {
+  date_moved: string;
+  quantity: number;
+  shelf_location: 
+    { sl_name: string; }; // Shelf location name
+  action: string; // "used", "damaged", or "NA"
+}
+
 interface InventoryHistory {
   bd_id: number;
   item_name: string;
   created_at: string;
-  movements: Array<{
-    date_moved: string;
-    quantity: number;
-    from_location: string;
-    to_location: string;
-  }>;
+  stock_out_date: string;
+  movements: InventoryMovement[];
 }
 
 const InventoryHistoryPage = () => {
@@ -32,6 +36,7 @@ const InventoryHistoryPage = () => {
 
   useEffect(() => {
     fetchInventoryHistory();
+    console.log(history);
   }, []);
 
   const formatDateTime = (dateTimeString: string | null) => {
@@ -49,22 +54,22 @@ const InventoryHistoryPage = () => {
   return (
     <div className="mt-24 ml-32 mr-32">
       <p className="text-3xl font-bold text-[#483C32] text-center mb-6">Inventory History</p>
-      
+
       <div className="flex justify-end mt-10">
-          <Link href="/Back&FrontInventory">
-              <Button>Back</Button>
-          </Link>
+        <Link href="/Back&FrontInventory">
+          <Button>Back</Button>
+        </Link>
       </div>
 
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Item Name</TableHead>
-            <TableHead>Created At</TableHead>
             <TableHead>Movement Date</TableHead>
             <TableHead>Quantity</TableHead>
-            <TableHead>From Location</TableHead>
-            <TableHead>To Location</TableHead>
+            <TableHead>Shelf Location</TableHead>
+            <TableHead>Stock Action</TableHead> {/* Used/Damaged/NA */}
+            <TableHead>Stock Out Date</TableHead> {/* Stock out date */}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -74,11 +79,11 @@ const InventoryHistoryPage = () => {
                 {record.movements.map((move, index) => (
                   <TableRow key={`${record.bd_id}-${index}`}>
                     <TableCell>{record.item_name}</TableCell>
-                    <TableCell>{formatDateTime(record.created_at)}</TableCell>
                     <TableCell>{formatDateTime(move.date_moved)}</TableCell>
                     <TableCell>{move.quantity}</TableCell>
-                    <TableCell>{move.from_location}</TableCell>
-                    <TableCell>{move.to_location}</TableCell>
+                    <TableCell>{move.shelf_location.sl_name}</TableCell>
+                    <TableCell>{move.action === 'NA' ? 'NA' : move.action}</TableCell> {/* Display stock action */}
+                    <TableCell>{formatDateTime(record.stock_out_date)}</TableCell> {/* Display stock out date */}
                   </TableRow>
                 ))}
               </React.Fragment>

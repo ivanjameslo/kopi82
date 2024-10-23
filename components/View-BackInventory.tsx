@@ -142,6 +142,7 @@ const ViewBackInventory = () => {
     inv.inventory_shelf.map(shelf => ({
       bd_id: inv.bd_id,
       item_name: inv.purchased_detail.item.item_name,
+      sl_id: shelf.sl_id,
       quantity: shelf.quantity,
       unit_name: inv.purchased_detail.item.unit.unit_name,
     }))
