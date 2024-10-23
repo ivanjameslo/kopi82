@@ -4,7 +4,7 @@ import React from "react";
 const page = () => {
   return (
     <main>
-      <div className="pt-20">
+      <div className="pt-10">
         <ViewProduct />
       </div>
     </main>
