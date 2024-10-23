@@ -114,22 +114,27 @@ export const allDayBreakfast = [
   {
     productName: "Longsilog",
     productPrice: "200",
-    productImage: "/picapica/calamares.png",
+    productImage: "/alldaybreakfast/longsilog.png",
   },
   {
     productName: "Sausilog",
-    productPrice: "Bistek Tagalog",
-    productImage: "/picapica/calamares.png",
+    productPrice: "230",
+    productImage: "/alldaybreakfast/sausilog.png",
   },
   {
     productName: "Chicken Steak with Mushroom Gravy",
     productPrice: "200",
-    productImage: "/picapica/calamares.png",
+    productImage: "/alldaybreakfast/chickenmushroom.png",
+  },
+  {
+    productName: "Bistek Tagalog",
+    productPrice: "200",
+    productImage: "/alldaybreakfast/bistektagalog.png",
   },
   {
     productName: "Beef Bulgogi",
     productPrice: "220",
-    productImage: "/picapica/calamares.png",
+    productImage: "/alldaybreakfast/beefbulgogi.png",
   },
 ];
 
@@ -137,42 +142,42 @@ export const riceMeals = [
   {
     productName: "Chicken Ala King",
     productPrice: "220",
-    productImage: "/picapica/calamares.png",
+    productImage: "/ricemeals/alaking.png",
   },
   {
     productName: "Chicken Parmigiana",
     productPrice: "240",
-    productImage: "/picapica/calamares.png",
+    productImage: "/ricemeals/chickenparmigiana.png",
   },
   {
     productName: "Ginger Soy Shrimp Popcorn",
     productPrice: "240",
-    productImage: "/picapica/calamares.png",
+    productImage: "/ricemeals/shrimppopcorn.png",
   },
   {
     productName: "Chili Cheese Bowl",
     productPrice: "200",
-    productImage: "/picapica/calamares.png",
+    productImage: "/ricemeals/chilicheesebowl.png",
   },
   {
     productName: "Beef Steak with Mushroom Gravy",
     productPrice: "250",
-    productImage: "/picapica/calamares.png",
+    productImage: "/ricemeals/beefmushroom.png",
   },
   {
     productName: "Pork Steak with Mushroom Gravy",
     productPrice: "250",
-    productImage: "/picapica/calamares.png",
+    productImage: "/ricemeals/porkmushroom.png",
   },
   {
     productName: "Garlic Pepper Beef",
     productPrice: "250",
-    productImage: "/picapica/calamares.png",
+    productImage: "/ricemeals/garlicpepperbeef.png",
   },
   {
     productName: "Lechon Kawali",
     productPrice: "220",
-    productImage: "/picapica/calamares.png",
+    productImage: "/ricemeals/lechonkawali.png",
   },
 ];
 
@@ -180,42 +185,42 @@ export const pasta = [
   {
     productName: "Penne Chicken Alfredo",
     productPrice: "220",
-    productImage: "/picapica/calamares.png",
+    productImage: "/pasta/pennechickenalfredo.png",
   },
   {
     productName: "Beef Meatball Marinara",
     productPrice: "220",
-    productImage: "/picapica/calamares.png",
+    productImage: "/pasta/meatballmarinara.png",
   },
   {
     productName: "Seafood Marinara",
     productPrice: "220",
-    productImage: "/picapica/calamares.png",
+    productImage: "/pasta/seafoodmarinara.png",
   },
   {
     productName: "Spicy Shrimp Aglio Olio",
     productPrice: "200",
-    productImage: "/picapica/calamares.png",
+    productImage: "/pasta/spicyshrimpaglioolio.png",
   },
   {
     productName: "Black Truffle Creamy Pasta",
     productPrice: "250",
-    productImage: "/picapica/calamares.png",
+    productImage: "/pasta/blacktrufflecreamypasta.png",
   },
   {
     productName: "Bacon and Mushroom Carbonara",
     productPrice: "220",
-    productImage: "/picapica/calamares.png",
+    productImage: "/pasta/baconmushroomcarbonara.png",
   },
   {
     productName: "Creamy Bacon Mushroom Pasta",
     productPrice: "220",
-    productImage: "/picapica/calamares.png",
+    productImage: "/pasta/baconmushroompasta.png",
   },
   {
     productName: "Bacon Penne Telefono",
     productPrice: "250",
-    productImage: "/picapica/calamares.png",
+    productImage: "/pasta/telefono.png",
   },
 ];
 
@@ -223,22 +228,22 @@ export const pizza = [
   {
     productName: "All Cheese",
     productPrice: "220",
-    productImage: "/picapica/calamares.png",
+    productImage: "/pizza/allcheesepizza.png",
   },
   {
     productName: "Garlic Shrimp",
     productPrice: "230",
-    productImage: "/picapica/calamares.png",
+    productImage: "/pizza/garlicshrimp.png",
   },
   {
     productName: "Cheesy Truffle",
     productPrice: "250",
-    productImage: "/picapica/calamares.png",
+    productImage: "/pizza/trufflepizza.png",
   },
   {
     productName: "All Meat",
     productPrice: "230",
-    productImage: "/picapica/calamares.png",
+    productImage: "/pizza/allmeatpizza.png",
   },
 ];
 
@@ -246,27 +251,27 @@ export const sandwiches = [
   {
     productName: "Kani Salad Roll",
     productPrice: "160",
-    productImage: "/picapica/calamares.png",
+    productImage: "/sandwiches/kanisalad.png",
   },
   {
     productName: "Chicken Salad Roll",
     productPrice: "160",
-    productImage: "/picapica/calamares.png",
+    productImage: "/sandwiches/chickensaladroll.png",
   },
   {
     productName: "Chili Cheesedog",
     productPrice: "230",
-    productImage: "/picapica/calamares.png",
+    productImage: "/sandwiches/chilicheesedog.png",
   },
   {
     productName: "French Toast BLT",
     productPrice: "230",
-    productImage: "/picapica/calamares.png",
+    productImage: "/sandwiches/frenchtoastBLT.png",
   },
   {
     productName: "Grilled Cheese",
     productPrice: "220",
-    productImage: "/picapica/calamares.png",
+    productImage: "/sandwiches/grilledcheese.png",
   },
 ];
 
@@ -279,32 +284,32 @@ export const picaPica = [
   {
     productName: "Sausage Platter",
     productPrice: "500",
-    productImage: "/picapica/calamares.png",
+    productImage: "/picapica/sausageplatter.png",
   },
   {
     productName: "Pork Sisig",
     productPrice: "200",
-    productImage: "/picapica/calamares.png",
+    productImage: "/picapica/porksisig.png",
   },
   {
     productName: "Nachos",
     productPrice: "250",
-    productImage: "/picapica/calamares.png",
+    productImage: "/picapica/nachos.png",
   },
   {
     productName: "Mozzarella Sticks",
     productPrice: "250",
-    productImage: "/picapica/calamares.png",
+    productImage: "/picapica/mozzarellasticks.png",
   },
   {
     productName: "Fish & Chips",
     productPrice: "220",
-    productImage: "/picapica/calamares.png",
+    productImage: "/picapica/fishandchips.png",
   },
   {
     productName: "Gambas",
     productPrice: "220",
-    productImage: "/picapica/calamares.png",
+    productImage: "/picapica/gambas.png",
   },
 ];
 
@@ -317,16 +322,16 @@ export const beer = [
   {
     productName: "San Miguel Super Dry",
     productPrice: "105",
-    productImage: "/beers/heineken.png",
+    productImage: "/beers/sanmiguelsuperdry.png",
   },
   {
     productName: "San Miguel Premium",
     productPrice: "110",
-    productImage: "/beers/heineken.png",
+    productImage: "/beers/sanmiguelpremium.png",
   },
   {
     productName: "San Miguel Negra",
     productPrice: "95",
-    productImage: "/beers/heineken.png",
+    productImage: "/beers/sanmiguelnegra.png",
   },
 ];
