@@ -16,8 +16,8 @@ import Link from "next/link";
 const InventoryRoutes = () => {
   return (
     <div className="bg-[url('/darkbackground.png')] bg-cover bg-center min-h-screen">
-      <div className="flex justify-center gap-3">
-        {/* <Card className="mt-96 bg-black border-none">
+      <div className="flex justify-center gap-3 h-screen items-center">
+        {/* <Card className="bg-black border-none">
           <CardHeader>
             <CardTitle className="text-white">Front Inventory</CardTitle>
             <CardDescription className="text-white font-light">
@@ -35,7 +35,7 @@ const InventoryRoutes = () => {
           </CardContent>
         </Card> */}
 
-        <Card className="mt-96 bg-black border-none">
+        <Card className=" bg-black border-none">
           <CardHeader>
             <CardTitle className="text-white">Inventory</CardTitle>
             <CardDescription className="text-white font-light">
@@ -53,7 +53,7 @@ const InventoryRoutes = () => {
           </CardContent>
         </Card>
 
-        <Card className="mt-96 bg-black border-none">
+        <Card className=" bg-black border-none">
           <CardHeader>
             <CardTitle className="text-white">Purchased Item</CardTitle>
             <CardDescription className="text-white font-light">
@@ -71,7 +71,7 @@ const InventoryRoutes = () => {
           </CardContent>
         </Card>
 
-        <Card className="mt-96 bg-black border-none">
+        <Card className=" bg-black border-none">
           <CardHeader>
             <CardTitle className="text-white">Item</CardTitle>
             <CardDescription className="text-white font-light">

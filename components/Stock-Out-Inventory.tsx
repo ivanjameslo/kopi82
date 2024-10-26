@@ -11,6 +11,7 @@ interface StockOutModalProps {
   selectedItems: {
     bd_id: number;
     item_name: string;
+    sl_id: number;
     quantity: number;
     unit_name: string;
   }[];
@@ -22,8 +23,9 @@ const StockOutModal = ({ isOpen, onClose, selectedItems, refreshInventory }: Sto
     selectedItems.map((item) => ({
       bd_id: item.bd_id,
       item_name: item.item_name,
+      sl_id: item.sl_id,
       action: "", // stock used or damaged
-      quantity: 0, // quantity to stock out
+      quantity: "", // quantity to stock out
       available_quantity: item.quantity, // max available quantity
       unit_name: item.unit_name,
     }))
@@ -50,14 +52,19 @@ const StockOutModal = ({ isOpen, onClose, selectedItems, refreshInventory }: Sto
     }
 
     setStockOutItems((prev) =>
-      prev.map((item) => (item.bd_id === bd_id ? { ...item, quantity } : item))
+      prev.map((item) => (item.bd_id === bd_id ? { ...item, quantity: value } : item))
     );
   };
 
   // Handle form submission
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const validItems = stockOutItems.filter((item) => item.action && item.quantity > 0);
+    const validItems = stockOutItems.map(item => ({
+      bd_id: item.bd_id,
+      sl_id: item.sl_id,
+      action: item.action,
+      quantity: parseInt(item.quantity, 10), // Convert quantity to an integer
+    }));
 
     if (validItems.length === 0) {
       toast.error("Please select an action and enter a valid quantity.");

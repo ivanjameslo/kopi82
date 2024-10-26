@@ -3,6 +3,7 @@ export enum Routes {
   MENU = "/Menu",
   // ORDERS = "/Orders",
   INVENTORY = "/Inventory",
+  SALES = "/Sales",
 }
 
 export const NAVBAR_LINKS = [
@@ -21,5 +22,9 @@ export const NAVBAR_LINKS = [
   {
     label: "Inventory",
     href: Routes.INVENTORY,
+  },
+  {
+    label: "Sales",
+    href: Routes.SALES,
   },
 ];
