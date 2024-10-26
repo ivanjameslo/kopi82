@@ -1,9 +1,12 @@
 "use client";
 
-import { on } from "events";
-import { useEffect, useState } from "react";
+import { product } from "@prisma/client";
+import { useRouter } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import { Button } from "@/components/ui/button";
 
-interface order_details {
+interface OrderDetails {
     order_id: number;
     product_id: number;
     quantity: number;
@@ -19,6 +22,11 @@ interface order_details {
         status: string;
         description: string;
         image_url: string;
+    }
+    order: {
+        order_id: number;
+        customer_name: string;
+        service_type: string;
     }
 }
 
@@ -36,74 +44,135 @@ interface ProductData {
     image_url: string;
 }
 
+interface orderData {
+    order_id: number;
+    customer_name: string;
+    service_type: string;
+}
+
+
+
 
 
 const ProductDetails = () => {
-
-
-    const [orderDetails, setOrderDetails] = useState<order_details[]>([]);
+    const router = useRouter();
+    const [orderDetails, setOrderDetails] = useState<OrderDetails[]>([]);
     const [product, setProduct] = useState<ProductData[]>([]);
-    const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
+
+    console.log('Fetched order details:', orderDetails); // Check order details
+    console.log('Fetched products:', product); // Check product data
+
+    const [formDataOrder, setFormDataArray] = useState([{
+        order_id: " ",
+        product_id: " ",
+        quantity: " ",
+
+    }]);
 
     // Fetch Product Details
     const fetchProductData = async () => {
         try {
             const response = await fetch('/api/product');
             const data = await response.json();
+            console.log('Fetched products:', data); // Log fetched products
             setProduct(data);
         } catch (error) {
-            console.error('Failed to fetch unit', error);
+            console.error('Failed to fetch product', error);
         }
-    }
+    };
 
     // Fetch Order Details
-    const fetchOrderDetails = async () => {
+    const handleAddtoCart = async (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        for (const formData of formDataOrder) {
+            if (!formData.order_id || !formData.product_id || !formData.quantity) {
+                toast.error('Missing required fields');
+                return;
+            }
+        }
+
+        const formDataOrderWithNumbers = formDataOrder.map(formDataOrder => ({
+            ...formDataOrder,
+            order_id: Number(formDataOrder.order_id),
+            product_id: Number(formDataOrder.product_id),
+        }));
+
         try {
-            const response = await fetch('/api/order_details');
-            const data = await response.json();
-            setOrderDetails(data);
+            const response = await fetch('app/api/order_details', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formDataOrderWithNumbers),
+            });
+
+            const result = await response.json();
+
+            // check if the response is successful
+            if (!response.ok) {
+                toast.error(result.error || 'Failed to add to cart');
+                return;
+            }
+
+            toast.success('Added to cart successfully');
+            setTimeout(() => {
+                router.push('/Item');
+            }, 1500);
         } catch (error) {
-            console.error('Failed to fetch order details', error);
+            toast.error('Failed to add to cart');
         }
     }
 
-    // Load intial data on page load
+    // Load initial data on page load
     useEffect(() => {
         fetchProductData();
-        fetchOrderDetails();
     }, []);
 
-    // Group products by category
-  const groupedProducts = product.reduce(
-    (acc: { [key: string]: ProductData[] }, product) => {
-      if (!acc[product.category]) {
-        acc[product.category] = [];
-      }
-      acc[product.category].push(product);
-      return acc;
-    },
-    {}
-  );
+    const findProductbyId = (productId: number, products: ProductData[]): string => {
+        const product = products.find((product) => product.product_id === productId);
+        return product ? product.product_name : '';
+    }
 
-  // Helper function to check if a product has any valid prices
-  const hasNonZeroPrice = (product: order_details) => {
-    return (
-      product.product.hotPrice > 0 ||
-      product.product.icedPrice > 0 ||
-      product.product.frappePrice > 0 ||
-      product.product.singlePrice > 0
-    );
-  };
+    const Horizontal = () => {
+        return (
+            <hr className="w-[30%] my-2" />
+        );
+    };
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full h-full">
-            {orderDetails.map((order) => (
-                <div>
-                    {order.product.image_url}
-                </div>
-            ))}
+            <form onSubmit={handleAddtoCart}>
+                {product.map((order, index) => (
+                    <div key={order.product_id}>
+                        <div>
+                            <img src={order.image_url} alt={order.product_name} />
+                        </div>
+                        <div>
+                            <h2 className="text-3xl font-medium text-slate-700">{order.product_name}</h2>
+                            <Horizontal />
+                            <div className="text-justify">{order.description}</div>
+                            <Horizontal />
+                            <div>
+                                <span className="font-semibold">CATEGORY:</span> {order.category}
+                            </div>
+                            <Horizontal />
+                            <div>
+                                <Button type="submit" variant="outline" size="default" className="w-full">
+                                    Add to cart</Button>
+                            </div>
+
+                        </div>
+                    </div>
+                ))}
+
+
+            </form>
+
+
+
         </div>
     );
-}
+};
 
 export default ProductDetails;

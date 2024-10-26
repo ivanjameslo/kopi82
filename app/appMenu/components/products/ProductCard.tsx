@@ -82,7 +82,8 @@ const ProductCard = () => {
     router.push(`/appMenu/menu/${product_id}`); // Navigate to the product page
   };
 
-  const Horizontal = () => <hr className="w-[30%] my-2" />;
+  const Horizontal = () => 
+  <hr className="w-[30%] my-2" />;
 
   const formatPrice = (price: number): string => {
     return new Intl.NumberFormat('en-PH', {

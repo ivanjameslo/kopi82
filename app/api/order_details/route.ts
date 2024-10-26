@@ -11,6 +11,8 @@ export async function GET(request: NextRequest) {
         order: {
           select: {
             order_id: true,
+            customer_name: true,
+            service_type: true,
           },
         },
         product: {
@@ -34,7 +36,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching order details:", error);
-    return new Response(JSON.stringify({ error: "Failed to fetch items." }), {
+    return new Response(JSON.stringify({ error: "Failed to fetch Order Details." }), {
       status: 500,
     });
   }
@@ -55,20 +57,20 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Validate: Check if the `order_id` and `product_id` combination is unique
-      const existingOrder = await prisma.order_details.findFirst({
-        where: {
-          order_id: order_id,
-          product_id: product_id,
-        },
-      });
+      // // Validate: Check if the `order_id` and `product_id` combination is unique
+      // const existingOrder = await prisma.order_details.findFirst({
+      //   where: {
+      //     order_id: order_id,
+      //     product_id: product_id,
+      //   },
+      // });
 
-      if (existingOrder) {
-        return NextResponse.json(
-          { error: "Order already exists." },
-          { status: 400 }
-        );
-      }
+      // if (existingOrder) {
+      //   return NextResponse.json(
+      //     { error: "Order already exists." },
+      //     { status: 400 }
+      //   );
+      // }
     }
 
     const created = await prisma.order_details.createMany({
@@ -78,7 +80,7 @@ export async function POST(request: NextRequest) {
         quantity: formData.quantity
       }))
     });
-    
+
     return NextResponse.json({ success: true, createdCount: created.count }, { status: 201 });
 
   } catch (error) {

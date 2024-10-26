@@ -193,14 +193,6 @@ model order_details {
   // ProductOrderDetails ProductOrderDetails[] (!!!!for many-to-many relation)
 }
 
-model Cart {
-  cart_id     Int      @id @default(autoincrement())
-  productId   Int
-  productName String
-  price       Float
-  quantity    Int
-  createdAt   DateTime @default(now())
-}
 
 // model ProductOrderDetails {
 //   product_id Int

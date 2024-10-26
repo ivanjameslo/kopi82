@@ -4,11 +4,13 @@ import ProductIdDetails from "../productDetails";
 import Container from "@/app/appMenu/components/Container";
 import { CartContextProvider } from "@/app/appMenu/components/hooks/UseCart";
 
-
+interface IParams {
+    productId?: string;
+}
 
 const Menu = () => {
- console.log('Menu');
-    
+
+      
     return ( 
         <div className="pt-8">
             <Container>
