@@ -18,15 +18,16 @@ datasource db {
 }
 
 model employee {
-  employee_id      Int                @id @default(autoincrement())
-  username         String
-  password         String
-  role             String
-  last_name        String
-  first_name       String
-  middle_name      String
-  // purchase_request purchase_request[]
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid // References auth.users.id
+  email       String
+  role        String
+  last_name   String
+  first_name  String
+  middle_name String
+
+  @@map("employee") // Optional: specify the exact name of the table if it differs
 }
+
 
 //INVENTORY
 
@@ -44,19 +45,8 @@ model back_inventory {
   inventory_shelf         inventory_shelf[]
   createdAt               DateTime          @default(now())
   updatedAt               DateTime          @updatedAt
+  inventory_tracking      inventory_tracking[]
 }
-
-// model purchase_request {
-//   pr_id        Int      @id @default(autoincrement())
-//   item_id      Int
-//   quantity     Int
-//   employee_id  Int
-//   date_ordered DateTime @default(now())
-//   status       String
-//   item         item     @relation(fields: [item_id], references: [item_id])
-//   employee     employee @relation(fields: [employee_id], references: [employee_id])
-//   createdAt    DateTime @default(now())
-// }
 
 model purchased_item {
   pi_id            Int                @id @default(autoincrement())
@@ -100,7 +90,7 @@ model unit {
   item             item[]
   purchased_detail purchased_detail[]
   inventory_shelf inventory_shelf[]
-  // back_inventory back_inventory[]
+  inventory_tracking inventory_tracking[]
 }
 
 model category {
@@ -108,7 +98,6 @@ model category {
   category_name String
   item          item[]
   purchased_detail purchased_detail[]
-  // back_inventory back_inventory[]
 }
 
 model shelf_location {
@@ -116,6 +105,10 @@ model shelf_location {
   sl_name String
   inv_type String
   inventory_shelf inventory_shelf[]
+  source_shelf inventory_tracking[] @relation("SourceShelf")
+  destination_shelf inventory_tracking[] @relation("DestinationShelf")
+
+  @@map("shelf_location")
 }
 
 model inventory_shelf {
@@ -131,6 +124,7 @@ model inventory_shelf {
   @@unique([bd_id, sl_id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  ProductInventory ProductInventory[]
 }
 
 model item {
@@ -142,7 +136,6 @@ model item {
   unit             unit               @relation(fields: [unit_id], references: [unit_id])
   category         category           @relation(fields: [category_id], references: [category_id])
   purchased_detail purchased_detail[]
-  // purchase_request purchase_request[]
   createdAt        DateTime           @default(now())
 }
 
@@ -154,13 +147,28 @@ model supplier {
   purchased_item purchased_item[]
 }
 
+model inventory_tracking {
+  id                   Int               @id @default(autoincrement())
+  bd_id                Int
+  quantity             Int
+  source_shelf_id      Int?
+  destination_shelf_id Int?
+  unit_id              Int
+  date_moved           DateTime          @default(now())
+  action               String
+  back_inventory       back_inventory    @relation(fields: [bd_id], references: [bd_id])
+  source_shelf         shelf_location?    @relation("SourceShelf", fields: [source_shelf_id], references: [sl_id])
+  destination_shelf    shelf_location ?   @relation("DestinationShelf", fields: [destination_shelf_id], references: [sl_id])
+  unit                 unit              @relation(fields: [unit_id], references: [unit_id])
+}
+
 //PRODUCT
 
 model product {
   product_id      Int               @id @default(autoincrement())
   category        String
   product_name    String
-  type            String
+  type            String?
   hotPrice        Float
   icedPrice       Float
   frappePrice     Float
@@ -170,11 +178,23 @@ model product {
   image_url       String?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
-  //fd_id Int @unique
-  //front_inventory front_inventory @relation(fields: [fd_id], references: [fd_id])
   order_details   order_details[]
   // ProductOrderDetails ProductOrderDetails[] (!!!!for many-to-many relation)
+
+  ProductInventory ProductInventory[]
 }
+
+model ProductInventory {
+  id              Int              @id @default(autoincrement())
+  product_id      Int
+  inventory_shelf_id Int
+  required_quantity Int              // Quantity needed for product
+  product         product           @relation(fields: [product_id], references: [product_id])
+  inventory_shelf inventory_shelf   @relation(fields: [inventory_shelf_id], references: [is_id])
+
+  @@unique([product_id, inventory_shelf_id])
+}
+
 
 //ORDER
 

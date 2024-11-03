@@ -1,14 +1,13 @@
-import ViewProduct from "@/components/View-Product";
+import Login from "@/components/Login"
 import React from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const page = () => {
   return (
-    <main>
-      <div className="pt-10">
-        <ViewProduct />
-        <ToastContainer 
+    <>
+    <Login />
+    <ToastContainer 
           position="bottom-right" 
           autoClose={1500} 
           hideProgressBar={false} 
@@ -19,8 +18,7 @@ const page = () => {
           pauseOnHover 
           style={{ zIndex: 9999 }}
         />
-      </div>
-    </main>
+      </>
   );
 };
 

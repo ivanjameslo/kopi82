@@ -24,7 +24,10 @@ export async function GET(request: NextRequest) {
         address: purchased.supplier.address, // If you want to include more details, you can add them here
         contact_no: purchased.supplier.contact_no,
       },
-      isUsed: purchased.purchased_detail.length > 0,
+      // isUsed: purchased.purchased_detail.length > 0,
+      isUsed: purchased.purchased_detail.some(detail => 
+        Object.values(detail).some(value => value !== null)
+      ),
     }));
 
     return new Response(JSON.stringify(data), {

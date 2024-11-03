@@ -253,18 +253,18 @@ const AddBackInventory = ({ onModalClose }: AddBackInventoryProps) => {
         }
     
         try {
-            const payload = selectedItems.map(item => {
-                console.log("Submitting item:", item);
-                const isCake = purchasedDetails.find(detail => detail.pd_id === item.pd_id)?.item?.category?.category_name?.toLowerCase() === "cake";
-                return {
+            const payload = selectedItems.map(item => ({
+                // console.log("Submitting item:", item);
+                // const isCake = purchasedDetails.find(detail => detail.pd_id === item.pd_id)?.item?.category?.category_name?.toLowerCase() === "cake";
+                // return {
                     pd_id: item.pd_id,
                     item_id: item.item_id,
                     sl_id: item.sl_id,
                     quantity: item.quantity,
                     pi_id: item.pi_id,
-                    unit_name: isCake ? "Slice" : item.unit_name,
-                };
-            });
+                    unit_name: item.unit_name,
+                // };
+            }));
     
             const response = await fetch("/api/back_inventory", {
                 method: "POST",

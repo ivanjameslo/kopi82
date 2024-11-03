@@ -20,6 +20,11 @@ export async function GET(request: NextRequest) {
             item: {
               select: {
                 item_name: true,
+                unit: {
+                  select: {
+                    unit_name: true,
+                  },
+                },
               },
             },
           },

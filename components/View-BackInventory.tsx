@@ -64,6 +64,7 @@ const ViewBackInventory = () => {
   const [isChecked, setIsChecked] = useState<Record<string, boolean>>({});
   const [filteredInventory, setFilteredInventory] = useState<Record<string, any>>({});
   const [selectedLocation, setSelectedLocation] = useState<string>("All");
+  const [disableCheckBox, setDisableCheckBox] = useState<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -110,6 +111,10 @@ const ViewBackInventory = () => {
 
       const itemExpiry = item.purchased_detail.expiry_date;
       acc[key].items.push({ ...item, inventory_shelf: nonZeroShelves });
+      // Sort by expiry date to ensure the order is correct after any stock-out updates
+      acc[key].items.sort((a: BackInventory, b: BackInventory) => {
+        return new Date(a.purchased_detail.expiry_date).getTime() - new Date(b.purchased_detail.expiry_date).getTime();
+      });
       acc[key].quantity += nonZeroShelves.reduce((sum, shelf) => sum + shelf.quantity, 0);
       acc[key].expiryRange.min = acc[key].expiryRange.min
         ? new Date(acc[key].expiryRange.min) < new Date(itemExpiry)
@@ -129,6 +134,46 @@ const ViewBackInventory = () => {
     setGroupedInventory(grouped);
     setFilteredInventory(grouped); // Initially show all inventory items
   };
+
+  const updateDisabledStatus = () => {
+    const updatedDisableCheckBox: Record<string, boolean> = {};
+  
+    // Loop through the inventory to enable the first batch for each location
+    Object.values(groupedInventory).forEach((group: any) => {
+      const sortedItems = group.items
+        .flatMap((item: BackInventory) => item.inventory_shelf.map((shelf) => ({
+          ...shelf,
+          expiry_date: item.purchased_detail.expiry_date || "NA",
+          bd_id: item.bd_id,
+        })))
+        .sort((a: { expiry_date: string | number | Date; bd_id: number }, b: { expiry_date: string | number | Date; bd_id: number }) => {
+          // Sort by expiry date or by order of purchase if expiry date is "NA"
+          if (a.expiry_date === "NA" && b.expiry_date === "NA") {
+            return a.bd_id - b.bd_id;
+          }
+          if (a.expiry_date === "NA") return -1;
+          if (b.expiry_date === "NA") return 1;
+          return new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime();
+        });
+  
+      const enabledLocations: Set<string> = new Set();
+  
+      sortedItems.forEach((shelf: { bd_id: any; sl_id: any; shelf_location: { sl_name: any; }; quantity: number; }) => {
+        const key = `${shelf.bd_id}-${group.item_id}-${shelf.sl_id}`;
+        const locationName = shelf.shelf_location.sl_name;
+  
+        // Enable the first batch for each location with quantity > 0
+        if (shelf.quantity > 0 && !enabledLocations.has(locationName)) {
+          updatedDisableCheckBox[key] = false; // Enable this checkbox
+          enabledLocations.add(locationName); // Mark this location as having an enabled item
+        } else {
+          updatedDisableCheckBox[key] = true; // Disable subsequent items
+        }
+      });
+    });
+  
+    setDisableCheckBox(updatedDisableCheckBox);
+  };  
 
   const handleLocationFilter = (location: string) => {
     setSelectedLocation(location);
@@ -202,6 +247,7 @@ const ViewBackInventory = () => {
         prev.filter((item) => !(item.bd_id === inventory.bd_id && item.inventory_shelf[0].sl_id === sl_id))
       );
     }
+    updateDisabledStatus();
   };  
 
   const openMoveInventoryModal = () => {
@@ -233,6 +279,7 @@ const ViewBackInventory = () => {
     sl_id: inventory.inventory_shelf[0].sl_id,
     quantity: inventory.inventory_shelf[0].quantity,
     unit_name: inventory.purchased_detail.item.unit.unit_name,
+    unit_id: inventory.purchased_detail.item.unit.unit_id,
   }));
 
   const closeStockOutModal = () => {
@@ -262,6 +309,10 @@ const ViewBackInventory = () => {
     fetchShelfLocations();
     fetchBackInventory();
   }, []);
+
+  useEffect(() => {
+    updateDisabledStatus();
+  }, [groupedInventory]);
 
   // Pagination
   const totalPages = Math.ceil(Object.keys(filteredInventory).length / itemsPerPage);
@@ -403,7 +454,11 @@ const ViewBackInventory = () => {
                       })()}
                     </TableCell>
                     <TableCell>
-                      {formatDateTime(group.expiryRange.min)} - <br /> {formatDateTime(group.expiryRange.max)}
+                      {group.expiryRange.min === group.expiryRange.max 
+                        ? formatDateTime(group.expiryRange.min) 
+                        : <>
+                            {formatDateTime(group.expiryRange.min)} - <br /> {formatDateTime(group.expiryRange.max)}
+                          </>}
                     </TableCell>
                   </TableRow>
 
@@ -420,6 +475,7 @@ const ViewBackInventory = () => {
                             <input
                               type="checkbox"
                               checked={Boolean(isChecked[`${item.bd_id}-${group.item_id}-${shelf.sl_id}`])} // unique key here
+                              disabled={disableCheckBox[`${item.bd_id}-${group.item_id}-${shelf.sl_id}`]}
                               onChange={(e) => handleItemSelection(item, shelf.sl_id, e.target.checked)}
                               style={{ width: "20px", height: "20px" }}
                             />

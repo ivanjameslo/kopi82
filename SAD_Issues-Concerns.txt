@@ -54,3 +54,5 @@ const { data, error } = await supabase.auth.updateUser({
 })
 
 https://dbdiagram.io/
+
+https://nextjs.org/docs/app/building-your-application/routing/middleware

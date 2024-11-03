@@ -137,6 +137,24 @@ const MoveInventory = ({ onModalClose, selectedItems, refreshInventory }: MoveIn
                 unit_id: item.unit_id
             }));
 
+        // const trackingMovements = movements.map(({ hidden, source_sl_id, destination_sl_id, ...trackingFields }) => ({
+        //     ...trackingFields,
+        //     source_shelf_id: source_sl_id,
+        //     destination_shelf_id: destination_sl_id,
+        //     date_moved: new Date().toISOString(),
+        //     action: "Transfer", // Set action to "Transfer" as required
+        // }));
+
+        const trackingMovements = movements.map(movement => ({
+            bd_id: movement.bd_id,
+            quantity: movement.quantity,
+            source_shelf_id: movement.source_sl_id,
+            destination_shelf_id: movement.destination_sl_id,
+            unit_id: movement.unit_id,
+            date_moved: new Date().toISOString(),
+            action: "transferred"
+          }))
+
         if (movements.length === 0) {
             toast.error("No valid movements to submit");
             setIsSubmitting(false);
@@ -144,6 +162,7 @@ const MoveInventory = ({ onModalClose, selectedItems, refreshInventory }: MoveIn
         }
 
         console.log("Submitting movements: ", movements);
+        console.log("Submitting trackingMovements for inventory_tracking:", trackingMovements);
 
         try {
             const response = await fetch("/api/move_inventory", {
@@ -156,6 +175,20 @@ const MoveInventory = ({ onModalClose, selectedItems, refreshInventory }: MoveIn
                 const errorData = await response.json();
                 throw new Error(errorData.error || "Failed to move inventory");
             }
+
+            // After successful movement, log each move in inventory_tracking
+            for (const movement of trackingMovements) {
+                const trackingResponse = await fetch("/api/inventory_tracking", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(movement),
+                })
+        
+                if (!trackingResponse.ok) {
+                  const trackingErrorData = await trackingResponse.json()
+                  throw new Error(trackingErrorData.error || "Failed to log inventory movement")
+                }
+              }
 
             toast.success("Inventory moved successfully!");
             setLocalSelectedItems([]);

@@ -1,6 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 
+export async function GET(request: NextRequest) {
+    try {
+        const inventoryMovement = await prisma.inventory_shelf.findMany({
+            include: {
+                shelf_location: {
+                    select: {
+                        sl_name: true,
+                    },
+                },
+                back_inventory: {
+                    select: {
+                        bd_id: true,
+                        purchased_detail: {
+                            select: {
+                                item: {
+                                    select: {
+                                        item_name: true,
+                                    },
+                                },
+                                unit: {
+                                    select: {
+                                        unit_name: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: {
+                updatedAt: 'desc',
+            },
+        });
+
+        // Map the data to a format suitable for the frontend
+        const data = inventoryMovement.map((movement) => ({
+            bd_id: movement.back_inventory?.bd_id,
+            item_name: movement.back_inventory?.purchased_detail?.item?.item_name || "Unknown",
+            quantity: movement.quantity,
+            date_moved: movement.updatedAt,
+            shelf_location: {
+                sl_name: movement.shelf_location.sl_name,
+            },
+            unit_name: movement.back_inventory?.purchased_detail?.unit?.unit_name || "units",
+            action: "transfer",
+        }));
+
+        return NextResponse.json(data, { status: 200 });
+    } catch (error) {
+        console.error("Error fetching inventory movement:", error);
+        return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
+    }
+}
+
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
@@ -41,6 +95,7 @@ export async function POST(request: NextRequest) {
                     data: {
                         quantity: sourceInventory.quantity - quantity,
                         hidden: sourceInventory.quantity === quantity ? true : sourceInventory.hidden,
+                        // action: "transfer",
                     },
                 });
 
@@ -59,6 +114,7 @@ export async function POST(request: NextRequest) {
                         data: {
                             quantity: destinationInventory.quantity + quantity,
                             hidden: false,
+                            // action: "transfer",
                         },
                     });
                 } else {
@@ -69,6 +125,7 @@ export async function POST(request: NextRequest) {
                             unit: { connect: { unit_id } },  // Connect the unit relation
                             shelf_location: { connect: { sl_id: destination_sl_id } },  // Use the relation for shelf_location
                             back_inventory: { connect: { bd_id } },  // Connect the back_inventory relation
+                            // action: "transfer",
                         },
                     });                                      
                 }

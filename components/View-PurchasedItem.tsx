@@ -28,7 +28,7 @@ interface PurchasedDetailData {
   expiry_date: string;
 }
 
-interface ItemDate {
+interface ItemData {
   item_id: number;
   item_name: string;
   description: string;
@@ -54,7 +54,7 @@ const ViewPurchaseOrder = () => {
 
   // For Displaying the table
   const [data, setData] = useState<PurchasedItemData[]>([]);
-  const [items, setItems] = useState<ItemDate[]>([]);
+  const [items, setItems] = useState<ItemData[]>([]);
   const [units, setUnits] = useState<UnitData[]>([]);
   const [categories, setCategories] = useState<CategoryData[]>([]);
   const [suppliers, setSupplier] = useState<SupplierData[]>([]);

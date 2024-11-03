@@ -163,7 +163,6 @@ const AddCategory = ({ onModalClose }: AddCategoryProps) => {
                             <table className="table-auto w-full border-collapse border border-gray-300">
                                 <thead>
                                     <tr className="bg-gray-100">
-                                        <th className="px-4 py-2 border-b text-center">ID</th>
                                         <th className="px-4 py-2 border-b text-center">Name</th>
                                         <th className="px-4 py-2 border-b text-center">Actions</th>
                                     </tr>
@@ -171,9 +170,6 @@ const AddCategory = ({ onModalClose }: AddCategoryProps) => {
                                 <tbody>
                                     {data.map((category) => (
                                         <tr key={category.category_id}>
-                                            <td className="px-4 py-2 border-b text-center">
-                                                {category.category_id}
-                                            </td>
                                             <td className="px-4 py-2 border-b text-center">
                                                 {category.category_name}
                                             </td>

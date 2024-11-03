@@ -3,9 +3,8 @@
 //// ------------------------------------------------------
 
 Table employee {
-  employee_id Int [pk, increment]
-  username String [not null]
-  password String [not null]
+  id String [pk]
+  email String [not null]
   role String [not null]
   last_name String [not null]
   first_name String [not null]
@@ -26,6 +25,7 @@ Table back_inventory {
   inventory_shelf inventory_shelf [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
+  inventory_tracking inventory_tracking [not null]
 }
 
 Table purchased_item {
@@ -70,6 +70,7 @@ Table unit {
   item item [not null]
   purchased_detail purchased_detail [not null]
   inventory_shelf inventory_shelf [not null]
+  inventory_tracking inventory_tracking [not null]
 }
 
 Table category {
@@ -84,6 +85,8 @@ Table shelf_location {
   sl_name String [not null]
   inv_type String [not null]
   inventory_shelf inventory_shelf [not null]
+  source_shelf inventory_tracking [not null]
+  destination_shelf inventory_tracking [not null]
 }
 
 Table inventory_shelf {
@@ -98,6 +101,7 @@ Table inventory_shelf {
   back_inventory back_inventory [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
+  ProductInventory ProductInventory [not null]
 
   indexes {
     (bd_id, sl_id) [unique]
@@ -124,11 +128,26 @@ Table supplier {
   purchased_item purchased_item [not null]
 }
 
+Table inventory_tracking {
+  id Int [pk, increment]
+  bd_id Int [not null]
+  quantity Int [not null]
+  source_shelf_id Int
+  destination_shelf_id Int
+  unit_id Int [not null]
+  date_moved DateTime [default: `now()`, not null]
+  action String [not null]
+  back_inventory back_inventory [not null]
+  source_shelf shelf_location
+  destination_shelf shelf_location
+  unit unit [not null]
+}
+
 Table product {
   product_id Int [pk, increment]
   category String [not null]
   product_name String [not null]
-  type String [not null]
+  type String
   hotPrice Float [not null]
   icedPrice Float [not null]
   frappePrice Float [not null]
@@ -139,6 +158,20 @@ Table product {
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
   order_details order_details [not null]
+  ProductInventory ProductInventory [not null]
+}
+
+Table ProductInventory {
+  id Int [pk, increment]
+  product_id Int [not null]
+  inventory_shelf_id Int [not null]
+  required_quantity Int [not null]
+  product product [not null]
+  inventory_shelf inventory_shelf [not null]
+
+  indexes {
+    (product_id, inventory_shelf_id) [unique]
+  }
 }
 
 Table order {
@@ -228,6 +261,18 @@ Ref: inventory_shelf.bd_id > back_inventory.bd_id
 Ref: item.unit_id > unit.unit_id
 
 Ref: item.category_id > category.category_id
+
+Ref: inventory_tracking.bd_id > back_inventory.bd_id
+
+Ref: inventory_tracking.source_shelf_id > shelf_location.sl_id
+
+Ref: inventory_tracking.destination_shelf_id > shelf_location.sl_id
+
+Ref: inventory_tracking.unit_id > unit.unit_id
+
+Ref: ProductInventory.product_id > product.product_id
+
+Ref: ProductInventory.inventory_shelf_id > inventory_shelf.is_id
 
 Ref: order_details.order_id > order.order_id
 

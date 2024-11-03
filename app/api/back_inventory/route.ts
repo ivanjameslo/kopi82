@@ -124,6 +124,21 @@ export async function POST(request: NextRequest) {
       data: inventoryShelfData,
     });
 
+    // Track each entry in inventory_tracking
+    const inventoryTrackingData = inventoryShelfData.map(entry => ({
+      bd_id: entry.bd_id,
+      quantity: entry.quantity,
+      source_shelf_id: null, // Since this is a new entry, there’s no source shelf
+      destination_shelf_id: entry.sl_id,
+      unit_id: entry.unit_id,
+      date_moved: new Date(),
+      action: "added"
+    }));
+
+    await prisma.inventory_tracking.createMany({
+      data: inventoryTrackingData,
+    });
+
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error: any) {
     console.error("Error creating Back Inventory:", error);
