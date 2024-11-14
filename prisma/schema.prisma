@@ -23,7 +23,8 @@ model employee {
   role        String
   last_name   String
   first_name  String
-  middle_name String
+  middle_name String?
+  status      String
 
   @@map("employee") // Optional: specify the exact name of the table if it differs
 }
@@ -212,6 +213,7 @@ model order_details {
   order_id        Int
   product_id      Int
   quantity        Int
+  date            DateTime @default(now())
   order           order   @relation(fields: [order_id], references: [order_id])
   product         product @relation(fields: [product_id], references: [product_id])
   // ProductOrderDetails ProductOrderDetails[] (!!!!for many-to-many relation)

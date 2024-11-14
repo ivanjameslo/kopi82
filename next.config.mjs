@@ -9,6 +9,14 @@ const nextConfig = {
         port: '', // Optional if there's a port specified
         pathname: '/storage/v1/object/public/ProductImages/**', // Use the correct path structure
       },
+      {
+        protocol: 'https',
+        hostname: 'example.com',
+      },
+      {
+        protocol: "https",
+        hostname: "**",
+      },
     ],
   },
 };

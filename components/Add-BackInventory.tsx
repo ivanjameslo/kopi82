@@ -414,7 +414,7 @@ const AddBackInventory = ({ onModalClose }: AddBackInventoryProps) => {
                         </div>
                         <div className="mt-6">
                             <Button type="submit" className="text-white px-4 py-2 rounded-md">
-                                Submit Back Inventory
+                                Add to Inventory
                             </Button>
                         </div>
                     </form>

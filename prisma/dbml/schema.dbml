@@ -8,7 +8,8 @@ Table employee {
   role String [not null]
   last_name String [not null]
   first_name String [not null]
-  middle_name String [not null]
+  middle_name String
+  status String [not null]
 }
 
 Table back_inventory {
@@ -188,6 +189,7 @@ Table order_details {
   order_id Int [not null]
   product_id Int [not null]
   quantity Int [not null]
+  date DateTime [default: `now()`, not null]
   order order [not null]
   product product [not null]
 }
