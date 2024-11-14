@@ -1,7 +1,8 @@
 import Link from "next/link";
 import Container from "../Container";
 import Image from "next/image";
-import CartCount from "./CartCount";
+import { MdShoppingBasket } from "react-icons/md";
+
 // import CartContextProvider from "../../Cart/page";
 // import CartCount, { CartContextProvider } from "./CartCount";
 
@@ -31,8 +32,10 @@ const Navbar = () => {
                 <div className="flex items-center gap-8
                 md:gap-12">
                     
-                    <CartCount/> 
-                   
+                  <div className="flex items-center gap-2">
+                  <MdShoppingBasket/>
+                    <Link href="/appMenu/Cart">Cart</Link>
+                    </div>
                 </div>
             </div>
         </Container>

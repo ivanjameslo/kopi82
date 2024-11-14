@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 // GET function to retrieve order details
 export async function GET(request: NextRequest) {
   try {
-    const order_details = await prisma.order_details.findMany({
+    const cart = await prisma.cart.findMany({
       select: {
         order: {
           select: {
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return new Response(JSON.stringify(order_details), {
+    return new Response(JSON.stringify(cart), {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     if (!Array.isArray(formDataArray)) {
       return NextResponse.json(
-        { error: "Invalid data format. Expected an array of order details." },
+        { error: "Invalid data format. Expected an array of cart." },
         { status: 400 }
       );
     }
@@ -67,11 +67,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const created = await prisma.order_details.createMany({
-      data: formDataArray.map((formData: { order_id: any; product_id: any; quantity: any; }) => ({
+    const created = await prisma.cart.createMany({
+      data: formDataArray.map((formData: { order_id: any; product_id: any; quantity: any; drink_type:any; price:any; }) => ({
         order_id: formData.order_id,
         product_id: formData.product_id,
-        quantity: formData.quantity
+        quantity: formData.quantity,
+        drink_type: formData.drink_type,
+        price: formData.price
       }))
     });
 

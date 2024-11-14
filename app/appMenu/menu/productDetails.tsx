@@ -1,178 +1,184 @@
 "use client";
 
-import { product } from "@prisma/client";
-import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { useState, useEffect, FormEvent } from "react";
+import Image from "next/image";
 import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
-interface OrderDetails {
-    order_id: number;
-    product_id: number;
-    quantity: number;
-    product: {
-        product_id: number;
-        product_name: string;
-        category: string;
-        type: string;
-        hotPrice: number;
-        icedPrice: number;
-        frappePrice: number;
-        singlePrice: number;
-        status: string;
-        description: string;
-        image_url: string;
-    }
-    order: {
-        order_id: number;
-        customer_name: string;
-        service_type: string;
-    }
+interface Product {
+  product_id: number;
+  product_name: string;
+  category: string;
+  type: string;
+  hotPrice: number;
+  icedPrice: number;
+  frappePrice: number;
+  singlePrice: number;
+  status: string;
+  description: string;
+  image_url: string;
 }
 
-interface ProductData {
-    product_id: number;
-    product_name: string;
-    category: string;
-    type: string;
-    hotPrice: number;
-    icedPrice: number;
-    frappePrice: number;
-    singlePrice: number;
-    status: string;
-    description: string;
-    image_url: string;
+interface ProductDetailsProps {
+  product_id: string;
 }
 
-interface orderData {
-    order_id: number;
-    customer_name: string;
-    service_type: string;
-}
+const ProductDetails: React.FC<ProductDetailsProps> = ({ product_id }) => {
+  const [product, setProduct] = useState<Product | null>(null);
+  const [quantity, setQuantity] = useState<number>(1);
+  const [selectedPrice, setSelectedPrice] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
 
+  const router = useRouter();
 
-
-
-
-const ProductDetails = () => {
-    const router = useRouter();
-    const [orderDetails, setOrderDetails] = useState<OrderDetails[]>([]);
-    const [product, setProduct] = useState<ProductData[]>([]);
-
-    console.log('Fetched order details:', orderDetails); // Check order details
-    console.log('Fetched products:', product); // Check product data
-
-    const [formDataOrder, setFormDataArray] = useState([{
-        order_id: " ",
-        product_id: " ",
-        quantity: " ",
-
-    }]);
-
-    // Fetch Product Details
-    const fetchProductData = async () => {
-        try {
-            const response = await fetch('/api/product');
-            const data = await response.json();
-            console.log('Fetched products:', data); // Log fetched products
-            setProduct(data);
-        } catch (error) {
-            console.error('Failed to fetch product', error);
-        }
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const response = await fetch(`/api/product/${product_id}`);
+        const data = await response.json();
+        setProduct(data);
+      } catch (error) {
+        console.error("Failed to fetch product", error);
+        toast.error("Failed to fetch product");
+      }
     };
 
-    // Fetch Order Details
-    const handleAddtoCart = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    fetchProduct();
+  }, [product_id]);
 
-        for (const formData of formDataOrder) {
-            if (!formData.order_id || !formData.product_id || !formData.quantity) {
-                toast.error('Missing required fields');
-                return;
-            }
-        }
+  const handlePriceSelection = (price: number) => setSelectedPrice(price);
 
-        const formDataOrderWithNumbers = formDataOrder.map(formDataOrder => ({
-            ...formDataOrder,
-            order_id: Number(formDataOrder.order_id),
-            product_id: Number(formDataOrder.product_id),
-        }));
+  const formatPrice = (price: number): string =>
+    new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
+      minimumFractionDigits: 0,
+    }).format(price);
 
-        try {
-            const response = await fetch('app/api/order_details', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formDataOrderWithNumbers),
-            });
+  const incrementQuantity = () => setQuantity((q) => (q < 1000 ? q + 1 : q));
+  const decrementQuantity = () => setQuantity((q) => (q > 1 ? q - 1 : q));
 
-            const result = await response.json();
+  const handleAddToCart = async (e: FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-            // check if the response is successful
-            if (!response.ok) {
-                toast.error(result.error || 'Failed to add to cart');
-                return;
-            }
-
-            toast.success('Added to cart successfully');
-            setTimeout(() => {
-                router.push('/Item');
-            }, 1500);
-        } catch (error) {
-            toast.error('Failed to add to cart');
-        }
-    }
-
-    // Load initial data on page load
-    useEffect(() => {
-        fetchProductData();
-    }, []);
-
-    const findProductbyId = (productId: number, products: ProductData[]): string => {
-        const product = products.find((product) => product.product_id === productId);
-        return product ? product.product_name : '';
-    }
-
-    const Horizontal = () => {
-        return (
-            <hr className="w-[30%] my-2" />
-        );
+    const orderDetails = {
+      product_id: product?.product_id,
+      quantity,
+      selectedPrice,
     };
 
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full h-full">
-            <form onSubmit={handleAddtoCart}>
-                {product.map((order, index) => (
-                    <div key={order.product_id}>
-                        <div>
-                            <img src={order.image_url} alt={order.product_name} />
-                        </div>
-                        <div>
-                            <h2 className="text-3xl font-medium text-slate-700">{order.product_name}</h2>
-                            <Horizontal />
-                            <div className="text-justify">{order.description}</div>
-                            <Horizontal />
-                            <div>
-                                <span className="font-semibold">CATEGORY:</span> {order.category}
-                            </div>
-                            <Horizontal />
-                            <div>
-                                <Button type="submit" variant="outline" size="default" className="w-full">
-                                    Add to cart</Button>
-                            </div>
+    try {
+      const response = await fetch("/api/order_details", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(orderDetails),
+      });
 
-                        </div>
-                    </div>
-                ))}
+      if (response.ok) {
+        toast.success("Added to cart");
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "Failed to add to cart");
+      }
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  if (!product) return <div>Product not found</div>;
 
-            </form>
-
-
-
+  return (
+    <div className="bg-white shadow-lg rounded-lg p-12 flex flex-col md:flex-row gap-16 w-full max-w-7xl">
+      <Image src={product.image_url} alt={product.product_name} width={400} height={400} sizes="100vw" />
+      <div>
+        <h1 className="text-4xl font-bold">{product.product_name}</h1>
+        <p className="text-2xl font-light">{product.category}</p>
+        <p className="text-2xl font-semibold mt-4">{product.description}</p>
+        
+        <div className="flex flex-row items-center space-x-8 mt-8">
+          {product.hotPrice > 0 && (
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="price"
+                onChange={() => handlePriceSelection(product.hotPrice)}
+              />
+              <span className="ml-2">Hot</span>
+            </label>
+          )}
+          {product.icedPrice > 0 && (
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="price"
+                onChange={() => handlePriceSelection(product.icedPrice)}
+              />
+              <span className="ml-2">Iced</span>
+            </label>
+          )}
+          {product.frappePrice > 0 && (
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="price"
+                onChange={() => handlePriceSelection(product.frappePrice)}
+              />
+              <span className="ml-2">Frappe</span>
+            </label>
+          )}
+          {product.singlePrice > 0 && (
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="price"
+                onChange={() => handlePriceSelection(product.singlePrice)}
+              />
+              <span className="ml-2">Single</span>
+            </label>
+          )}
         </div>
-    );
+        
+        <div className="mt-4 text-lg">
+          Price: {selectedPrice !== null ? formatPrice(selectedPrice) : "Please select a price"}
+        </div>
+        
+        <div className="flex items-center mt-8 space-x-8">
+          <button
+            type="button"
+            onClick={decrementQuantity}
+            className="px-8 py-4 bg-gray-200 rounded"
+            disabled={quantity === 1}
+          >
+            -
+          </button>
+          <input
+            type="number"
+            value={quantity}
+            readOnly
+            className="w-24 text-center border border-gray-300 rounded"
+          />
+          <button
+            type="button"
+            onClick={incrementQuantity}
+            className="px-8 py-4 bg-gray-200 rounded"
+            disabled={quantity === 1000}
+          >
+            +
+          </button>
+        </div>
+        
+        <Button onClick={handleAddToCart} disabled={loading} className="mt-4">
+          {loading ? "Adding..." : "ADD TO CART"}
+        </Button>
+      </div>
+    </div>
+  );
 };
 
 export default ProductDetails;

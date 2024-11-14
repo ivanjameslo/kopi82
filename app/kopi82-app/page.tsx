@@ -1,14 +1,21 @@
 "use client";
 
-import { supabase } from "@/lib/initSupabase";
-import { useRouter } from "next/navigation"; // Import useRouter from next/navigation
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { ChangeEvent, FormEvent, useState } from "react";
+import "@/app/kopi82-app/kopi822.css"; // Importing the CSS file for styling
 
 const Kopi82app = () => {
-    const router = useRouter(); // Initialize the router
+    const router = useRouter();
+
+    const getCurrentDate = () => {
+        const date = new Date();
+        return date.toISOString().split("T")[0];
+    }
+
     const [formData, setFormData] = useState({
         customer_name: "",
-        service_type: "", // Default value
+        service_type: "",
+        date: getCurrentDate(),
     });
     const [uploading, setUploading] = useState(false);
 
@@ -25,21 +32,32 @@ const Kopi82app = () => {
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setUploading(true);
-
+    
         try {
+            // Extract individual fields from formData
+            // const { customer_name, service_type } = formData;
+            // const currentDate = new Date().toISOString().split('T')[0]; // Adjust date format if necessary
+    
+            // Send each field individually in the request body
             const response = await fetch("/api/order", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(formData),
+                body: JSON.stringify({ 
+                    customer_name: formData.customer_name,
+                    service_type: formData.service_type,
+                    date: formData.date + "T00:00:00Z",
+                }), // Pass individual fields
             });
-
-            if (response.ok) {
-                router.push('/appMenu'); // Navigate to /appMenu
-            } else {
-                throw new Error('Failed to create product');
+    
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Failed to create order:', errorData);
+                throw new Error(errorData.message || 'Unknown server error');
             }
+
+            router.push("/appMenu")
         } catch (error) {
             console.error("Error submitting form:", error);
         } finally {
@@ -48,9 +66,9 @@ const Kopi82app = () => {
     };
 
     return (
-        <div className="bg-[url('/kopimural3.jpg')] bg-cover bg-fixed min-h-screen flex justify-center items-center">
-            <div className="bg-black bg-opacity-70 p-12 rounded-lg text-white text-center w-[90%] max-w-lg">
-                <div className="border border-gray-200 p-10 rounded-md bg-transparent">
+        <div className="background">
+            <div className="squarebox">
+                <div className="squarebox1">
                     <div className="mb-6">
                         <img
                             src="/kopi.png"
@@ -68,11 +86,10 @@ const Kopi82app = () => {
                                 value={formData.customer_name}
                                 type="text"
                                 name="customer_name"
-                                id="customerName"
                                 className="w-full p-4 rounded-md bg-transparent border border-white placeholder-gray-300 text-center"
                             />
                         </div>
-                        <div className="mb-6 flex justify-center space-x-6">
+                        <div className="radio">
                             <label className="flex items-center">
                                 <input 
                                     type="radio" 
@@ -96,7 +113,7 @@ const Kopi82app = () => {
                                 Takeout
                             </label>
                         </div>
-                        <button className="bg-white text-black px-6 py-2 rounded hover:bg-gray-300 transition" type="submit" disabled={uploading}>
+                        <button className="button" type="submit" disabled={uploading}>
                             Proceed
                         </button>
                     </form>

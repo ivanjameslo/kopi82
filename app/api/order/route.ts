@@ -15,11 +15,12 @@ export async function POST(request: NextRequest){
     try{
         const res = await request.json();
         const { customer_name, service_type, date } = res;
+        console.log("Data to Insert:", { customer_name, service_type, date });
         const created = await prisma.order.create({
             data: {
                 customer_name,
                 service_type,
-                date: new Date(),
+                date: new Date(date),
             }
         });
         return NextResponse.json(created, {status: 201})

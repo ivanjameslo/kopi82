@@ -170,6 +170,8 @@ model product {
   //front_inventory front_inventory @relation(fields: [fd_id], references: [fd_id])
   order_details   order_details[]
   // ProductOrderDetails ProductOrderDetails[] (!!!!for many-to-many relation)
+
+  
 }
 
 //ORDER
@@ -181,6 +183,8 @@ model order {
   date          DateTime        @default(now())
   order_details order_details[]
   payment       payment?
+
+ 
 }
 
 model order_details {
@@ -192,6 +196,8 @@ model order_details {
   product         product @relation(fields: [product_id], references: [product_id])
   // ProductOrderDetails ProductOrderDetails[] (!!!!for many-to-many relation)
 }
+
+
 
 
 // model ProductOrderDetails {

@@ -1,0 +1,64 @@
+/* Reset default margins and padding on html and body */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+    overflow-y: hidden; /* Prevent vertical scrolling */
+}
+
+/* Background container styling */
+.background {
+    @apply bg-[url('/kopimural3.jpg')] bg-cover bg-center flex justify-center items-center;
+    
+    /* Ensure the background covers the entire viewport height */
+    min-height: 100vh; /* For tailwind utility compatibility */
+    height: 100vh; /* Makes sure background fills viewport height */
+    width: 100vw; /* Ensures full width coverage */
+    overflow: hidden; /* Prevents scrollbars */
+
+    /* Fixes mobile-specific issues with background positioning */
+    background-attachment: fixed;
+}
+
+/* Adjust container styles for mobile */
+@media (max-width: 640px) {
+    .background {
+        background-size: cover;
+        background-attachment: scroll; /* Changes to scroll on small screens to prevent overflow */
+        background-position: center; /* Keeps the image centered */
+    }
+}
+
+
+.squarebox {
+    /* Default for mobile */
+    @apply bg-black bg-opacity-70 p-6 rounded-lg text-white text-center w-full max-w-sm;
+
+    /* Larger screens */
+    @apply sm:p-8 md:p-12 lg:w-[80%] lg:max-w-lg;
+}
+
+.squarebox1 {
+    /* Default for mobile */
+    @apply border border-gray-200 p-6 rounded-md bg-transparent;
+
+    /* Larger screens */
+    @apply sm:p-8 md:p-10;
+}
+
+.radio {
+    /* Default for mobile */
+    @apply mb-4 flex justify-center space-x-4;
+
+    /* Larger screens */
+    @apply sm:space-x-6 md:space-x-8;
+}
+
+.button {
+    /* Default for mobile */
+    @apply bg-white text-black px-4 py-2 rounded hover:bg-gray-300 transition;
+
+    /* Larger screens */
+    @apply sm:px-6 sm:py-2;
+}
