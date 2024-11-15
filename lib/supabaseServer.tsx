@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
 
-  const publicPaths = ['/Login'];
+  const publicPaths = [/^\/Login$/, /^\/appMenu/, /^\/kopi82/];
   let supabaseResponse = NextResponse.next({
     request,
   })

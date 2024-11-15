@@ -2,10 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { ChangeEvent, FormEvent, useState } from "react";
+import { useCartContext } from "../appMenu/components/context/cartContext"
 import "@/app/kopi82-app/kopi822.css"; // Importing the CSS file for styling
 
 const Kopi82app = () => {
     const router = useRouter();
+    const { setOrderId } = useCartContext(); // Access `setOrderId` from context
 
     const getCurrentDate = () => {
         const date = new Date();
@@ -56,6 +58,11 @@ const Kopi82app = () => {
                 console.error('Failed to create order:', errorData);
                 throw new Error(errorData.message || 'Unknown server error');
             }
+
+            const responseData = await response.json();
+
+            // Update the context with the new order_id
+            setOrderId(responseData.order_id);
 
             router.push("/appMenu")
         } catch (error) {

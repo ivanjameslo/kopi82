@@ -36,9 +36,9 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product_id }) => {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    const initialPrice = cart[Number(product_id)]?.selectedPrice || Number(searchParams.get("selectedPrice"));
+    const initialQuantity = cart[Number(product_id)]?.quantity || Number(searchParams.get("quantity"));
 
-    const initialPrice = Number(searchParams.get("selectedPrice"));
-    const initialQuantity = Number(searchParams.get("quantity"));
     if (initialPrice) {
       setSelectedPrice(initialPrice);
     }
@@ -58,7 +58,8 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product_id }) => {
     };
 
     fetchProduct();
-  }, [product_id, searchParams]);
+  }, [product_id, searchParams, cart]);
+
 
   const handlePriceSelection = (price: number) => setSelectedPrice(price);
 

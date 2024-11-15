@@ -20,15 +20,21 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<{ [key: number]: CartItem }>({});
-  const [order_id, setOrderId] = useState<number>(() => {
-    // Retrieve order_id from localStorage, or initialize to 0 if not set
-    const savedOrderId = localStorage.getItem("order_id");
-    return savedOrderId ? Number(savedOrderId) : 0;
-  });
+  const [order_id, setOrderId] = useState<number>(0);
 
-  // Update localStorage whenever order_id changes
+  // Initialize `order_id` from `localStorage` only on the client side
   useEffect(() => {
-    localStorage.setItem("order_id", order_id.toString());
+    const savedOrderId = localStorage.getItem("order_id");
+    if (savedOrderId) {
+      setOrderId(Number(savedOrderId));
+    }
+  }, []);
+
+  // Update `localStorage` whenever `order_id` changes
+  useEffect(() => {
+    if (order_id !== 0) {
+      localStorage.setItem("order_id", order_id.toString());
+    }
   }, [order_id]);
 
   const updateCart = (item: CartItem) => {
@@ -38,7 +44,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const initializeOrderId = async () => {
     if (order_id === 0) {
       try {
-        // Fetch the latest order_id from an API or set it to a new order if needed
         const response = await fetch("/api/order/latest");
         const data = await response.json();
         const latestOrderId = data.order_id || 1; // Default to 1 if no order exists
