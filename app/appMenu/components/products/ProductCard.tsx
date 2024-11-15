@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import MenuRow from "@/components/MenuRow";
 import { toast } from "react-toastify";
+import { useCartContext } from "../../components/context/cartContext";
 
 interface Product {
     product_id: number;
@@ -22,12 +23,13 @@ interface Product {
 }
 
 const ProductCard = () => {
+    const { cart, order_id, updateCart, setOrderId } = useCartContext();
     const [product, setProduct] = useState<Product[]>([]);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [visibility, setVisibility] = useState<{ [key: number]: boolean }>({});
     const router = useRouter();
     const [makeOrder, setMakeOrder] = useState({
-        order_id: 0,
+        order_id: order_id || 0,
         product_id: 0,
         quantity: 0,
         selectedPrice: 0
@@ -53,6 +55,7 @@ const ProductCard = () => {
                 throw new Error(errorDetails.error || 'Unknown error');
             } else {
                 toast.success("Added to cart");
+                updateCart(makeOrder);
             }
         } catch (error) {
             console.error("Error adding to cart:", error);
@@ -71,21 +74,21 @@ const ProductCard = () => {
         }
     };
 
-    const fetchOrder = () => {
-        fetch("/api/order")
-            .then(response => response.json())
-            .then(data => {
-                if (data && data.length > 0) {
-                    const latestOrder = data[0];
-                    setMakeOrder(prev => ({ ...prev, order_id: latestOrder.order_id }));
-                }
-            })
-            .catch(error => console.error("Failed to fetch order ID", error));
-    };
+    // const fetchOrder = () => {
+    //     fetch("/api/order")
+    //         .then(response => response.json())
+    //         .then(data => {
+    //             if (data && data.length > 0) {
+    //                 const latestOrder = data[0];
+    //                 setMakeOrder(prev => ({ ...prev, order_id: latestOrder.order_id }));
+    //             }
+    //         })
+    //         .catch(error => console.error("Failed to fetch order ID", error));
+    // };
 
     useEffect(() => {
         fetchProduct();
-        fetchOrder();
+        // fetchOrder();
     }, []);
 
     const groupedProducts = product.reduce(
@@ -113,7 +116,7 @@ const ProductCard = () => {
             ...prev,
             [productId]: !prev[productId],
         }));
-    };
+    };    
 
     const handleTypeSelection = (price: number) => {
         setMakeOrder((prev) => ({
@@ -122,139 +125,175 @@ const ProductCard = () => {
         }));
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setMakeOrder({ ...makeOrder, [name]: value });
+    const incrementQuantity = () => {
+        setMakeOrder((prev) => ({
+            ...prev,
+            quantity: Math.min(prev.quantity + 1, 1000),
+        }));
     };
+    
+    const decrementQuantity = () => {
+        setMakeOrder((prev) => ({
+            ...prev,
+            quantity: Math.max(prev.quantity - 1, 0),
+        }));
+    };    
 
-    const handleProductClick = (product_id: number) => {
-        router.push(`appMenu/menu/${product_id}`);
+    // const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    //     const { name, value } = e.target;
+    //     setMakeOrder({ ...makeOrder, [name]: value });
+    // };
+
+    const handleProductClick = (product: Product) => {
+        updateCart({
+            product_id: product.product_id,
+            selectedPrice: makeOrder.selectedPrice,
+            quantity: makeOrder.quantity,
+            order_id: order_id, // Use order_id from CartContext to persist
+        });
+    
+        router.push(`appMenu/menu/${product.product_id}`);
     };
 
     return (
         <div>
             <form onSubmit={handleAddtoCart}>
-    {Object.keys(groupedProducts).map((category, index) => (
-        <div key={index}>
-            <MenuRow label={category} />
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {groupedProducts[category].map((product, index) => {
-                    if (!hasNonZeroPrice(product)) return null;
+                {Object.keys(groupedProducts).map((category, index) => (
+                    <div key={index}>
+                        <MenuRow label={category} />
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            {groupedProducts[category].map((product) => {
+                                if (!hasNonZeroPrice(product)) return null;
 
-                    return (
-                        <div
-                            key={index}
-                            className="flex flex-col p-4 border border-gray-200 rounded-lg bg-white shadow-md text-center cursor-pointer"
-                            onClick={() => handleProductClick(product.product_id)} // Click to navigate
-                        >
-                            <div className="flex justify-center items-center mb-4">
-                                <Image className="object-contain w-full h-32" src={product.image_url} alt={product.product_name} width={128} height={128} />
-                            </div>
-                            <span className="text-lg font-bold">{product.product_name}</span>
-                            <div className="text-sm text-gray-500 mt-2">
-                                {product.hotPrice > 0 && <span>Hot: {product.hotPrice}</span>}
-                                {product.icedPrice > 0 && <span> Iced: {product.icedPrice}</span>}
-                                {product.frappePrice > 0 && <span> Frappe: {product.frappePrice}</span>}
-                                {product.singlePrice > 0 && <span> Single: {product.singlePrice}</span>}
-                            </div>
-
-                            {/* Plus Icon with stopPropagation */}
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    e.stopPropagation(); // Prevents triggering the onClick of the parent div
-                                    handleVisibilityToggle(product.product_id);
-                                }}
-                                className="bg-gray-300 p-2  mt-4"
-                            >
-                                <FiPlus size={20} />
-                                {/* Quantity, Drink Type Selection, and Add to Cart, shown only if visibility[product.product_id] is true */}
-                            {visibility[product.product_id] && (
-                                <>
-                                    <div className="mt-4">
-                                        <div className="flex flex-col items-start">
-                                            {product.hotPrice > 0 && (
-                                                <label className="flex items-center">
-                                                    <input
-                                                        type="radio"
-                                                        name="drinkType"
-                                                        value="hot"
-                                                        onClick={(e) => e.stopPropagation()} // Stop event propagation
-                                                        onChange={() => handleTypeSelection(product.hotPrice)}
-                                                    />
-                                                    <span className="ml-2">Hot</span>
-                                                </label>
-                                            )}
-                                            {product.icedPrice > 0 && (
-                                                <label className="flex items-center">
-                                                    <input
-                                                        type="radio"
-                                                        name="drinkType"
-                                                        value="iced"
-                                                        onClick={(e) => e.stopPropagation()} // Stop event propagation
-                                                        onChange={() => handleTypeSelection(product.icedPrice)}
-                                                    />
-                                                    <span className="ml-2">Iced</span>
-                                                </label>
-                                            )}
-                                            {product.frappePrice > 0 && (
-                                                <label className="flex items-center">
-                                                    <input
-                                                        type="radio"
-                                                        name="drinkType"
-                                                        value="frappe"
-                                                        onClick={(e) => e.stopPropagation()} // Stop event propagation
-                                                        onChange={() => handleTypeSelection(product.frappePrice)}
-                                                    />
-                                                    <span className="ml-2">Frappe</span>
-                                                </label>
-                                            )}
-                                            {product.singlePrice > 0 && (
-                                                <label className="flex items-center">
-                                                    <input
-                                                        type="radio"
-                                                        name="drinkType"
-                                                        value="single"
-                                                        onClick={(e) => e.stopPropagation()} // Stop event propagation
-                                                        onChange={() => handleTypeSelection(product.singlePrice)}
-                                                    />
-                                                    <span className="ml-2">Single</span>
-                                                </label>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div className="mt-4">
-                                        <input
-                                            placeholder="Quantity"
-                                            onClick={(e) => e.stopPropagation()} // Prevents triggering the onClick of the parent div
-                                            onChange={(e) => setMakeOrder({ ...makeOrder, quantity: Number(e.target.value), product_id: product.product_id })}
-                                            value={makeOrder.product_id === product.product_id ? makeOrder.quantity : ""}
-                                            type="number"
-                                            name="quantity"
-                                            className="w-full p-2 rounded-md bg-gray-100 border border-gray-300 text-center"
-                                        />
-                                    </div>
-                                    <button
-                                        onClick={(e) => e.stopPropagation()} // Prevents triggering the onClick of the parent div
-                                        className="bg-blue-500 text-white px-4 py-2 rounded mt-2 hover:bg-blue-600 transition"
-                                        type="submit"
-                                        disabled={uploading}
+                                return (
+                                    <div
+                                        key={index}
+                                        className="flex flex-col p-4 border border-gray-200 rounded-lg bg-white shadow-md text-center cursor-pointer"
+                                        onClick={() => handleProductClick(product)} // Click to navigate
                                     >
-                                        Add to Cart
-                                    </button>
-                                </>
-                            )}
-                            </button>
+                                        <div className="flex justify-center items-center mb-4">
+                                            <Image className="object-contain w-full h-32" src={product.image_url} alt={product.product_name} width={128} height={128} />
+                                        </div>
+                                        <span className="text-lg font-bold">{product.product_name}</span>
+                                        <div className="text-sm text-gray-500 mt-2">
+                                            {product.hotPrice > 0 && <span>Hot: {product.hotPrice}</span>}
+                                            {product.icedPrice > 0 && <span> Iced: {product.icedPrice}</span>}
+                                            {product.frappePrice > 0 && <span> Frappe: {product.frappePrice}</span>}
+                                            {product.singlePrice > 0 && <span> Single: {product.singlePrice}</span>}
+                                        </div>
 
-                            
+                                        {/* Plus Icon with stopPropagation */}
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // Prevents triggering the onClick of the parent div
+                                                handleVisibilityToggle(product.product_id);
+                                            }}
+                                            className="bg-gray-300 p-2  mt-4"
+                                        >
+                                            <FiPlus size={20} />
+                                            {/* Quantity, Drink Type Selection, and Add to Cart, shown only if visibility[product.product_id] is true */}
+                                        {visibility[product.product_id] && (
+                                            <>
+                                                <div className="mt-4">
+                                                    <div className="flex flex-row space-x-4">
+                                                        {product.hotPrice > 0 && (
+                                                            <label className="flex items-center space-x-2">
+                                                                <input
+                                                                    type="radio"
+                                                                    name={`price-${product.product_id}`}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    onChange={() => handleTypeSelection(product.hotPrice)}
+                                                                    checked={makeOrder.selectedPrice === product.hotPrice}
+                                                                />
+                                                                <span className="ml-2">Hot</span>
+                                                            </label>
+                                                        )}
+                                                        {product.icedPrice > 0 && (
+                                                            <label className="flex items-center space-x-2">
+                                                                <input
+                                                                    type="radio"
+                                                                    name={`price-${product.product_id}`}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    onChange={() => handleTypeSelection(product.icedPrice)}
+                                                                    checked={makeOrder.selectedPrice === product.icedPrice}
+                                                                />
+                                                                <span className="ml-2">Iced</span>
+                                                            </label>
+                                                        )}
+                                                        {product.frappePrice > 0 && (
+                                                            <label className="flex items-center space-x-2">
+                                                                <input
+                                                                    type="radio"
+                                                                    name={`price-${product.product_id}`}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    onChange={() => handleTypeSelection(product.frappePrice)}
+                                                                    checked={makeOrder.selectedPrice === product.frappePrice}
+                                                                />
+                                                                <span className="ml-2">Frappe</span>
+                                                            </label>
+                                                        )}
+                                                        {product.singlePrice > 0 && (
+                                                            <label className="flex items-center space-x-2">
+                                                                <input
+                                                                    type="radio"
+                                                                    name={`price-${product.product_id}`}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    onChange={() => handleTypeSelection(product.singlePrice)}
+                                                                    checked={makeOrder.selectedPrice === product.singlePrice}
+                                                                />
+                                                                <span className="ml-2">Single</span>
+                                                            </label>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center mt-4 space-x-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            decrementQuantity();
+                                                        }}
+                                                        className="bg-gray-200 px-3 py-1 rounded"
+                                                    >
+                                                        -
+                                                    </button>
+                                                    <input
+                                                        type="number"
+                                                        value={makeOrder.quantity}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        onChange={(e) => setMakeOrder({ ...makeOrder, quantity: Number(e.target.value), product_id: product.product_id })}
+                                                        className="w-full text-center border border-gray-300 rounded pl-4"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            incrementQuantity();
+                                                        }}
+                                                        className="bg-gray-200 px-3 py-1 rounded"
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                                <button
+                                                    onClick={(e) => e.stopPropagation()} // Prevents triggering the onClick of the parent div
+                                                    className="bg-blue-500 text-white px-4 py-2 rounded mt-2 hover:bg-blue-600 transition"
+                                                    type="submit"
+                                                    disabled={uploading}
+                                                >
+                                                    Add to Cart
+                                                </button>
+                                            </>
+                                        )}
+                                        </button>
+                                    </div>
+                                );
+                            })}
                         </div>
-                    );
-                })}
-            </div>
-        </div>
-    ))}
-</form>
-
+                    </div>
+                ))}
+            </form>
         </div>
     );
 };

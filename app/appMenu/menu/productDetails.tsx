@@ -3,8 +3,9 @@
 import { useState, useEffect, FormEvent } from "react";
 import Image from "next/image";
 import { toast } from "react-toastify";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCartContext } from "../components/context/cartContext";
 
 interface Product {
   product_id: number;
@@ -25,14 +26,26 @@ interface ProductDetailsProps {
 }
 
 const ProductDetails: React.FC<ProductDetailsProps> = ({ product_id }) => {
+  const { cart, updateCart, order_id } = useCartContext();
   const [product, setProduct] = useState<Product | null>(null);
-  const [quantity, setQuantity] = useState<number>(1);
+  const [quantity, setQuantity] = useState<number>(0);
   const [selectedPrice, setSelectedPrice] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
+
+    const initialPrice = Number(searchParams.get("selectedPrice"));
+    const initialQuantity = Number(searchParams.get("quantity"));
+    if (initialPrice) {
+      setSelectedPrice(initialPrice);
+    }
+    if (!isNaN(initialQuantity)) {
+      setQuantity(initialQuantity);
+    }
+
     const fetchProduct = async () => {
       try {
         const response = await fetch(`/api/product/${product_id}`);
@@ -45,7 +58,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product_id }) => {
     };
 
     fetchProduct();
-  }, [product_id]);
+  }, [product_id, searchParams]);
 
   const handlePriceSelection = (price: number) => setSelectedPrice(price);
 
@@ -56,29 +69,42 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product_id }) => {
       minimumFractionDigits: 0,
     }).format(price);
 
-  const incrementQuantity = () => setQuantity((q) => (q < 1000 ? q + 1 : q));
-  const decrementQuantity = () => setQuantity((q) => (q > 1 ? q - 1 : q));
+  // const incrementQuantity = () => setQuantity((q) => (q < 1000 ? q + 1 : q));
+  // const decrementQuantity = () => setQuantity((q) => (q > 1 ? q - 1 : q));
+
+  const incrementQuantity = () => setQuantity((q) => Math.min(q + 1, 1000));
+  const decrementQuantity = () => setQuantity((q) => Math.max(q - 1, 0));
 
   const handleAddToCart = async (e: FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
-    const orderDetails = {
-      product_id: product?.product_id,
-      quantity,
+    if (!product || selectedPrice === null || quantity === 0) {
+      toast.error("Please select a price and quantity");
+      return;
+    }
+
+    const cartItem = {
+      product_id: product.product_id,
       selectedPrice,
+      quantity,
+      order_id, // Use order_id from CartContext
     };
 
+    setLoading(true);
+
     try {
+      // Update server
       const response = await fetch("/api/order_details", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(orderDetails),
+        body: JSON.stringify(cartItem),
       });
 
       if (response.ok) {
+        // Update CartContext
+        updateCart(cartItem);
         toast.success("Added to cart");
       } else {
         const errorData = await response.json();
@@ -99,75 +125,77 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product_id }) => {
       <div>
         <h1 className="text-4xl font-bold">{product.product_name}</h1>
         <p className="text-2xl font-light">{product.category}</p>
-        <p className="text-2xl font-semibold mt-4">{product.description}</p>
+        <p className="text-sm font-semibold mt-4">{product.description}</p>
         
         <div className="flex flex-row items-center space-x-8 mt-8">
           {product.hotPrice > 0 && (
-            <label className="flex items-center">
+            <label className="flex items-center space-x-2">
               <input
                 type="radio"
                 name="price"
                 onChange={() => handlePriceSelection(product.hotPrice)}
+                checked={selectedPrice === product.hotPrice}
               />
               <span className="ml-2">Hot</span>
             </label>
           )}
           {product.icedPrice > 0 && (
-            <label className="flex items-center">
+            <label className="flex items-center space-x-2">
               <input
                 type="radio"
                 name="price"
                 onChange={() => handlePriceSelection(product.icedPrice)}
+                checked={selectedPrice === product.icedPrice}
               />
               <span className="ml-2">Iced</span>
             </label>
           )}
           {product.frappePrice > 0 && (
-            <label className="flex items-center">
+            <label className="flex items-center space-x-2">
               <input
                 type="radio"
                 name="price"
                 onChange={() => handlePriceSelection(product.frappePrice)}
+                checked={selectedPrice === product.frappePrice}
               />
               <span className="ml-2">Frappe</span>
             </label>
           )}
           {product.singlePrice > 0 && (
-            <label className="flex items-center">
+            <label className="flex items-center space-x-2">
               <input
                 type="radio"
                 name="price"
                 onChange={() => handlePriceSelection(product.singlePrice)}
+                checked={selectedPrice === product.singlePrice}
               />
               <span className="ml-2">Single</span>
             </label>
           )}
         </div>
         
-        <div className="mt-4 text-lg">
+        {/* <div className="mt-4 text-lg">
           Price: {selectedPrice !== null ? formatPrice(selectedPrice) : "Please select a price"}
-        </div>
+        </div> */}
         
-        <div className="flex items-center mt-8 space-x-8">
+        <div className="flex items-center mt-8 space-x-4">
           <button
             type="button"
             onClick={decrementQuantity}
-            className="px-8 py-4 bg-gray-200 rounded"
-            disabled={quantity === 1}
+            className="px-6 py-2 bg-gray-200 rounded hover:bg-gray-300"
           >
             -
           </button>
           <input
             type="number"
             value={quantity}
-            readOnly
-            className="w-24 text-center border border-gray-300 rounded"
+            onChange={(e) => setQuantity(Number(e.target.value))}
+            className="w-16 pl-4 text-center border border-gray-300 rounded"
           />
           <button
             type="button"
             onClick={incrementQuantity}
-            className="px-8 py-4 bg-gray-200 rounded"
-            disabled={quantity === 1000}
+            className="px-6 py-2 bg-gray-200 rounded hover:bg-gray-300"
           >
             +
           </button>

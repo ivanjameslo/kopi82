@@ -6,7 +6,6 @@ import { NextResponse } from "next/server";
 // GET function to fetch all data from Order model
 export async function GET(request: NextRequest) {
   const orders = await prisma.order.findMany()
-  console.log(orders)
   return NextResponse.json(orders)
 }
 

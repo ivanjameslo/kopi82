@@ -1,4 +1,3 @@
-// app/components/ConditionalSidebar.tsx
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -6,8 +5,11 @@ import Sidebar from "@/components/Sidebar";
 
 export default function ConditionalSidebar() {
   const pathname = usePathname();
-  const isLoginPage = pathname === "/Login";
+  const isPageNoSidebar =
+    pathname === "/Login" ||
+    pathname.startsWith("/appMenu") ||
+    pathname.startsWith("/kopi82-app");
 
-  if (isLoginPage) return null;
+  if (isPageNoSidebar) return null;
   return <Sidebar />;
 }
