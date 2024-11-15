@@ -1,0 +1,289 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table employee {
+  id String [pk]
+  email String [not null]
+  role String [not null]
+  last_name String [not null]
+  first_name String [not null]
+  middle_name String
+  status String [not null]
+}
+
+Table back_inventory {
+  bd_id Int [pk, increment]
+  item_id Int [not null]
+  pd_id Int [not null]
+  pi_id Int
+  stock_in_date DateTime
+  stock_out_date DateTime
+  stock_damaged Int [not null]
+  stock_used Int [not null]
+  purchased_item purchased_item
+  purchased_detail purchased_detail
+  inventory_shelf inventory_shelf [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  inventory_tracking inventory_tracking [not null]
+}
+
+Table purchased_item {
+  pi_id Int [pk, increment]
+  receipt_no Int [not null]
+  supplier_id Int [not null]
+  purchase_date DateTime [default: `now()`, not null]
+  purchased_detail purchased_detail [not null]
+  supplier supplier [not null]
+  back_inventory back_inventory [not null]
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table purchased_detail {
+  pd_id Int [pk, increment]
+  pi_id Int [not null]
+  item_id Int [not null]
+  quantity Int [not null]
+  unit_id Int [not null]
+  category_id Int [not null]
+  price Float [not null]
+  expiry_date DateTime
+  purchased_item purchased_item [not null]
+  item item [not null]
+  unit unit [not null]
+  category category [not null]
+  back_inventory back_inventory [not null]
+  processed_purchase_details ProcessedPurchaseDetails [not null]
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table ProcessedPurchaseDetails {
+  ppd_id Int [pk, increment]
+  pd_id Int [unique, not null]
+  processed_at DateTime [default: `now()`, not null]
+  purchased_detail purchased_detail [not null]
+}
+
+Table unit {
+  unit_id Int [pk, increment]
+  unit_name String [not null]
+  item item [not null]
+  purchased_detail purchased_detail [not null]
+  inventory_shelf inventory_shelf [not null]
+  inventory_tracking inventory_tracking [not null]
+}
+
+Table category {
+  category_id Int [pk, increment]
+  category_name String [not null]
+  item item [not null]
+  purchased_detail purchased_detail [not null]
+}
+
+Table shelf_location {
+  sl_id Int [pk, increment]
+  sl_name String [not null]
+  inv_type String [not null]
+  inventory_shelf inventory_shelf [not null]
+  source_shelf inventory_tracking [not null]
+  destination_shelf inventory_tracking [not null]
+}
+
+Table inventory_shelf {
+  is_id Int [pk, increment]
+  bd_id Int [not null]
+  sl_id Int [not null]
+  quantity Int [not null]
+  unit_id Int [not null]
+  hidden Boolean [not null, default: false]
+  shelf_location shelf_location [not null]
+  unit unit [not null]
+  back_inventory back_inventory [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  ProductInventory ProductInventory [not null]
+
+  indexes {
+    (bd_id, sl_id) [unique]
+  }
+}
+
+Table item {
+  item_id Int [pk, increment]
+  item_name String [not null]
+  description String [not null]
+  unit_id Int [not null]
+  category_id Int [not null]
+  unit unit [not null]
+  category category [not null]
+  purchased_detail purchased_detail [not null]
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table supplier {
+  supplier_id Int [pk, increment]
+  supplier_name String [not null]
+  contact_no String
+  address String [not null]
+  purchased_item purchased_item [not null]
+}
+
+Table inventory_tracking {
+  id Int [pk, increment]
+  bd_id Int [not null]
+  quantity Int [not null]
+  source_shelf_id Int
+  destination_shelf_id Int
+  unit_id Int [not null]
+  date_moved DateTime [default: `now()`, not null]
+  action String [not null]
+  back_inventory back_inventory [not null]
+  source_shelf shelf_location
+  destination_shelf shelf_location
+  unit unit [not null]
+}
+
+Table product {
+  product_id Int [pk, increment]
+  category String [not null]
+  product_name String [not null]
+  type String
+  hotPrice Float [not null]
+  icedPrice Float [not null]
+  frappePrice Float [not null]
+  singlePrice Float [not null]
+  status String [not null]
+  description String [not null]
+  image_url String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  order_details order_details [not null]
+  ProductInventory ProductInventory [not null]
+}
+
+Table ProductInventory {
+  id Int [pk, increment]
+  product_id Int [not null]
+  inventory_shelf_id Int [not null]
+  required_quantity Int [not null]
+  product product [not null]
+  inventory_shelf inventory_shelf [not null]
+
+  indexes {
+    (product_id, inventory_shelf_id) [unique]
+  }
+}
+
+Table order {
+  order_id Int [pk, increment]
+  customer_name String [not null]
+  service_type String [not null]
+  date DateTime [default: `now()`, not null]
+  order_details order_details [not null]
+  payment payment
+}
+
+Table order_details {
+  orderDetails_id Int [pk, increment]
+  order_id Int [not null]
+  product_id Int [not null]
+  quantity Int [not null]
+  date DateTime [default: `now()`, not null]
+  order order [not null]
+  product product [not null]
+}
+
+Table payment {
+  payment_id Int [pk, increment]
+  order_id Int [unique]
+  discount_id Int
+  p_method_eWallet_id Int [unique]
+  p_method_otc_id Int [unique]
+  date DateTime [default: `now()`, not null]
+  order order
+  discount discount
+  eWallet payment_method_eWallet
+  otc payment_method_otc
+}
+
+Table discount {
+  discount_id Int [pk, increment]
+  discount_name String [not null]
+  discount_rate Float [not null]
+  status String [not null]
+  payment payment [not null]
+}
+
+Table payment_method_eWallet {
+  p_method_id Int [pk, increment]
+  mode String [not null]
+  reference_no String [not null]
+  payment payment
+}
+
+Table payment_method_otc {
+  p_method_id Int [pk, increment]
+  mode String [not null]
+  amount Float [not null]
+  change Float [not null]
+  payment payment
+}
+
+Table product_sales {
+  sales_id Int [pk, increment]
+  orderDetails_id Int [unique, not null]
+  product_sold Int [not null]
+  total_sales Float [not null]
+  date DateTime [not null]
+}
+
+Ref: back_inventory.pi_id > purchased_item.pi_id
+
+Ref: back_inventory.pd_id > purchased_detail.pd_id
+
+Ref: purchased_item.supplier_id > supplier.supplier_id
+
+Ref: purchased_detail.pi_id > purchased_item.pi_id
+
+Ref: purchased_detail.item_id > item.item_id
+
+Ref: purchased_detail.unit_id > unit.unit_id
+
+Ref: purchased_detail.category_id > category.category_id
+
+Ref: ProcessedPurchaseDetails.pd_id > purchased_detail.pd_id
+
+Ref: inventory_shelf.sl_id > shelf_location.sl_id
+
+Ref: inventory_shelf.unit_id > unit.unit_id
+
+Ref: inventory_shelf.bd_id > back_inventory.bd_id
+
+Ref: item.unit_id > unit.unit_id
+
+Ref: item.category_id > category.category_id
+
+Ref: inventory_tracking.bd_id > back_inventory.bd_id
+
+Ref: inventory_tracking.source_shelf_id > shelf_location.sl_id
+
+Ref: inventory_tracking.destination_shelf_id > shelf_location.sl_id
+
+Ref: inventory_tracking.unit_id > unit.unit_id
+
+Ref: ProductInventory.product_id > product.product_id
+
+Ref: ProductInventory.inventory_shelf_id > inventory_shelf.is_id
+
+Ref: order_details.order_id > order.order_id
+
+Ref: order_details.product_id > product.product_id
+
+Ref: payment.order_id - order.order_id
+
+Ref: payment.discount_id > discount.discount_id
+
+Ref: payment.p_method_eWallet_id - payment_method_eWallet.p_method_id
+
+Ref: payment.p_method_otc_id - payment_method_otc.p_method_id

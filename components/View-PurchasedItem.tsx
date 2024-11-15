@@ -2,18 +2,12 @@
 
 import React, { useEffect, useState, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Button } from "./ui/button";
 import { set } from "react-hook-form";
 import { HiClipboardDocumentList } from "react-icons/hi2";
 import { MdDelete } from "react-icons/md";
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, } from "./ui/pagination";
 
 interface PurchasedItemData {
   pi_id: number;
@@ -34,7 +28,7 @@ interface PurchasedDetailData {
   expiry_date: string;
 }
 
-interface ItemDate {
+interface ItemData {
   item_id: number;
   item_name: string;
   description: string;
@@ -60,10 +54,12 @@ const ViewPurchaseOrder = () => {
 
   // For Displaying the table
   const [data, setData] = useState<PurchasedItemData[]>([]);
-  const [items, setItems] = useState<ItemDate[]>([]);
+  const [items, setItems] = useState<ItemData[]>([]);
   const [units, setUnits] = useState<UnitData[]>([]);
   const [categories, setCategories] = useState<CategoryData[]>([]);
   const [suppliers, setSupplier] = useState<SupplierData[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const fetchPurchasedItem = async () => {
     try {
@@ -125,6 +121,18 @@ const ViewPurchaseOrder = () => {
     fetchPurchasedItem();
     fetchItemDeets();
   }, []);
+
+  const totalPages = Math.ceil(data.length / itemsPerPage);
+
+  // Slice data to show only the items for the current page
+  const paginatedData = data.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
 
   // For displaying purchase details in modal
   const [selectedPurchasedDetail, setSelectedPurchasedDetail] = useState<PurchasedDetailData[]>([]);
@@ -214,36 +222,100 @@ const ViewPurchaseOrder = () => {
   };
 
   return (
-    <div className="mt-24 ml-40 mr-40">
+    <div className="mt-12 ml-40 mr-40">
 
       <div className="mt-10">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-center">Receipt Number</TableHead>
-              <TableHead className="text-center">Supplier</TableHead>
-              <TableHead className="text-center">Purchase Date</TableHead>
+              <TableHead>Receipt Number</TableHead>
+              <TableHead>Supplier</TableHead>
+              <TableHead>Purchase Date</TableHead>
               <TableHead className="text-center">Purchase Details</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((purchasedItem) => (
-              <TableRow key={purchasedItem.pi_id}>
-                <TableCell className="text-center">{purchasedItem.receipt_no}</TableCell>
-                <TableCell className="text-center">{purchasedItem.supplier?.supplier_name || "No Supplier"}</TableCell>
-                <TableCell className="text-center">{formatDateTime(purchasedItem.purchase_date)}</TableCell>
-                <TableCell className="text-center">
-                <div className="flex items-center justify-center space-x-6">
-                  <HiClipboardDocumentList size={25} className="cursor-pointer" style={{color: '3d3130'}} onClick={() => handleViewDetails(purchasedItem.pi_id)} />
-                  {!purchasedItem.isUsed && (
-                    <MdDelete size={25} className="cursor-pointer" style={{color: 'd00000'}} onClick={() => handleDelete(purchasedItem.pi_id)} />
-                  )}
-                  </div>
+            {paginatedData && paginatedData.length > 0 ? (
+              paginatedData.map((purchasedItem) => (
+                <TableRow key={purchasedItem.pi_id}>
+                  <TableCell>
+                    {purchasedItem.receipt_no}
+                  </TableCell>
+                  <TableCell>
+                    {purchasedItem.supplier?.supplier_name || "No Supplier"}
+                  </TableCell>
+                  <TableCell>
+                    {new Date(purchasedItem.purchase_date).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center space-x-6">
+                      <HiClipboardDocumentList
+                        size={25}
+                        className="cursor-pointer"
+                        style={{ color: "#3d3130" }}
+                        onClick={() => handleViewDetails(purchasedItem.pi_id)}
+                      />
+                      {!purchasedItem.isUsed && (
+                        <MdDelete
+                          size={25}
+                          className="cursor-pointer"
+                          style={{ color: "#d00000" }}
+                          onClick={() => handleDelete(purchasedItem.pi_id)}
+                        />
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center">
+                  No data available
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="flex justify-center mt-4">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={currentPage === 1 ? undefined : () => currentPage > 1 && goToPage(currentPage - 1)}
+                style={{ pointerEvents: currentPage === 1 ? 'none' : 'auto', opacity: currentPage === 1 ? 0.5 : 1 }}
+              />
+            </PaginationItem>
+            {[...Array(totalPages)].map((_, index) => {
+              const page = index + 1;
+              return (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      goToPage(page);
+                    }}
+                    isActive={page === currentPage}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              );
+            })}
+            {totalPages > 5 && <PaginationEllipsis />}
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={() => currentPage < totalPages && goToPage(currentPage + 1)}
+                style={{ pointerEvents: currentPage === totalPages ? 'none' : 'auto', opacity: currentPage === totalPages ? 0.5 : 1 }}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
 
       {/* MODAL */}

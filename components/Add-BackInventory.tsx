@@ -212,13 +212,13 @@ const AddBackInventory = ({ onModalClose }: AddBackInventoryProps) => {
                 quantity: isCake ? 0 : selectedDetail.quantity, 
                 unit_id: selectedDetail.unit.unit_id,
                 pi_id: selectedDetail.pi_id,
-                unit_name: selectedDetail.unit.unit_name,
+                unit_name: isCake ? "Slice" : selectedDetail.unit.unit_name,
                 isInvalid: false,
             }]);
         } else {
             setSelectedItems(selectedItems.filter((item) => item.pd_id !== pd_id));
         }
-    };    
+    };     
 
     const isItemSelected = (pd_id: number) => {
         return selectedItems.some(item => item.pd_id === pd_id);
@@ -253,18 +253,18 @@ const AddBackInventory = ({ onModalClose }: AddBackInventoryProps) => {
         }
     
         try {
-            const payload = selectedItems.map(item => {
-                console.log("Submitting item:", item); // Log each item being submitted
-                return {
+            const payload = selectedItems.map(item => ({
+                // console.log("Submitting item:", item);
+                // const isCake = purchasedDetails.find(detail => detail.pd_id === item.pd_id)?.item?.category?.category_name?.toLowerCase() === "cake";
+                // return {
                     pd_id: item.pd_id,
                     item_id: item.item_id,
                     sl_id: item.sl_id,
                     quantity: item.quantity,
                     pi_id: item.pi_id,
-                    unit_id: item.unit_id,
                     unit_name: item.unit_name,
-                };
-            });
+                // };
+            }));
     
             const response = await fetch("/api/back_inventory", {
                 method: "POST",
@@ -414,7 +414,7 @@ const AddBackInventory = ({ onModalClose }: AddBackInventoryProps) => {
                         </div>
                         <div className="mt-6">
                             <Button type="submit" className="text-white px-4 py-2 rounded-md">
-                                Submit Back Inventory
+                                Add to Inventory
                             </Button>
                         </div>
                     </form>

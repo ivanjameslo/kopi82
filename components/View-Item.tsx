@@ -8,6 +8,7 @@ import UpdateItemModal from '@/components/Update-Item'; // New component for the
 import Link from 'next/link';
 import AddUnit from '@/components/Add-Unit';
 import AddCategory from '@/components/Add-Category';
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, } from "./ui/pagination";
 
 interface ItemData {
     item_id: number;
@@ -40,6 +41,8 @@ const ViewItem = () => {
     const [category, setCategory] = useState<CategoryData[]>([]);
     const [selectedItem, setSelectedItem] = useState<ItemData | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
 
     // Fetch Units
     const fetchUnit = async () => {
@@ -143,8 +146,20 @@ const ViewItem = () => {
         return unit ? unit.unit_name : 'Unknown Unit';
     };
 
+    const totalPages = Math.ceil(data.length / itemsPerPage);
+
+    // Slice data to show only the items for the current page
+    const paginatedData = data.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
+    const goToPage = (page: number) => {
+        setCurrentPage(page);
+    };
+
     return (
-        <div className="mt-24 ml-40 mr-40">
+        <div className="mt-12 ml-40 mr-40">
             <p className="flex text-3xl text-[#483C32] font-bold justify-center mb-2">Items</p>
 
             <div className="flex justify-end mt-10 space-x-4">
@@ -159,34 +174,82 @@ const ViewItem = () => {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="text-center">ID</TableHead>
-                            <TableHead className="text-center">Item Name</TableHead>
-                            <TableHead className="text-center">Description</TableHead>
-                            <TableHead className="text-center">Unit</TableHead>
-                            <TableHead className="text-center">Category</TableHead>
+                            {/* <TableHead className="text-center">ID</TableHead> */}
+                            <TableHead>Item Name</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Unit</TableHead>
+                            <TableHead>Category</TableHead>
                             <TableHead className="text-center">Action</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {data.map((items) => (
-                            <TableRow key={items.item_id}>
-                                <TableCell className="text-center">{items.item_id}</TableCell>
-                                <TableCell className="text-center">{items.item_name}</TableCell>
-                                <TableCell className="text-center">{items.description}</TableCell>
-                                <TableCell className="text-center">{findUnitNameById(items.unit.unit_id, unit)}</TableCell>
-                                <TableCell className="text-center">{items.category.category_name}</TableCell>
-                                <TableCell className="text-center">
-                                    <div className="flex items-center justify-center space-x-2">
-                                        <MdEdit size={25} style={{ color: "#3d3130" }} className="cursor-pointer" onClick={() => handleEdit(items)} />
-                                        {!items.isUsed && (
-                                            <MdDelete size={25} style={{ color: "#d00000" }} className="cursor-pointer" onClick={() => handleDelete(items.item_id)} />
-                                        )}
-                                    </div>
+                        {paginatedData && paginatedData.map ? (
+                            paginatedData.map((items) => (
+                                <TableRow key={items.item_id}>
+                                    {/* <TableCell className="text-center">{items.item_id}</TableCell> */}
+                                    <TableCell>{items.item_name}</TableCell>
+                                    <TableCell>{items.description}</TableCell>
+                                    <TableCell>{findUnitNameById(items.unit.unit_id, unit)}</TableCell>
+                                    <TableCell>{items.category.category_name}</TableCell>
+                                    <TableCell className="text-center">
+                                        <div className="flex items-center justify-center space-x-2">
+                                            <MdEdit size={25} style={{ color: "#3d3130" }} className="cursor-pointer" onClick={() => handleEdit(items)} />
+                                            {!items.isUsed && (
+                                                <MdDelete size={25} style={{ color: "#d00000" }} className="cursor-pointer" onClick={() => handleDelete(items.item_id)} />
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={6} className="text-center">
+                                No data available
                                 </TableCell>
                             </TableRow>
-                        ))}
+                        )}
                     </TableBody>
                 </Table>
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex justify-center mt-4">
+                <Pagination>
+                <PaginationContent>
+                    <PaginationItem>
+                    <PaginationPrevious
+                        href="#"
+                        onClick={currentPage === 1 ? undefined : () => currentPage > 1 && goToPage(currentPage - 1)}
+                        style={{ pointerEvents: currentPage === 1 ? 'none' : 'auto', opacity: currentPage === 1 ? 0.5 : 1 }}
+                    />
+                    </PaginationItem>
+                    {[...Array(totalPages)].map((_, index) => {
+                    const page = index + 1;
+                    return (
+                        <PaginationItem key={page}>
+                        <PaginationLink
+                            href="#"
+                            onClick={(e) => {
+                            e.preventDefault();
+                            goToPage(page);
+                            }}
+                            isActive={page === currentPage}
+                        >
+                            {page}
+                        </PaginationLink>
+                        </PaginationItem>
+                    );
+                    })}
+                    {totalPages > 5 && <PaginationEllipsis />}
+                    <PaginationItem>
+                    <PaginationNext
+                        href="#"
+                        onClick={() => currentPage < totalPages && goToPage(currentPage + 1)}
+                        style={{ pointerEvents: currentPage === totalPages ? 'none' : 'auto', opacity: currentPage === totalPages ? 0.5 : 1 }}
+                    />
+                    </PaginationItem>
+                </PaginationContent>
+                </Pagination>
             </div>
 
             {isEditModalOpen && selectedItem && (

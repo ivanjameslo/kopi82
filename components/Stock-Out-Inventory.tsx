@@ -14,6 +14,7 @@ interface StockOutModalProps {
     sl_id: number;
     quantity: number;
     unit_name: string;
+    unit_id: number;
   }[];
   refreshInventory: () => void; // Function to refresh inventory data after stock out
 }
@@ -28,6 +29,7 @@ const StockOutModal = ({ isOpen, onClose, selectedItems, refreshInventory }: Sto
       quantity: "", // quantity to stock out
       available_quantity: item.quantity, // max available quantity
       unit_name: item.unit_name,
+      unit_id: item.unit_id,
     }))
   );
 
@@ -59,12 +61,9 @@ const StockOutModal = ({ isOpen, onClose, selectedItems, refreshInventory }: Sto
   // Handle form submission
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const validItems = stockOutItems.map(item => ({
-      bd_id: item.bd_id,
-      sl_id: item.sl_id,
-      action: item.action,
-      quantity: parseInt(item.quantity, 10), // Convert quantity to an integer
-    }));
+    const validItems = stockOutItems.filter(
+      (item) => item.action && parseInt(item.quantity, 10) > 0
+    )
 
     if (validItems.length === 0) {
       toast.error("Please select an action and enter a valid quantity.");
@@ -72,18 +71,50 @@ const StockOutModal = ({ isOpen, onClose, selectedItems, refreshInventory }: Sto
     }
 
     try {
-      const response = await fetch("/api/stock_out", {
+      const stockOutResponse = await fetch("/api/stock_out", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ items: validItems }),
+        body: JSON.stringify({
+          items: validItems.map((item) => ({
+            bd_id: item.bd_id,
+            sl_id: item.sl_id,
+            action: item.action,
+            quantity: parseInt(item.quantity, 10),
+          })),
+        }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!stockOutResponse.ok) {
+        const errorData = await stockOutResponse.json();
         toast.error(errorData.error || "Failed to stock out items.");
         return;
+      }
+
+      // Inventory tracking API calls
+      for (const item of validItems) {
+        const trackingData = {
+          bd_id: item.bd_id,
+          quantity: parseInt(item.quantity, 10),
+          source_shelf_id: item.sl_id,
+          destination_shelf_id: null,
+          unit_id: item.unit_id,
+          action: item.action,
+        }
+
+        const trackingResponse = await fetch("/api/inventory_tracking", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(trackingData),
+        })
+
+        if (!trackingResponse.ok) {
+          const trackingErrorData = await trackingResponse.json()
+          throw new Error(trackingErrorData.error || "Failed to log inventory movement")
+        }
       }
 
       toast.success("Stock out completed successfully.");

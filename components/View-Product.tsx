@@ -215,11 +215,11 @@ const ViewProduct = () => {
                     {selectedProduct.category}
                 </div>
                 <Horizontal />
-                <div className="mb-2">
+                {/* <div className="mb-2">
                     <span className="font-semibold">TYPE: </span>
                     {selectedProduct.type}
                 </div>
-                <Horizontal />
+                <Horizontal /> */}
                 
                 {/* Conditionally show prices only if they are greater than 0 */}
                 {selectedProduct.hotPrice > 0 && (

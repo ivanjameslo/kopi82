@@ -44,3 +44,15 @@ September 2, 2024
 - Password: Group3M1!051220
 
 Grp3M1!051220
+
+
+https://supabase.com/docs/reference/javascript/auth-signinwithpassword
+
+Update
+const { data, error } = await supabase.auth.updateUser({
+  password: new_password
+})
+
+https://dbdiagram.io/
+
+https://nextjs.org/docs/app/building-your-application/routing/middleware

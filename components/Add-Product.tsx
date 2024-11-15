@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "../lib/initSupabase";
+import { toast } from "react-toastify";
 
 export default function AddProduct() {
   const router = useRouter();
@@ -112,9 +113,12 @@ export default function AddProduct() {
 
       if (response.ok) {
         // Redirect to the existing Products page
-        router.push('/Menu');
+        toast.success("Product added successfully");
+        setTimeout(() => {
+          router.push('/Menu');
+      }, 1500);
       } else {
-        throw new Error('Failed to create product');
+        toast.error("Failed to add product");
       }
     } catch (error) {
       console.error("Error submitting form:", error);

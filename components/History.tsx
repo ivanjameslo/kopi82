@@ -1,102 +1,156 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import React, { useEffect, useState } from "react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import Link from 'next/link';
+import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface InventoryMovement {
   date_moved: string;
   quantity: number;
-  shelf_location: 
-    { sl_name: string; }; // Shelf location name
-  action: string; // "used", "damaged", or "NA"
+  unit_name: string;
+  action: string;
+  source_shelf: string;
+  destination_shelf: string;
 }
 
-interface InventoryHistory {
-  bd_id: number;
+interface InventoryItem {
   item_name: string;
-  created_at: string;
-  stock_out_date: string;
   movements: InventoryMovement[];
 }
 
-const InventoryHistoryPage = () => {
-  const [history, setHistory] = useState<InventoryHistory[]>([]);
+export default function HistoryPage() {
+  const [history, setHistory] = useState<InventoryItem[]>([]);
 
-  const fetchInventoryHistory = async () => {
+  const fetchInventoryTracking = async () => {
     try {
-      const response = await fetch("/api/back_inventory/history");
+      const response = await fetch("/api/inventory_tracking");
       const data = await response.json();
-      setHistory(data);
+      console.log("Fetched Inventory Tracking:", data);
+
+      // Transform data to group by item name
+      const transformedData = data.reduce((acc: InventoryItem[], record: any) => {
+        const itemName = record.item_name || "Unnamed Item";
+
+        const movement: InventoryMovement = {
+          date_moved: record.date_moved,
+          quantity: record.quantity,
+          unit_name: record.unit_name,
+          action: record.action,
+          source_shelf: record.source_shelf,
+          destination_shelf: record.destination_shelf,
+        };
+
+        const existingItem = acc.find((item) => item.item_name === itemName);
+        if (existingItem) {
+          existingItem.movements.push(movement);
+        } else {
+          acc.push({
+            item_name: itemName,
+            movements: [movement],
+          });
+        }
+
+        return acc;
+      }, []);
+
+      // Sort movements for each item by date
+      transformedData.forEach((item: { movements: any[]; }) => {
+        item.movements.sort((a, b) => new Date(b.date_moved).getTime() - new Date(a.date_moved).getTime());
+      });
+
+      setHistory(transformedData);
     } catch (error) {
-      console.error("Error fetching inventory history", error);
+      console.error("Error fetching inventory tracking data:", error);
     }
   };
 
   useEffect(() => {
-    fetchInventoryHistory();
-    console.log(history);
+    fetchInventoryTracking();
   }, []);
 
   const formatDateTime = (dateTimeString: string | null) => {
-    if (!dateTimeString || dateTimeString === "NA") {
-      return "NA";
-    }
+    if (!dateTimeString) return "NA";
     const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     };
-    return new Date(dateTimeString).toLocaleString('en-US', options);
+    return new Date(dateTimeString).toLocaleString("en-US", options);
+  };
+
+  const formatMovement = (move: InventoryMovement) => {
+    switch (move.action) {
+      case "added":
+        return `${formatDateTime(move.date_moved)}: Added ${move.quantity} ${move.unit_name} to ${move.destination_shelf}`;
+      case "transferred":
+        return `${formatDateTime(move.date_moved)}: Transferred ${move.quantity} ${move.unit_name} from ${move.source_shelf} to ${move.destination_shelf}`;
+      case "used":
+      case "damaged":
+        return `${formatDateTime(move.date_moved)}: ${move.action.charAt(0).toUpperCase() + move.action.slice(1)} ${move.quantity} ${move.unit_name}`;
+      default:
+        return `${formatDateTime(move.date_moved)}: ${move.action.charAt(0).toUpperCase() + move.action.slice(1)} ${move.quantity} ${move.unit_name}`;
+    }
   };
 
   return (
-    <div className="mt-24 ml-32 mr-32">
-      <p className="text-3xl font-bold text-[#483C32] text-center mb-6">Inventory History</p>
-
-      <div className="flex justify-end mt-10">
+    <div className="mt-24 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <h1 className="text-3xl font-bold text-[#483C32] text-center mb-6">Inventory History</h1>
+      
+      <div className="flex justify-end mt-10 mb-6">
         <Link href="/Back&FrontInventory">
           <Button>Back</Button>
         </Link>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Item Name</TableHead>
-            <TableHead>Movement Date</TableHead>
-            <TableHead>Quantity</TableHead>
-            <TableHead>Shelf Location</TableHead>
-            <TableHead>Stock Action</TableHead> {/* Used/Damaged/NA */}
-            <TableHead>Stock Out Date</TableHead> {/* Stock out date */}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {history.length > 0 ? (
-            history.map((record) => (
-              <React.Fragment key={record.bd_id}>
-                {record.movements.map((move, index) => (
-                  <TableRow key={`${record.bd_id}-${index}`}>
-                    <TableCell>{record.item_name}</TableCell>
-                    <TableCell>{formatDateTime(move.date_moved)}</TableCell>
-                    <TableCell>{move.quantity}</TableCell>
-                    <TableCell>{move.shelf_location.sl_name}</TableCell>
-                    <TableCell>{move.action === 'NA' ? 'NA' : move.action}</TableCell> {/* Display stock action */}
-                    <TableCell>{formatDateTime(record.stock_out_date)}</TableCell> {/* Display stock out date */}
-                  </TableRow>
-                ))}
-              </React.Fragment>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center">No history available.</TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {history.length > 0 ? (
+          history.map((item) => (
+            <Card key={item.item_name} className="shadow-lg border border-gray-300">
+              <CardHeader>
+                <CardTitle>{item.item_name}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {item.movements.slice(0, 5).map((move, index) => (
+                    <p key={index} className="text-sm">
+                      {formatMovement(move)}
+                    </p>
+                  ))}
+                </div>
+                {item.movements.length > 5 && (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="mt-4 w-full">View All</Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>{item.item_name} - Full History</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-3">
+                        {item.movements.map((move, index) => (
+                          <p key={index} className="text-sm">
+                            {formatMovement(move)}
+                          </p>
+                        ))}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <p className="text-center col-span-full">No inventory history available.</p>
+        )}
+      </div>
     </div>
   );
-};
-
-export default InventoryHistoryPage;
+}

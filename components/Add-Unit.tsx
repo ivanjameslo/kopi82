@@ -163,7 +163,6 @@ const AddUnit = ({ onModalClose }: AddUnitProps) => {
                             <table className="table-auto w-full border-collapse border border-gray-300">
                                 <thead>
                                     <tr className="bg-gray-100">
-                                        <th className="px-4 py-2 border-b text-center">ID</th>
                                         <th className="px-4 py-2 border-b text-center">Name</th>
                                         <th className="px-4 py-2 border-b text-center">Actions</th>
                                     </tr>
@@ -171,9 +170,6 @@ const AddUnit = ({ onModalClose }: AddUnitProps) => {
                                 <tbody>
                                     {data.map((unit) => (
                                         <tr key={unit.unit_id}>
-                                            <td className="px-4 py-2 border-b text-center">
-                                                {unit.unit_id}
-                                            </td>
                                             <td className="px-4 py-2 border-b text-center">
                                                 {unit.unit_name}
                                             </td>

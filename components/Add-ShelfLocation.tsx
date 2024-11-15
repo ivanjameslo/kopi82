@@ -187,7 +187,6 @@ const AddShelfLocation = ({ onModalClose }: AddShelfLocationProps) => {
               <table className="table-auto w-full border-collapse border border-gray-300">
                 <thead>
                   <tr className="bg-gray-100">
-                    <th className="px-4 py-2 border-b text-center">ID</th>
                     <th className="px-4 py-2 border-b text-center">Name</th>
                     <th className="px-4 py-2 border-b text-center">Type</th>
                     <th className="px-4 py-2 border-b text-center">Actions</th>
@@ -196,7 +195,6 @@ const AddShelfLocation = ({ onModalClose }: AddShelfLocationProps) => {
                 <tbody>
                   {shelfLocation.map((location) => (
                     <tr key={location.sl_id}>
-                      <td className="px-4 py-2 border-b text-center">{location.sl_id}</td>
                       <td className="px-4 py-2 border-b text-center">{location.sl_name}</td>
                       <td className="px-4 py-2 border-b text-center">{location.inv_type}</td>
                       <td className="px-4 py-2 border-b flex justify-center items-center text-center">
