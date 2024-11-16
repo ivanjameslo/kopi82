@@ -206,8 +206,6 @@ model order {
   date          DateTime        @default(now())
   order_details order_details[]
   payment       payment?
-
- 
 }
 
 model order_details {
@@ -218,7 +216,7 @@ model order_details {
   date            DateTime @default(now())
   order           order   @relation(fields: [order_id], references: [order_id])
   product         product @relation(fields: [product_id], references: [product_id])
-  // ProductOrderDetails ProductOrderDetails[] (!!!!for many-to-many relation)
+  // ProductOrderDetails ProductOrderDetails[] 
 }
 
 
@@ -231,7 +229,7 @@ model order_details {
 //   order_details order_details @relation(fields: [orderDetails_id], references: [orderDetails_id])
 
 //   @@id([product_id, orderDetails_id])
-// } (!!!!for many-to-many relation)
+// } 
 
 //PAYMENT
 

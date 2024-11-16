@@ -2,7 +2,7 @@
 
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { CartProvider } from "@/app/appMenu/components/context/cartContext";
+import { CartProvider } from "@/app/kopi82-app/context/cartContext";
 import ConditionalSidebar from "@/components/ConditionalSidebar";
 
 const inter = Inter({ subsets: ["latin"] });
