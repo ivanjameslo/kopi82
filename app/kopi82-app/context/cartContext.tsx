@@ -10,7 +10,7 @@ interface CartItem {
 }
 
 interface CartContextType {
-  cart: { [key: number]: CartItem };
+  cart: { [key: string]: CartItem };
   order_id: number;
   updateCart: (newCart: { [key: number]: CartItem }) => void; // Updated to accept the entire cart object
   setOrderId: (id: number) => void;
@@ -19,7 +19,7 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [cart, setCart] = useState<{ [key: number]: CartItem }>({});
+  const [cart, setCart] = useState<{ [key: string]: CartItem }>({});
   const [order_id, setOrderId] = useState<number>(0);
 
   // Initialize `cart` and `order_id` from `localStorage`
@@ -47,9 +47,26 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [order_id]);
 
   const updateCart = (newCart: { [key: number]: CartItem }) => {
-    setCart(newCart); // Update the cart directly with the new object
+    setCart((prevCart) => {
+      const updatedCart = { ...prevCart };
+  
+      Object.values(newCart).forEach((newItem) => {
+        // Generate a unique key for each item (product_id + selectedPrice)
+        const uniqueKey = `${newItem.product_id}-${newItem.selectedPrice}`;
+  
+        if (updatedCart[uniqueKey]) {
+          // If the same product and type exist, increment the quantity
+          updatedCart[uniqueKey].quantity += newItem.quantity;
+        } else {
+          // If it's a new product/type, add it to the cart
+          updatedCart[uniqueKey] = newItem;
+        }
+      });
+  
+      return updatedCart;
+    });
   };
-
+  
   return (
     <CartContext.Provider value={{ cart, order_id, updateCart, setOrderId }}>
       {children}

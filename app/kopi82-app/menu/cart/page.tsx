@@ -11,31 +11,63 @@ const CartPage = () => {
     const [customerName, setCustomerName] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
+    const [productDetails, setProductDetails] = useState<{ [key: number]: { product_name: string, image_url: string } }>({});
+
     // Fetch customer name based on order_id
     const fetchCustomerName = async (order_id: number) => {
         try {
-            const response = await fetch(`/api/orders/${order_id}`);
+            const response = await fetch("/api/orders/${order_id}");
             if (!response.ok) {
                 throw new Error("Failed to fetch order details");
             }
             const data = await response.json();
-            setCustomerName(data.customer_name); // Assuming `customer_name` is part of the response
+            setCustomerName(data.customer_name);
         } catch (error) {
             console.error("Error fetching customer name:", error);
-            setCustomerName("Unknown"); // Fallback in case of error
+            setCustomerName("Unknown");
         }
     };
 
-    // Use `useEffect` to fetch customer name when `order_id` is available
+    // Fetch product details based on product_id
+    const fetchProductDetails = async (productId: number) => {
+        try {
+            const response = await fetch("/api/product/${productId}");
+            if (!response.ok) {
+                throw new Error("Failed to fetch product details");
+            }
+            return await response.json(); // Expecting { product_name, image_url }
+        } catch (error) {
+            console.error("Error fetching product details:", error);
+            return { product_name: "Unknown", image_url: "/placeholder.png" };
+        }
+    };
+
     useEffect(() => {
         if (order_id) {
             fetchCustomerName(order_id);
         }
     }, [order_id]);
 
-    const cartItems = Object.values(cart); // Convert cart object to an array of items
+    useEffect(() => {
+        const fetchDetails = async () => {
+            const details: { [key: number]: { product_name: string, image_url: string } } = {};
+            for (const item of Object.values(cart)) {
+                if (!productDetails[item.product_id]) {
+                    const product = await fetchProductDetails(item.product_id);
+                    details[item.product_id] = {
+                        product_name: product.product_name,
+                        image_url: product.image_url,
+                    };
+                }
+            }
+            setProductDetails((prev) => ({ ...prev, ...details }));
+        };
 
-    // Function to remove an item from the cart
+        fetchDetails();
+    }, [cart]);
+
+    const cartItems = Object.values(cart);
+
     const removeItem = (productId: number) => {
         const updatedCart = { ...cart };
         delete updatedCart[productId];
@@ -49,9 +81,9 @@ const CartPage = () => {
                 order_id: order_id,
                 product_id: item.product_id,
                 quantity: item.quantity,
-                date: new Date(), // Current date
+                date: new Date(),
             }));
-    
+
             const response = await fetch("/api/order_details", {
                 method: "POST",
                 headers: {
@@ -59,20 +91,20 @@ const CartPage = () => {
                 },
                 body: JSON.stringify(formDataArray),
             });
-    
+
             if (!response.ok) {
                 throw new Error("Failed to save order details.");
             }
-    
+
             const result = await response.json();
-            alert(`Order details saved successfully. Items saved: ${result.createdCount}`);
+            alert("Order details saved successfully. Items saved: ${result.createdCount}");
         } catch (error) {
             console.error("Checkout failed:", error);
             alert("Failed to save order details. Please try again.");
         } finally {
             setLoading(false);
         }
-    };    
+    };
 
     if (cartItems.length === 0) {
         return (
@@ -81,7 +113,7 @@ const CartPage = () => {
                 <p className="text-gray-500 mt-4">Your cart is empty.</p>
                 <button
                     className="mt-6 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    onClick={() => router.push("/kopi82-app/menu")} // Redirect to menu page
+                    onClick={() => router.push("/kopi82-app/menu")}
                 >
                     Back to Menu
                 </button>
@@ -93,7 +125,7 @@ const CartPage = () => {
         <div className="m-14">
             <h1 className="text-2xl font-bold">Cart</h1>
             <p className="text-gray-600 mt-2">
-                Customer: {customerName || "Loading..."} {/* Display "Loading..." until fetched */}
+                Customer: {customerName || "Loading..."}
             </p>
             <p className="text-gray-600">Order ID: {order_id}</p>
 
@@ -102,6 +134,7 @@ const CartPage = () => {
                     <thead>
                         <tr>
                             <th className="border border-gray-300 px-4 py-2">Product</th>
+                            
                             <th className="border border-gray-300 px-4 py-2">Quantity</th>
                             <th className="border border-gray-300 px-4 py-2">Price</th>
                             <th className="border border-gray-300 px-4 py-2">Total</th>
@@ -109,36 +142,43 @@ const CartPage = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {cartItems.map((item) => (
-                            <tr key={item.product_id}>
-                                <td className="border border-gray-300 px-4 py-2 flex items-center space-x-4">
-                                    <Image
-                                        src={`/path-to-image/${item.product_id}`} // Update path as needed
-                                        alt={`Product ${item.product_id}`}
-                                        width={50}
-                                        height={50}
-                                    />
-                                    <span>Product {item.product_id}</span> {/* Replace with actual product name */}
-                                </td>
-                                <td className="border border-gray-300 px-4 py-2 text-center">
-                                    {item.quantity}
-                                </td>
-                                <td className="border border-gray-300 px-4 py-2 text-center">
-                                    {item.selectedPrice.toFixed(2)}
-                                </td>
-                                <td className="border border-gray-300 px-4 py-2 text-center">
-                                    {(item.quantity * item.selectedPrice).toFixed(2)}
-                                </td>
-                                <td className="border border-gray-300 px-4 py-2 text-center">
-                                    <button
-                                        className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                                        onClick={() => removeItem(item.product_id)}
-                                    >
-                                        X
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
+                        {cartItems.map((item) => {
+                            const product = productDetails[item.product_id] || {
+                                product_name: "Loading...",
+                                image_url: "/placeholder.png",
+                            };
+
+                            return (
+                                <tr key={item.product_id}>
+                                    <td className="border border-gray-300 px-4 py-2 flex items-center space-x-4">
+                                        <Image
+                                            src={product.image_url}
+                                            alt={product.product_name}
+                                            width={50}
+                                            height={50}
+                                        />
+                                        <span>{product.product_name}</span>
+                                    </td>
+                                    <td className="border border-gray-300 px-4 py-2 text-center">
+                                        {item.quantity}
+                                    </td>
+                                    <td className="border border-gray-300 px-4 py-2 text-center">
+                                        {item.selectedPrice.toFixed(2)}
+                                    </td>
+                                    <td className="border border-gray-300 px-4 py-2 text-center">
+                                        {(item.quantity * item.selectedPrice).toFixed(2)}
+                                    </td>
+                                    <td className="border border-gray-300 px-4 py-2 text-center">
+                                        <button
+                                            className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                            onClick={() => removeItem(item.product_id)}
+                                        >
+                                            X
+                                        </button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
@@ -157,7 +197,7 @@ const CartPage = () => {
 
             <button
                 className="mt-6 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                onClick={() => router.push("/kopi82-app/menu")} // Redirect to menu page
+                onClick={() => router.push("/kopi82-app/menu")}
             >
                 Back to Menu
             </button>

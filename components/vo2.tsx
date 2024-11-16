@@ -1,191 +1,172 @@
-// "use client";
+// 'use client'
 
-// import React, { useEffect, useState } from 'react';
-// import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-// import { Button } from "@/components/ui/button";
-// import { MdEdit } from "react-icons/md";
-// import UpdateEmployee from '@/components/Update-Employee';
-// import Link from 'next/link';
-// import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, } from "./ui/pagination";
-// import { toast } from 'react-toastify';
+// import { useState } from 'react'
+// import { Button } from "@/components/ui/button"
+// import { Input } from "@/components/ui/input"
 
-// export interface EmployeeData {
-//     id: number;
-//     email: string;
-//     role: string;
-//     last_name: string;
-//     first_name: string;
-//     middle_name: string;
-//     status: string;
+// interface Product {
+//   product_id: number;
+//   quantity: number;
+//   selectedPrice: number;
 // }
 
-// export default function ViewEmployee() {
-//     const [data, setData] = useState<EmployeeData[]>([]);
-//     const [loading, setLoading] = useState(false);
-//     const [selectedEmployee, setSelectedEmployee] = useState<EmployeeData | null>(null);
-//     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-//     const [currentPage, setCurrentPage] = useState(1);
-//     const employeePerPage = 5;
+// interface FormData {
+//   order_id: number;
+//   products: Product[];
+// }
 
-//     const fetchEmployees = async () => {
-//         try {
-//             setLoading(true);
-//             const response = await fetch("/api/employee");
-//             const employees = await response.json();
-//             // Ensure that employees is an array
-//             setData(Array.isArray(employees) ? employees : []);
-//         } catch (error) {
-//             console.error("Failed to fetch employees:", error);
-//             setData([]); // Set to empty array in case of error
-//         } finally {
-//             setLoading(false);
-//         }
-//     }
+// export default function Component() {
+//   const [formData, setFormData] = useState<FormData>({
+//     order_id: 1, // Assuming a default order_id
+//     products: []
+//   })
 
-//     useEffect(() => {
-//         fetchEmployees();
-//     }, []);
+//   const incrementQuantity = (productId: number) => {
+//     setFormData((prevFormData) => {
+//       const existingProductIndex = prevFormData.products.findIndex(
+//         (p) => p.product_id === productId
+//       );
+//       if (existingProductIndex > -1) {
+//         const updatedProducts = [...prevFormData.products];
+//         updatedProducts[existingProductIndex] = {
+//           ...updatedProducts[existingProductIndex],
+//           quantity: updatedProducts[existingProductIndex].quantity + 1
+//         };
+//         return {
+//           ...prevFormData,
+//           products: updatedProducts,
+//         };
+//       } else {
+//         return {
+//           ...prevFormData,
+//           products: [
+//             ...prevFormData.products,
+//             { product_id: productId, quantity: 1, selectedPrice: 0 },
+//           ],
+//         };
+//       }
+//     });
+//   };
 
-//     const handleEdit = (employee: EmployeeData) => {
-//         setSelectedEmployee(employee);
-//         setIsEditModalOpen(true);
-//     }
+//   const decrementQuantity = (productId: number) => {
+//     setFormData((prevFormData) => {
+//       const existingProductIndex = prevFormData.products.findIndex(
+//         (p) => p.product_id === productId
+//       );
+//       if (existingProductIndex > -1) {
+//         const updatedProducts = [...prevFormData.products];
+//         updatedProducts[existingProductIndex] = {
+//           ...updatedProducts[existingProductIndex],
+//           quantity: Math.max(updatedProducts[existingProductIndex].quantity - 1, 0)
+//         };
+//         return {
+//           ...prevFormData,
+//           products: updatedProducts,
+//         };
+//       }
+//       return prevFormData;
+//     });
+//   };
 
-//     const handleSaveEdit = async (employee: EmployeeData) => {
-//         try {
-//             const response = await fetch(`/api/employee/${employee.id}`, {
-//                 method: "PUT",
-//                 headers: {
-//                     "Content-Type": "application/json",
-//                 },
-//                 body: JSON.stringify(employee),
-//             });
+//   const handleQuantityInput = (productId: number, quantity: number) => {
+//     setFormData((prevFormData) => {
+//       const existingProductIndex = prevFormData.products.findIndex(
+//         (p) => p.product_id === productId
+//       );
+//       if (existingProductIndex > -1) {
+//         const updatedProducts = [...prevFormData.products];
+//         updatedProducts[existingProductIndex] = {
+//           ...updatedProducts[existingProductIndex],
+//           quantity: Math.max(quantity, 0)
+//         };
+//         return {
+//           ...prevFormData,
+//           products: updatedProducts,
+//         };
+//       } else {
+//         return {
+//           ...prevFormData,
+//           products: [
+//             ...prevFormData.products,
+//             { product_id: productId, quantity: Math.max(quantity, 0), selectedPrice: 0 },
+//           ],
+//         };
+//       }
+//     });
+//   };
 
-//             if (!response.ok) {
-//                 throw new Error("Failed to update employee");
-//             }
+//   // For demonstration purposes, let's add a product to the formData
+//   const addProduct = () => {
+//     const newProductId = formData.products.length + 1;
+//     setFormData(prevFormData => ({
+//       ...prevFormData,
+//       products: [...prevFormData.products, { product_id: newProductId, quantity: 0, selectedPrice: 0 }]
+//     }));
+//   };
 
-//             const updatedEmployee = await response.json();
-//             const updatedData = data.map((emp) => emp.id === updatedEmployee.id ? updatedEmployee : emp);
-//             setData(updatedData);
-//             setIsEditModalOpen(false);
-//         } catch (error) {
-//             toast.error("Failed to update employee");
-//         }
-//     }
-
-//     const totalPages = Math.ceil(data.length / employeePerPage);
-
-//     const paginatedData = data.slice(
-//         (currentPage - 1) * employeePerPage,
-//         currentPage * employeePerPage
-//     );
-
-//     const goToPage = (page: number) => {
-//         setCurrentPage(page);
-//     };
-
-//     if (loading) {
-//         return <div>Loading...</div>;
-//     }
-
-//     return (
-//         <div className="mt-12 mx-40">
-//             <h1 className="text-3xl text-[#483C32] font-bold text-center mb-2">Employee</h1>
-
-//             <div className="flex justify-end mt-10">
-//                 <Link href="./Employee/Register">
-//                     <Button>Register Employee</Button>
-//                 </Link>
-//             </div>
-
-//             <div className="mt-10">
-//                 <Table>
-//                     <TableHeader>
-//                         <TableRow>
-//                             <TableHead>ID</TableHead>
-//                             <TableHead>Email</TableHead>
-//                             <TableHead>Role</TableHead>
-//                             <TableHead>Last Name</TableHead>
-//                             <TableHead>First Name</TableHead>
-//                             <TableHead>Middle Name</TableHead>
-//                             <TableHead>Status</TableHead>
-//                             <TableHead>Edit</TableHead>
-//                         </TableRow>
-//                     </TableHeader>
-//                     <TableBody>
-//                         {paginatedData.length > 0 ? (
-//                             paginatedData.map((employee) => (
-//                                 <TableRow key={employee.id}>
-//                                     <TableCell>{employee.id}</TableCell>
-//                                     <TableCell>{employee.email}</TableCell>
-//                                     <TableCell>{employee.role}</TableCell>
-//                                     <TableCell>{employee.last_name}</TableCell>
-//                                     <TableCell>{employee.first_name}</TableCell>
-//                                     <TableCell>{employee.middle_name}</TableCell>
-//                                     <TableCell>{employee.status}</TableCell>
-//                                     <TableCell>
-//                                         <Button onClick={() => handleEdit(employee)}>
-//                                             <MdEdit />
-//                                         </Button>
-//                                     </TableCell>
-//                                 </TableRow>
-//                             ))
-//                         ) : (
-//                             <TableRow>
-//                                 <TableCell colSpan={8} className="text-center">No employees found</TableCell>
-//                             </TableRow>
-//                         )}
-//                     </TableBody>
-//                 </Table>
-//             </div>
-
-//             {/* Pagination Controls */}
-//             <div className="flex justify-center mt-4">
-//                 <Pagination>
-//                     <PaginationContent>
-//                         <PaginationItem>
-//                             <PaginationPrevious
-//                                 href="#"
-//                                 onClick={() => currentPage > 1 && goToPage(currentPage - 1)}
-//                                 className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-//                             />
-//                         </PaginationItem>
-//                         {[...Array(totalPages)].map((_, index) => {
-//                             const page = index + 1;
-//                             return (
-//                                 <PaginationItem key={page}>
-//                                     <PaginationLink
-//                                         href="#"
-//                                         onClick={(e) => {
-//                                             e.preventDefault();
-//                                             goToPage(page);
-//                                         }}
-//                                         isActive={page === currentPage}
-//                                     >
-//                                         {page}
-//                                     </PaginationLink>
-//                                 </PaginationItem>
-//                             );
-//                         })}
-//                         {totalPages > 5 && <PaginationEllipsis />}
-//                         <PaginationItem>
-//                             <PaginationNext
-//                                 href="#"
-//                                 onClick={() => currentPage < totalPages && goToPage(currentPage + 1)}
-//                                 className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-//                             />
-//                         </PaginationItem>
-//                     </PaginationContent>
-//                 </Pagination>
-//             </div>
-
-//             <UpdateEmployee
-//                 employee={selectedEmployee}
-//                 isOpen={isEditModalOpen}
-//                 onClose={() => setIsEditModalOpen(false)}
-//                 onSave={handleSaveEdit}
-//             />
+//   return (
+//     <div className="p-4">
+//       <Button onClick={addProduct} className="mb-4">Add Product</Button>
+//       {formData.products.map(product => (
+//         <div key={product.product_id} className="flex items-center space-x-2 mb-4">
+//           <Button onClick={() => decrementQuantity(product.product_id)} variant="outline">-</Button>
+//           <Input
+//             type="number"
+//             value={product.quantity}
+//             onChange={(e) => handleQuantityInput(product.product_id, parseInt(e.target.value, 10))}
+//             className="w-20 text-center"
+//           />
+//           <Button onClick={() => incrementQuantity(product.product_id)} variant="outline">+</Button>
+//           <span>Current quantity: {product.quantity}</span>
 //         </div>
-//     );
+//       ))}
+//     </div>
+//   )
 // }
+
+//  const incrementQuantity = (productId: number) => {
+//         setFormData((prevFormData) => {
+//           const existingProductIndex = prevFormData.products.findIndex(
+//             (p) => p.product_id === productId
+//           );
+//           if (existingProductIndex > -1) {
+//             const updatedProducts = [...prevFormData.products];
+//             updatedProducts[existingProductIndex].quantity += 1; 
+//             return {
+//               ...prevFormData,
+//               products: updatedProducts,
+//             };
+//           } else {
+//             return {
+//               ...prevFormData,
+//               products: [
+//                 ...prevFormData.products,
+//                 { product_id: productId, quantity: 1, selectedPrice: 0 },
+//               ],
+//             };
+//           }
+//         });
+//       };
+      
+//       const decrementQuantity = (productId: number) => {
+//         setFormData((prevFormData) => {
+//           const existingProductIndex = prevFormData.products.findIndex(
+//             (p) => p.product_id === productId
+//           );
+      
+//           if (existingProductIndex > -1) {
+//             const updatedProducts = [...prevFormData.products];
+//             updatedProducts[existingProductIndex].quantity = Math.max(
+//               updatedProducts[existingProductIndex].quantity - 1,
+//               0
+//             );
+      
+//             return {
+//               ...prevFormData,
+//               products: updatedProducts,
+//             };
+//           } else {
+//             return prevFormData;
+//           }
+//         });
+//       };
