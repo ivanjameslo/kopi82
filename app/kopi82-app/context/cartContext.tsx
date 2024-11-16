@@ -12,7 +12,7 @@ interface CartItem {
 interface CartContextType {
   cart: { [key: number]: CartItem };
   order_id: number;
-  updateCart: (item: CartItem) => void;
+  updateCart: (newCart: { [key: number]: CartItem }) => void; // Updated to accept the entire cart object
   setOrderId: (id: number) => void;
 }
 
@@ -22,13 +22,22 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [cart, setCart] = useState<{ [key: number]: CartItem }>({});
   const [order_id, setOrderId] = useState<number>(0);
 
-  // Initialize `order_id` from `localStorage` only on the client side
+  // Initialize `cart` and `order_id` from `localStorage`
   useEffect(() => {
+    const savedCart = localStorage.getItem("cart");
     const savedOrderId = localStorage.getItem("order_id");
+    if (savedCart) {
+      setCart(JSON.parse(savedCart));
+    }
     if (savedOrderId) {
       setOrderId(Number(savedOrderId));
     }
   }, []);
+
+  // Update `localStorage` whenever `cart` changes
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }, [cart]);
 
   // Update `localStorage` whenever `order_id` changes
   useEffect(() => {
@@ -37,26 +46,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [order_id]);
 
-  const updateCart = (item: CartItem) => {
-    setCart((prev) => ({ ...prev, [item.product_id]: item }));
+  const updateCart = (newCart: { [key: number]: CartItem }) => {
+    setCart(newCart); // Update the cart directly with the new object
   };
-
-  const initializeOrderId = async () => {
-    if (order_id === 0) {
-      try {
-        const response = await fetch("/api/order/latest");
-        const data = await response.json();
-        const latestOrderId = data.order_id || 1; // Default to 1 if no order exists
-        setOrderId(latestOrderId);
-      } catch (error) {
-        console.error("Failed to fetch the latest order ID", error);
-      }
-    }
-  };
-
-  useEffect(() => {
-    initializeOrderId();
-  }, []);
 
   return (
     <CartContext.Provider value={{ cart, order_id, updateCart, setOrderId }}>

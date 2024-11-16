@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Container from "../Container";
+import Container from "../app-components/Container";
 import Image from "next/image";
 import { MdShoppingBasket } from "react-icons/md";
 
@@ -26,7 +26,7 @@ const Navbar = () => {
             md:gap-0">
                 <div className="flex items-center gap-2">
                 <Image src="/kopi.png" alt="Kopi82" width={40} height={40} />
-                <Link href="/">Kopi82</Link>
+                <Link href="/kopi82-app/menu">Kopi82</Link>
                 </div> 
                 <div className="hidden md:block">Search</div>
                 <div className="flex items-center gap-8
@@ -34,7 +34,7 @@ const Navbar = () => {
                     
                   <div className="flex items-center gap-2">
                   <MdShoppingBasket/>
-                    <Link href="/appMenu/Cart">Cart</Link>
+                    <Link href="/kopi82-app/menu/cart">Cart</Link>
                     </div>
                 </div>
             </div>

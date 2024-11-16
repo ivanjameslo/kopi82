@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { ChangeEvent, FormEvent, useState } from "react";
-import { useCartContext } from "../appMenu/components/context/cartContext"
+import { useCartContext } from "../kopi82-app/context/cartContext"
 import "@/app/kopi82-app/kopi822.css"; // Importing the CSS file for styling
 
 const Kopi82app = () => {
@@ -36,11 +36,6 @@ const Kopi82app = () => {
         setUploading(true);
     
         try {
-            // Extract individual fields from formData
-            // const { customer_name, service_type } = formData;
-            // const currentDate = new Date().toISOString().split('T')[0]; // Adjust date format if necessary
-    
-            // Send each field individually in the request body
             const response = await fetch("/api/order", {
                 method: "POST",
                 headers: {
@@ -50,7 +45,7 @@ const Kopi82app = () => {
                     customer_name: formData.customer_name,
                     service_type: formData.service_type,
                     date: formData.date + "T00:00:00Z",
-                }), // Pass individual fields
+                }),
             });
     
             if (!response.ok) {
@@ -64,7 +59,7 @@ const Kopi82app = () => {
             // Update the context with the new order_id
             setOrderId(responseData.order_id);
 
-            router.push("/appMenu")
+            router.push("/kopi82-app/menu");
         } catch (error) {
             console.error("Error submitting form:", error);
         } finally {
