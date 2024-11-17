@@ -188,6 +188,7 @@ Table order_details {
   orderDetails_id Int [pk, increment]
   order_id Int [not null]
   product_id Int [not null]
+  price Float [not null]
   quantity Int [not null]
   date DateTime [default: `now()`, not null]
   order order [not null]

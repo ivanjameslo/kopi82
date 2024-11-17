@@ -1,26 +1,34 @@
 "use client";
 
+
 import React, { createContext, useContext, useEffect, useState } from "react";
+
 
 interface CartItem {
   product_id: number;
   quantity: number;
   selectedPrice: number;
   order_id: number;
+  hotPrice?: number; // Add optional properties if needed
+  icedPrice?: number;
+  frappePrice?: number;
+  singlePrice?: number;
 }
 
 interface CartContextType {
-  cart: { [key: number]: CartItem };
+  cart: { [key: string]: CartItem }; // Change key type from number to string
   order_id: number;
-  updateCart: (newCart: { [key: number]: CartItem }) => void; // Updated to accept the entire cart object
+  updateCart: (newCart: { [key: string]: CartItem }) => void; // Update here as well
   setOrderId: (id: number) => void;
 }
+
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<{ [key: number]: CartItem }>({});
   const [order_id, setOrderId] = useState<number>(0);
+
 
   // Initialize `cart` and `order_id` from `localStorage`
   useEffect(() => {
@@ -34,10 +42,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+
   // Update `localStorage` whenever `cart` changes
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
+
 
   // Update `localStorage` whenever `order_id` changes
   useEffect(() => {
@@ -46,9 +56,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [order_id]);
 
+
   const updateCart = (newCart: { [key: number]: CartItem }) => {
     setCart(newCart); // Update the cart directly with the new object
   };
+
 
   return (
     <CartContext.Provider value={{ cart, order_id, updateCart, setOrderId }}>
@@ -56,6 +68,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </CartContext.Provider>
   );
 };
+
 
 export const useCartContext = () => {
   const context = useContext(CartContext);
