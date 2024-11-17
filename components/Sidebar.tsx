@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, Home, User, Box, ShoppingCart, Wallet, LogOut } from "lucide-react";
+import { Menu, Home, User, Box, ShoppingCart, TicketMinus, Wallet, LogOut } from "lucide-react";
 import { supabase } from "@/lib/initSupabase";
 import { NAVBAR_LINKS } from "@/lib/links";
 import { usePathname, useRouter } from "next/navigation";
@@ -60,6 +60,7 @@ export default function Sidebar() {
                             {link.label === "Employee" && <User className="h-6 w-6 flex-shrink-0" />}
                             {link.label === "Menu" && <ShoppingCart className="h-6 w-6 flex-shrink-0" />}
                             {link.label === "Inventory" && <Box className="h-6 w-6 flex-shrink-0" />}
+                            {link.label === "Discount" && <TicketMinus className="h-6 w-6 flex-shrink-0" />}
                             {link.label === "Sales" && <Wallet className="h-6 w-6 flex-shrink-0" />}
                             {isOpen && (
                                 <span

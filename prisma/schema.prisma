@@ -212,6 +212,7 @@ model order_details {
   orderDetails_id Int     @id @default(autoincrement())
   order_id        Int
   product_id      Int
+  price           Float
   quantity        Int
   date            DateTime @default(now())
   order           order   @relation(fields: [order_id], references: [order_id])

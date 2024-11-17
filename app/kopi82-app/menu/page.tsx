@@ -1,5 +1,6 @@
 "use client";
 
+
 import { FormEvent, useEffect, useState } from "react";
 import { FiPlus } from "react-icons/fi";
 import Image from "next/image";
@@ -7,7 +8,7 @@ import { useRouter } from "next/navigation";
 import MenuRow from "@/components/MenuRow";
 import { toast } from "react-toastify";
 import { useCartContext } from "../context/cartContext";
-import  HomeBanner  from "../app-components/Homebanner"
+import HomeBanner from "../app-components/Homebanner"
 import Modal from "../modal";
 import Navbar from "../app-components/Navbar";
 
@@ -23,17 +24,6 @@ interface Product {
     status: string;
     description: string;
     image_url: string;
-}
-
-interface Cart {
-    [key: string]: CartItem;
-}
-
-interface CartItem {
-    product_id: number;
-    quantity: number;
-    selectedPrice: number;
-    order_id: number;
 }
 
 const AppMenu = () => {
@@ -55,7 +45,6 @@ const AppMenu = () => {
     const [uploading, setUploading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-
 
     const fetchProduct = async () => {
         try {
@@ -96,18 +85,18 @@ const AppMenu = () => {
             ...prev,
             [productId]: !prev[productId],
         }));
-    };  
+    };
 
     const handleTypeSelection = (productId: number, selectedPrice: number) => {
         setFormData((prevFormData) => {
             const existingProductIndex = prevFormData.products.findIndex(
                 (p) => p.product_id === productId
             );
-    
+
             if (existingProductIndex > -1) {
                 const updatedProducts = [...prevFormData.products];
                 updatedProducts[existingProductIndex].selectedPrice = selectedPrice;
-    
+
                 return {
                     ...prevFormData,
                     products: updatedProducts,
@@ -130,61 +119,61 @@ const AppMenu = () => {
 
     const incrementQuantity = (productId: number) => {
         setFormData((prevFormData) => {
-          const existingProductIndex = prevFormData.products.findIndex(
-            (p) => p.product_id === productId
-          );
-          if (existingProductIndex > -1) {
-            const updatedProducts = [...prevFormData.products];
-            updatedProducts[existingProductIndex] = {
-              ...updatedProducts[existingProductIndex],
-              quantity: updatedProducts[existingProductIndex].quantity + 1
-            };
-            return {
-              ...prevFormData,
-              products: updatedProducts,
-            };
-          } else {
-            return {
-              ...prevFormData,
-              products: [
-                ...prevFormData.products,
-                { product_id: productId, quantity: 1, selectedPrice: 0 },
-              ],
-            };
-          }
+            const existingProductIndex = prevFormData.products.findIndex(
+                (p) => p.product_id === productId
+            );
+            if (existingProductIndex > -1) {
+                const updatedProducts = [...prevFormData.products];
+                updatedProducts[existingProductIndex] = {
+                    ...updatedProducts[existingProductIndex],
+                    quantity: updatedProducts[existingProductIndex].quantity + 1
+                };
+                return {
+                    ...prevFormData,
+                    products: updatedProducts,
+                };
+            } else {
+                return {
+                    ...prevFormData,
+                    products: [
+                        ...prevFormData.products,
+                        { product_id: productId, quantity: 1, selectedPrice: 0 },
+                    ],
+                };
+            }
         });
-      };
-    
-      const decrementQuantity = (productId: number) => {
+    };
+
+    const decrementQuantity = (productId: number) => {
         setFormData((prevFormData) => {
-          const existingProductIndex = prevFormData.products.findIndex(
-            (p) => p.product_id === productId
-          );
-          if (existingProductIndex > -1) {
-            const updatedProducts = [...prevFormData.products];
-            updatedProducts[existingProductIndex] = {
-              ...updatedProducts[existingProductIndex],
-              quantity: Math.max(updatedProducts[existingProductIndex].quantity - 1, 0)
-            };
-            return {
-              ...prevFormData,
-              products: updatedProducts,
-            };
-          }
-          return prevFormData;
+            const existingProductIndex = prevFormData.products.findIndex(
+                (p) => p.product_id === productId
+            );
+            if (existingProductIndex > -1) {
+                const updatedProducts = [...prevFormData.products];
+                updatedProducts[existingProductIndex] = {
+                    ...updatedProducts[existingProductIndex],
+                    quantity: Math.max(updatedProducts[existingProductIndex].quantity - 1, 0)
+                };
+                return {
+                    ...prevFormData,
+                    products: updatedProducts,
+                };
+            }
+            return prevFormData;
         });
-      };
+    };
 
     const handleQuantityInput = (productId: number, quantity: number) => {
         setFormData((prevFormData) => {
             const existingProductIndex = prevFormData.products.findIndex(
                 (p) => p.product_id === productId
             );
-    
+
             if (existingProductIndex > -1) {
                 const updatedProducts = [...prevFormData.products];
                 updatedProducts[existingProductIndex].quantity = Math.max(quantity, 0);
-    
+
                 return {
                     ...prevFormData,
                     products: updatedProducts,
@@ -203,73 +192,55 @@ const AppMenu = () => {
                 };
             }
         });
-    };    
-    
-    const handleAddToCart = (
-        e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>,
-        productId?: number
-      ) => {
+    };
+
+    const handleAddToCart = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-      
-        if (!productId) {
-          if (formData.products.length === 0) {
+
+        if (formData.products.length === 0) {
             toast.error("No items in the cart!");
-        const updatedCart: Cart = { ...cart }; // Copy the current cart state
-          }
-        }
-      
-        const updatedCart: Cart = { ...cart }; // Copy the current cart state
-      
-        // If adding a single product (via button click)
-        if (productId) {
-          const productToAdd = formData.products.find((p) => p.product_id === productId);
-      
-          if (!productToAdd || productToAdd.quantity === 0) {
-            toast.error("Select a product and quantity before adding to the cart.");
             return;
-          }
-      
-          const cartKey = `${productId}-${productToAdd.selectedPrice}`; // Unique key for the product+price
-      
-          // Check if the product with the specific price already exists in the cart
-          if (updatedCart[cartKey]) {
-            updatedCart[cartKey].quantity += productToAdd.quantity;
-          } else {
-            updatedCart[cartKey] = { ...productToAdd, order_id };
-          }
-        } else {
-          // Handle form submission of multiple products
-          formData.products.forEach((product) => {
-            const cartKey = `${product.product_id}-${product.selectedPrice}`; // Unique key
-      
-            if (updatedCart[cartKey]) {
-              updatedCart[cartKey].quantity += product.quantity;
-            } else {
-              updatedCart[cartKey] = { ...product, order_id };
-            }
-          });
         }
-      
-        updateCart(updatedCart); // Update the cart in context
+
+        const updatedCart: { [key: string]: { product_id: number; quantity: number; selectedPrice: number; order_id: number } } = { ...cart }; // Start with the existing cart context
+
+        formData.products.forEach((product) => {
+            // Create a unique key for the combination of product_id and selectedPrice
+            const uniqueKey = `${product.product_id}-${product.selectedPrice}`;
+
+            if (updatedCart[uniqueKey]) {
+                // If the same preference already exists, increment the quantity
+                updatedCart[uniqueKey].quantity += product.quantity;
+            } else {
+                // Otherwise, add it as a new row
+                updatedCart[uniqueKey] = {
+                    product_id: product.product_id,
+                    quantity: product.quantity,
+                    selectedPrice: product.selectedPrice,
+                    order_id: formData.order_id,
+                };
+            }
+        });
+
+        updateCart(updatedCart); // Pass the updated cart object
+
         toast.success("Items added to the cart!");
-      
-        // Clear formData products array
-        setFormData((prev) => ({
-          ...prev,
-          products: []
+        setFormData((prevFormData) => ({
+            ...prevFormData,
+            products: [], // Clear formData after saving to the cart context
         }));
-      };
-      
+        console.log("Context contains: ", updatedCart);
+    };
+
     const openProductModal = (product: Product) => {
         setSelectedProduct(product);
         setIsModalOpen(true);
     };
-    
+
     const closeProductModal = () => {
         setSelectedProduct(null);
         setIsModalOpen(false);
     };
-    
 
     return (
         <div>
@@ -286,15 +257,15 @@ const AppMenu = () => {
                                         formData.products.find(
                                             (p) => p.product_id === product.product_id
                                         ) || { quantity: 0, selectedPrice: 0 };
-    
+
                                     return (
                                         <div
                                             key={product.product_id}
-                                            className={`flex flex-col p-4 border rounded-lg shadow-md text-center ${
-                                                visibility[product.product_id]
+                                            className={`flex flex-col p-4 border rounded-lg shadow-md text-center ${visibility[product.product_id]
                                                     ? "border-blue-500"
                                                     : ""
-                                            }`}
+                                                }`}
+                                            onClick={() => openProductModal(product)}
                                         >
                                             <Image
                                                 className="object-contain w-full h-32"
@@ -307,8 +278,12 @@ const AppMenu = () => {
                                                 {product.product_name}
                                             </span>
                                             <div className="text-sm text-gray-500 mt-2">
-                                                {product.hotPrice > 0 && <span>Hot: {product.hotPrice}</span>}
-                                                {product.icedPrice > 0 && <span> Iced: {product.icedPrice}</span>}
+                                                {product.hotPrice > 0 && (
+                                                    <span>Hot: {product.hotPrice}</span>
+                                                )}
+                                                {product.icedPrice > 0 && (
+                                                    <span> Iced: {product.icedPrice}</span>
+                                                )}
                                                 {product.frappePrice > 0 && (
                                                     <span> Frappe: {product.frappePrice}</span>
                                                 )}
@@ -320,134 +295,145 @@ const AppMenu = () => {
                                                 type="button"
                                                 className="bg-gray-300 p-2 mt-4"
                                                 onClick={(e) => {
-                                                    e.stopPropagation();
+                                                    e.stopPropagation(); // Prevents modal opening
                                                     handleVisibilityToggle(product.product_id);
                                                 }}
                                             >
                                                 <FiPlus size={20} />
-                                            </button>
-                                            {visibility[product.product_id] && (
-                                                <div className="mt-4">
-                                                    <div className="grid grid-cols-2 gap-2 mt-2 pl-5 pr-5">
-                                                        {product.hotPrice > 0 && (
-                                                            <label className="flex items-center space-x-2 cursor-pointer">
-                                                                <input
-                                                                    type="radio"
-                                                                    name={`price-${product.product_id}`}
-                                                                    onChange={() =>
-                                                                        handleTypeSelection(
-                                                                            product.product_id,
+                                                {visibility[product.product_id] && (
+                                                    <div className="mt-4">
+                                                        <div className="grid grid-cols-2 gap-2 mt-2 pl-5 pr-5">
+                                                            {product.hotPrice > 0 && (
+                                                                <label
+                                                                    className="flex items-center space-x-2 cursor-pointer"
+                                                                    onClick={(e) => e.stopPropagation()}>
+                                                                    <input
+                                                                        type="radio"
+                                                                        name={`price-${product.product_id}`}
+                                                                        onChange={() =>
+                                                                            handleTypeSelection(
+                                                                                product.product_id,
+                                                                                product.hotPrice
+                                                                            )
+                                                                        }
+                                                                        checked={
+                                                                            selectedCartItem.selectedPrice ===
                                                                             product.hotPrice
-                                                                        )
-                                                                    }
-                                                                    checked={
-                                                                        selectedCartItem.selectedPrice ===
-                                                                        product.hotPrice
-                                                                    }
-                                                                />
-                                                                <span>Hot</span>
-                                                            </label>
-                                                        )}
-                                                        {product.icedPrice > 0 && (
-                                                            <label className="flex items-center space-x-2 cursor-pointer">
-                                                                <input
-                                                                    type="radio"
-                                                                    name={`price-${product.product_id}`}
-                                                                    onChange={() =>
-                                                                        handleTypeSelection(
-                                                                            product.product_id,
+                                                                        }
+                                                                    />
+                                                                    <span>Hot</span>
+                                                                </label>
+                                                            )}
+                                                            {product.icedPrice > 0 && (
+                                                                <label
+                                                                    className="flex items-center space-x-2 cursor-pointer"
+                                                                    onClick={(e) => e.stopPropagation()}>
+                                                                    <input
+                                                                        type="radio"
+                                                                        name={`price-${product.product_id}`}
+                                                                        onChange={() =>
+                                                                            handleTypeSelection(
+                                                                                product.product_id,
+                                                                                product.icedPrice
+                                                                            )
+                                                                        }
+                                                                        checked={
+                                                                            selectedCartItem.selectedPrice ===
                                                                             product.icedPrice
-                                                                        )
-                                                                    }
-                                                                    checked={
-                                                                        selectedCartItem.selectedPrice ===
-                                                                        product.icedPrice
-                                                                    }
-                                                                />
-                                                                <span>Iced</span>
-                                                            </label>
-                                                        )}
-                                                        {product.frappePrice > 0 && (
-                                                            <label className="flex items-center space-x-2 cursor-pointer">
-                                                                <input
-                                                                    type="radio"
-                                                                    name={`price-${product.product_id}`}
-                                                                    onChange={() =>
-                                                                        handleTypeSelection(
-                                                                            product.product_id,
+                                                                        }
+                                                                    />
+                                                                    <span>Iced</span>
+                                                                </label>
+                                                            )}
+                                                            {product.frappePrice > 0 && (
+                                                                <label
+                                                                    className="flex items-center space-x-2 cursor-pointer"
+                                                                    onClick={(e) => e.stopPropagation()}>
+                                                                    <input
+                                                                        type="radio"
+                                                                        name={`price-${product.product_id}`}
+                                                                        onChange={() =>
+                                                                            handleTypeSelection(
+                                                                                product.product_id,
+                                                                                product.frappePrice
+                                                                            )
+                                                                        }
+                                                                        checked={
+                                                                            selectedCartItem.selectedPrice ===
                                                                             product.frappePrice
-                                                                        )
-                                                                    }
-                                                                    checked={
-                                                                        selectedCartItem.selectedPrice ===
-                                                                        product.frappePrice
-                                                                    }
-                                                                />
-                                                                <span>Frappe</span>
-                                                            </label>
-                                                        )}
-                                                        {product.singlePrice > 0 && (
-                                                            <label className="flex items-center space-x-2 cursor-pointer">
-                                                                <input
-                                                                    type="radio"
-                                                                    name={`price-${product.product_id}`}
-                                                                    onChange={() =>
-                                                                        handleTypeSelection(
-                                                                            product.product_id,
+                                                                        }
+                                                                    />
+                                                                    <span>Frappe</span>
+                                                                </label>
+                                                            )}
+                                                            {product.singlePrice > 0 && (
+                                                                <label
+                                                                    className="flex items-center space-x-2 cursor-pointer"
+                                                                    onClick={(e) => e.stopPropagation()}>
+                                                                    <input
+                                                                        type="radio"
+                                                                        name={`price-${product.product_id}`}
+                                                                        onChange={() =>
+                                                                            handleTypeSelection(
+                                                                                product.product_id,
+                                                                                product.singlePrice
+                                                                            )
+                                                                        }
+                                                                        checked={
+                                                                            selectedCartItem.selectedPrice ===
                                                                             product.singlePrice
-                                                                        )
-                                                                    }
-                                                                    checked={
-                                                                        selectedCartItem.selectedPrice ===
-                                                                        product.singlePrice
-                                                                    }
-                                                                />
-                                                                <span>Single</span>
-                                                            </label>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex items-center mt-2 space-x-2"
-                                                    onClick={(e) => e.stopPropagation()}>
+                                                                        }
+                                                                    />
+                                                                    <span>Single</span>
+                                                                </label>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center mt-2 space-x-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    decrementQuantity(product.product_id);
+                                                                }}
+                                                                className="px-3 py-1 rounded bg-gray-200"
+                                                            >
+                                                                -
+                                                            </button>
+                                                            <input
+                                                                type="number"
+                                                                value={selectedCartItem.quantity}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                onChange={(e) =>
+                                                                    handleQuantityInput(
+                                                                        product.product_id,
+                                                                        Math.max(0, parseInt(e.target.value))
+                                                                    )
+                                                                }
+                                                                className="w-full pl-4 text-center border border-gray-300 rounded"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    incrementQuantity(product.product_id);
+                                                                }}
+                                                                className="px-3 py-1 rounded bg-gray-200"
+                                                            >
+                                                                +
+                                                            </button>
+                                                        </div>
+
                                                         <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                decrementQuantity(product.product_id);
-                                                            }}
-                                                            className="px-3 py-1 rounded bg-gray-200"
-                                                        >
-                                                            -
-                                                        </button>
-                                                        <input
-                                                            type="number"
-                                                            value={selectedCartItem.quantity}
                                                             onClick={(e) => e.stopPropagation()}
-                                                            onChange={(e) =>
-                                                                handleQuantityInput(
-                                                                    product.product_id,
-                                                                    Number(e.target.value)
-                                                                )
-                                                            }
-                                                            className="w-full pl-4 text-center border border-gray-300 rounded"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                incrementQuantity(product.product_id);
-                                                            }}
-                                                            className="px-3 py-1 rounded bg-gray-200"
+                                                            className="bg-yellow-950 text-white px-4 py-2 rounded mt-2 hover:bg-blue-600 transition"
+                                                            type="submit"
+                                                            disabled={uploading}
                                                         >
-                                                            +
+                                                            Add to Cart
                                                         </button>
                                                     </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={(e) => handleAddToCart(e, product.product_id)}
-                                                        className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                                                    >
-                                                        Add to Cart
-                                                    </button>
-                                                </div>
-                                            )}
+                                                )}
+                                            </button>
                                         </div>
                                     );
                                 })}
