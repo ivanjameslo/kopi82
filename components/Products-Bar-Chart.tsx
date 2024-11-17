@@ -68,7 +68,7 @@ export default function SalesBarChart() {
 
     return (
         <div className="flex flex-col h-screen p-6">
-            <div className="mb-4">
+            <div className="mb-4 mt-4 text-center">
                 <CardTitle>Product Sales Analytics</CardTitle>
                 <CardDescription>Top 10 products purchased (by quantity)</CardDescription>
             </div>
@@ -91,7 +91,7 @@ export default function SalesBarChart() {
                         </Alert>
                     ) : (
                         <div className="h-full max-h-screen">
-                            <ChartContainer config={chartConfig} className="h-1/3 w-screen">
+                            <ChartContainer config={chartConfig} className="h-3/4 w-screen">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart
                                         data={data}
