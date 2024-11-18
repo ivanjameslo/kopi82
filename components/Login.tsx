@@ -34,11 +34,14 @@ export default function LoginPage() {
       if (error) {
         setError("Invalid email or password");
         setLoading(false);
+        console.error('Login failed:', error.message);
         return;
       }
 
       if (data) {
-        router.push("/")
+        await supabase.auth.refreshSession();
+        router.push('/');
+        console.log("Logged in:", data.user)
       }
 
     } catch (error: any) {

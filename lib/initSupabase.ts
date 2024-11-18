@@ -2,12 +2,19 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Missing Supabase URL or anonymous key.");
+if (!supabaseUrl || (!supabaseAnonKey && !supabaseServiceRoleKey)) {
+  throw new Error("Missing Supabase URL or keys.");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Use service role in server-side context
+export const supabase = (() => {
+  if (typeof window === "undefined") {
+    return createClient(supabaseUrl!, supabaseServiceRoleKey!);
+  }
+  return createClient(supabaseUrl!, supabaseAnonKey!);
+})();
 
 // import { createClient } from "@supabase/supabase-js";
 

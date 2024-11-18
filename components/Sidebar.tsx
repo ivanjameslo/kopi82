@@ -15,7 +15,7 @@ export default function Sidebar() {
     const [isOpen, setIsOpen] = React.useState(false);
 
     // Prevent Sidebar from rendering on the login page
-    if (pathname === "/Login") return null;
+    if (pathname === "/") return null;
 
     const logout = async () => {
         const { error } = await supabase.auth.signOut();
@@ -24,8 +24,12 @@ export default function Sidebar() {
         destroyCookie(null, "sb-access-token=", { path: "/" });
         destroyCookie(null, "sb-refresh-token=", { path: "/" });
         destroyCookie(null, "sb-gdxxyfiodvmrnonepzls-auth-token", { path: "/" });
-        if (error) console.error("Error signing out:", error);
-        router.push("/Login")
+        if (error) {
+            console.error("Error signing out:", error);
+            // Optionally, display a notification to the user
+            return;
+          }
+        router.push("/")
     };
 
     return (
@@ -37,7 +41,7 @@ export default function Sidebar() {
             } bg-gradient-to-b from-[#FAEED1] to-[#B19470] p-4 shadow-lg`}
         >
             <div className="flex flex-col flex-grow space-y-4">
-                <Link href="/" className="flex justify-center">
+                <Link href="/Home" className="flex justify-center">
                     <Image
                         src="/kopi.png"
                         alt="Kopi 82 Logo"

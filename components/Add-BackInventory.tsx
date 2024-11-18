@@ -398,7 +398,7 @@ const AddBackInventory = ({ onModalClose }: AddBackInventoryProps) => {
                                                                 value={selectedItems.find(selectedItem => selectedItem.pd_id === item.pd_id)?.quantity || ""}
                                                                 onChange={(e) => handleQuantityChange(item.pd_id, e.target.value)}
                                                                 className="border border-gray-300 rounded px-3 py-1 w-24"
-                                                                required
+                                                                readOnly
                                                             />
                                                         </div>
                                                     </div>

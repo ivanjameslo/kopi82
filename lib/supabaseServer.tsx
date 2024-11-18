@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
 
-  const publicPaths = [/^\/Login$/, /^\/appMenu/, /^\/kopi82/];
+  const publicPaths = [/^\/Login$/, /^\/kopi82-app(\/.*)?$/];
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -12,29 +12,44 @@ export async function updateSession(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      // cookies: {
+      //   getAll() {
+      //     return request.cookies.getAll()
+      //   },
+      //   setAll(cookiesToSet: any) {
+      //     cookiesToSet.forEach(({ name, value, options }: any) => request.cookies.set(name, value))
+      //     supabaseResponse = NextResponse.next({
+      //       request,
+      //     })
+      //     cookiesToSet.forEach(({ name, value, options }: any) =>
+      //       supabaseResponse.cookies.set(name, value, options)
+      //     )
+      //   },
+      // },
       cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet: any) {
-          cookiesToSet.forEach(({ name, value, options }: any) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request,
-          })
-          cookiesToSet.forEach(({ name, value, options }: any) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
+        getAll: () => request.cookies.getAll(),
+        setAll: (cookiesToSet) => {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            options = {
+              ...options,
+              secure: false, // Only for local development
+              sameSite: 'lax', // Default setting
+            };
+            supabaseResponse.cookies.set(name, value, options);
+          });
         },
       },
     }
   )
 
-  const { data } = await supabase.auth.getUser()
-  console.log('user:', data)
+  const { data, error } = await supabase.auth.getUser()
+  console.log('Supabase User:', data);
+  console.log('Supabase Error:', error);
 
   if (
     !data &&
     !request.nextUrl.pathname.startsWith('/Login') && 
+    !request.nextUrl.pathname.startsWith('/kopi82-app') && 
     // exclude "/" route 
     request.nextUrl.pathname !== '/'
     
@@ -47,7 +62,7 @@ export async function updateSession(request: NextRequest) {
   //   return NextResponse.redirect(new URL('/Login', request.url));
   // }
 
-  // return supabaseResponse
+  return supabaseResponse
 }
 
 // import { createServerClient } from '@supabase/ssr';

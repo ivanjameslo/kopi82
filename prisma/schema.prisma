@@ -205,7 +205,7 @@ model order {
   service_type  String
   date          DateTime        @default(now())
   order_details order_details[]
-  payment       payment?
+  payment       payment?        // Relation to payment (one-to-one relationship)
 }
 
 model order_details {
@@ -220,9 +220,6 @@ model order_details {
   // ProductOrderDetails ProductOrderDetails[] 
 }
 
-
-
-
 // model ProductOrderDetails {
 //   product_id Int
 //   orderDetails_id Int
@@ -235,16 +232,17 @@ model order_details {
 //PAYMENT
 
 model payment {
-  payment_id          Int                     @id @default(autoincrement())
-  order_id            Int?                    @unique
-  discount_id         Int?
-  p_method_eWallet_id Int?                    @unique
-  p_method_otc_id     Int?                    @unique
-  date                DateTime                @default(now())
-  order               order?                  @relation(fields: [order_id], references: [order_id])
-  discount            discount?               @relation(fields: [discount_id], references: [discount_id])
-  eWallet             payment_method_eWallet? @relation(fields: [p_method_eWallet_id], references: [p_method_id])
-  otc                 payment_method_otc?     @relation(fields: [p_method_otc_id], references: [p_method_id])
+  payment_id      Int       @id @default(autoincrement())
+  payment_method  String    // e.g., card, gcash, paymaya
+  payment_status  String    // e.g., pending, succeeded, failed
+  amount          Float
+  transaction_id  String?   // PayMongo transaction ID or equivalent
+  discount        discount? @relation(fields: [discount_id], references: [discount_id])
+  discount_id     Int?      // Relation to the associated discount
+  order           order?    @relation(fields: [order_id], references: [order_id])
+  order_id        Int?      @unique // Make order_id unique to satisfy one-to-one relation
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model discount {
@@ -255,20 +253,20 @@ model discount {
   payment       payment[]
 }
 
-model payment_method_eWallet {
-  p_method_id  Int      @id @default(autoincrement())
-  mode         String
-  reference_no String
-  payment      payment?
-}
+// model payment_method_eWallet {
+//   p_method_id  Int      @id @default(autoincrement())
+//   mode         String
+//   reference_no String
+//   payment      payment?
+// }
 
-model payment_method_otc {
-  p_method_id Int      @id @default(autoincrement())
-  mode        String
-  amount      Float
-  change      Float
-  payment     payment?
-}
+// model payment_method_otc {
+//   p_method_id Int      @id @default(autoincrement())
+//   mode        String
+//   amount      Float
+//   change      Float
+//   payment     payment?
+// }
 
 //SALES
 

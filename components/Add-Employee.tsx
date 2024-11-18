@@ -6,6 +6,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { VscEye, VscEyeClosed } from "react-icons/vsc";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { IoArrowBack } from "react-icons/io5";
 // import { supabase } from "@/lib/initSupabase";
 
 const employeeSchema = z.object({
@@ -21,6 +23,7 @@ type EmployeeFormData = z.infer<typeof employeeSchema>;
 
 export default function RegisterEmployee() {
 
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -107,6 +110,19 @@ export default function RegisterEmployee() {
 
   return (
     <div className="ml-72 mr-72 mt-20 p-4 bg-white shadow rounded">
+      <div className="flex items-center space-x-2 mb-8">
+        <IoArrowBack
+          size={24}
+          className="cursor-pointer"
+          onClick={() => router.push("/Employee")}
+        />
+        <span
+          className="text-lg font-medium cursor-pointer"
+          onClick={() => router.push("/Employee")}
+        >
+          Back
+        </span>
+      </div>
       <h2 className="text-2xl font-bold mb-4">Register New Employee</h2>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="mb-4">

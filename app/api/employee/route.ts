@@ -29,51 +29,50 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const { email, password, first_name, middle_name, last_name, role } = await req.json();
-
   try {
-    // Step 1: Create the user in Supabase with admin privileges
+    const body = await req.json();
+    console.log("Incoming body:", body);
+
+    const { email, password, first_name, middle_name, last_name, role } = body;
+
+    // Step 1: Create the user in Supabase
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
-      user_metadata: {
-        firstName: first_name,
-        middleName: middle_name,
-        lastName: last_name,
-        role,
-      },
+      user_metadata: { firstName: first_name, middleName: middle_name, lastName: last_name, role },
       email_confirm: true,
     });
 
     if (authError) {
+      console.error("Supabase error:", authError);
       return NextResponse.json({ error: authError.message }, { status: 400 });
     }
 
     const { user } = authData;
-
     if (!user) {
-      return NextResponse.json({ error: "User creation failed" }, { status: 500 });
+      throw new Error("User creation failed in Supabase");
     }
 
     // Step 2: Add additional employee data to the database
     const employee = await prisma.employee.create({
       data: {
-        id: user.id, // Link to Supabase user ID
+        id: user.id,
         email,
         role,
         first_name,
         middle_name: middle_name || null,
         last_name,
-        status: 'Active', // Assuming a default status
+        status: "Active",
       },
     });
 
     return NextResponse.json({ message: "User and employee created successfully", employee });
   } catch (error) {
     console.error("Error creating employee:", error);
-    return NextResponse.json({ error: 'Failed to create employee' }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create employee" }, { status: 500 });
   }
 }
+
 
 
 // export async function POST(request: NextRequest) {

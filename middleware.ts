@@ -9,8 +9,13 @@ export async function middleware(request: NextRequest) {
 
 // Specify the paths that the middleware should run on
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    '/((?!api|_next/static|_next/image|favicon.ico|Login|kopi82-app).*)',
+  ],
 };
+// export const config = {
+//   matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+// };
 
 
 
