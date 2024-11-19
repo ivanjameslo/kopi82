@@ -10,7 +10,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       orderDetails_id: Number(id),
     }, include: {
       product: true,
-      order: true,
+      order: {
+        select: {
+          customer_name: true,
+          service_type: true,
+        }
+      },
     }
       
   });

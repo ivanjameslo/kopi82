@@ -40,7 +40,7 @@ export default function LoginPage() {
 
       if (data) {
         await supabase.auth.refreshSession();
-        router.push('/');
+        router.push('/Home');
         console.log("Logged in:", data.user)
       }
 

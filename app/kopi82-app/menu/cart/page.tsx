@@ -11,28 +11,27 @@ const CartPage = () => {
     const { cart, order_id, updateCart } = useCartContext();
     const router = useRouter();
     const [customerName, setCustomerName] = useState<string | null>(null);
+    const [serviceType, setServiceType] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-
 
     const [productDetails, setProductDetails] = useState<{ [key: number]: { product_name: string, image_url: string } }>({});
 
-
     // Fetch customer name based on order_id
-    const fetchCustomerName = async (order_id: number) => {
+    const fetchOrderDetails = async (order_id: number) => {
         try {
             const response = await fetch(`/api/orders/${order_id}`);
             if (!response.ok) {
-                throw new Error("Failed to fetch order details");
+                throw new Error(`Failed to fetch order details for order_id: ${order_id}`);
             }
             const data = await response.json();
-            setCustomerName(data.customer_name);
+            setCustomerName(data.customer_name || "Unknown");
+            setServiceType(data.service_type || "Unknown");
         } catch (error) {
-            console.error("Error fetching customer name:", error);
+            console.error("Error fetching order details:", error);
             setCustomerName("Unknown");
+            setServiceType("Unknown");
         }
     };
-
-
     // Fetch product details based on product_id
     const fetchProductDetails = async (productId: number) => {
         try {
@@ -47,13 +46,11 @@ const CartPage = () => {
         }
     };
 
-
     useEffect(() => {
         if (order_id) {
-            fetchCustomerName(order_id);
+            fetchOrderDetails(order_id);
         }
     }, [order_id]);
-
 
     useEffect(() => {
         const fetchDetails = async () => {
@@ -69,7 +66,6 @@ const CartPage = () => {
             }
             setProductDetails((prev) => ({ ...prev, ...details }));
         };
-
 
         fetchDetails();
     }, [cart]);
@@ -92,7 +88,6 @@ const CartPage = () => {
                 date: new Date(),
             }));
 
-
             const response = await fetch("/api/order_details", {
                 method: "POST",
                 headers: {
@@ -100,7 +95,6 @@ const CartPage = () => {
                 },
                 body: JSON.stringify(formDataArray),
             });
-
 
             if (!response.ok) {
                 throw new Error("Failed to save order details.");
@@ -131,15 +125,16 @@ const CartPage = () => {
         );
     }
 
-
     return (
         <div className="m-14">
             <h1 className="text-2xl font-bold">Cart</h1>
-            <p className="text-gray-600 mt-2">
+            {/* <p className="text-gray-600 mt-2">
                 Customer: {customerName || "Loading..."}
             </p>
+            <p className="text-gray-600 mt-2">
+                Service Type: {serviceType || "Loading..."}
+            </p> */}
             <p className="text-gray-600">Order ID: {order_id}</p>
-
 
             <div className="mt-6">
                 <table className="w-full table-auto border-collapse border border-gray-300">
@@ -159,7 +154,6 @@ const CartPage = () => {
                                 product_name: "Loading...",
                                 image_url: "/placeholder.png",
                             };
-
 
                             return (
                                 <tr key={key}>
@@ -195,7 +189,6 @@ const CartPage = () => {
                     </tbody>
                 </table>
             </div>
-
 
             <div className="mt-6 text-right">
                 <p className="text-lg font-bold">

@@ -93,8 +93,11 @@ export default function HistoryPage() {
       case "transferred":
         return `${formatDateTime(move.date_moved)}: Transferred ${move.quantity} ${move.unit_name} from ${move.source_shelf} to ${move.destination_shelf}`;
       case "used":
+        return `${formatDateTime(move.date_moved)}: Used ${move.quantity} ${move.unit_name}`;
       case "damaged":
-        return `${formatDateTime(move.date_moved)}: ${move.action.charAt(0).toUpperCase() + move.action.slice(1)} ${move.quantity} ${move.unit_name}`;
+        return `${formatDateTime(move.date_moved)}: Damaged ${move.quantity} ${move.unit_name}`;
+      case "expired":
+        return `${formatDateTime(move.date_moved)}: Expired ${move.quantity} ${move.unit_name}`;
       default:
         return `${formatDateTime(move.date_moved)}: ${move.action.charAt(0).toUpperCase() + move.action.slice(1)} ${move.quantity} ${move.unit_name}`;
     }

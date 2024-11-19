@@ -280,6 +280,7 @@ const ViewBackInventory = () => {
     quantity: inventory.inventory_shelf[0].quantity,
     unit_name: inventory.purchased_detail.item.unit.unit_name,
     unit_id: inventory.purchased_detail.item.unit.unit_id,
+    expiry_date: inventory.purchased_detail.expiry_date
   }));
 
   const closeStockOutModal = () => {
@@ -303,6 +304,15 @@ const ViewBackInventory = () => {
         {expiryDate.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
       </span>
     );
+  };
+
+  const isExpired = (expiryDateString: string | null) => {
+    if (!expiryDateString || expiryDateString === "NA") {
+      return false;
+    }
+    const expiryDate = new Date(expiryDateString);
+    const currentDate = new Date();
+    return expiryDate < currentDate;
   };
 
   useEffect(() => {
@@ -418,10 +428,13 @@ const ViewBackInventory = () => {
                   .reduce((shelfSum, shelf) => shelfSum + shelf.quantity, 0);
                 return sum + shelfQuantity;
               }, 0);
+              const isGroupExpired = group.items.some((item: BackInventory) =>
+                item.inventory_shelf.some((shelf) => isExpired(item.purchased_detail.expiry_date))
+              );
 
               return (
                 <React.Fragment key={group.item_id}>
-                  <TableRow>
+                  <TableRow className={isGroupExpired ? "text-red-600" : ""}>
                     <TableCell className="text-center">
                       {expandedItems[group.item_id] ? (
                         <RiArrowDropUpLine
@@ -469,27 +482,31 @@ const ViewBackInventory = () => {
                         .filter((shelf) =>
                           selectedLocation === "All" || shelf.shelf_location.sl_name === selectedLocation
                         )
-                        .map((shelf) => (
-                          <TableRow key={`${group.item_id}-${shelf.sl_id}`} className="bg-gray-100">
-                            <TableCell className="text-center">
-                            <input
-                              type="checkbox"
-                              checked={Boolean(isChecked[`${item.bd_id}-${group.item_id}-${shelf.sl_id}`])} // unique key here
-                              disabled={disableCheckBox[`${item.bd_id}-${group.item_id}-${shelf.sl_id}`]}
-                              onChange={(e) => handleItemSelection(item, shelf.sl_id, e.target.checked)}
-                              style={{ width: "20px", height: "20px" }}
-                            />
-                            </TableCell>
-                            <TableCell>{group.item_id}</TableCell>
-                            <TableCell>{group.item_name}</TableCell>
-                            <TableCell>{group.description}</TableCell>
-                            <TableCell>{group.category_name}</TableCell>
-                            <TableCell>{shelf.quantity}</TableCell>
-                            <TableCell>{group.unit_name}</TableCell>
-                            <TableCell>{shelf.shelf_location.sl_name}</TableCell>
-                            <TableCell>{formatDateTime(item.purchased_detail.expiry_date)}</TableCell>
-                          </TableRow>
-                        ))
+                        .map((shelf) => {
+                          const isRowExpired = isExpired(item.purchased_detail.expiry_date); // Check if the item is expired
+                          return (
+                            <TableRow key={`${group.item_id}-${shelf.sl_id}`} 
+                            className={isRowExpired ? "bg-red-100 text-red-600" : "bg-gray-100"}>
+                              <TableCell className="text-center">
+                              <input
+                                type="checkbox"
+                                checked={Boolean(isChecked[`${item.bd_id}-${group.item_id}-${shelf.sl_id}`])} // unique key here
+                                disabled={disableCheckBox[`${item.bd_id}-${group.item_id}-${shelf.sl_id}`]}
+                                onChange={(e) => handleItemSelection(item, shelf.sl_id, e.target.checked)}
+                                style={{ width: "20px", height: "20px" }}
+                              />
+                              </TableCell>
+                              <TableCell>{group.item_id}</TableCell>
+                              <TableCell>{group.item_name}</TableCell>
+                              <TableCell>{group.description}</TableCell>
+                              <TableCell>{group.category_name}</TableCell>
+                              <TableCell>{shelf.quantity}</TableCell>
+                              <TableCell>{group.unit_name}</TableCell>
+                              <TableCell>{shelf.shelf_location.sl_name}</TableCell>
+                              <TableCell>{formatDateTime(item.purchased_detail.expiry_date)}</TableCell>
+                            </TableRow>
+                          );
+                        })
                     )}
                 </React.Fragment>
               );

@@ -78,10 +78,11 @@ export async function POST(request: NextRequest) {
     // Bulk insert order details
     const created = await prisma.order_details.createMany({
       data: formDataArray.map(
-        (formData: { order_id: number; product_id: number; quantity: number }) => ({
+        (formData: { order_id: number; product_id: number; quantity: number; price: number }) => ({
           order_id: formData.order_id,
           product_id: formData.product_id,
           quantity: formData.quantity,
+          price: formData.price,
           date: new Date(),
         })
       ),

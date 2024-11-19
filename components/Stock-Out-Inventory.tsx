@@ -15,9 +15,19 @@ interface StockOutModalProps {
     quantity: number;
     unit_name: string;
     unit_id: number;
+    expiry_date: string | null;
   }[];
   refreshInventory: () => void; // Function to refresh inventory data after stock out
 }
+
+const isExpired = (expiryDateString: string | null) => {
+  if (!expiryDateString || expiryDateString === "NA") {
+    return false;
+  }
+  const expiryDate = new Date(expiryDateString);
+  const currentDate = new Date();
+  return expiryDate < currentDate;
+};
 
 const StockOutModal = ({ isOpen, onClose, selectedItems, refreshInventory }: StockOutModalProps) => {
   const [stockOutItems, setStockOutItems] = useState(
@@ -30,6 +40,7 @@ const StockOutModal = ({ isOpen, onClose, selectedItems, refreshInventory }: Sto
       available_quantity: item.quantity, // max available quantity
       unit_name: item.unit_name,
       unit_id: item.unit_id,
+      expired: isExpired(item.expiry_date),
     }))
   );
 
@@ -157,6 +168,7 @@ const StockOutModal = ({ isOpen, onClose, selectedItems, refreshInventory }: Sto
                             <option value="" disabled>Select Action</option>
                             <option value="used">Stock Used</option>
                             <option value="damaged">Stock Damaged</option>
+                            {item.expired && <option value="expired">Expired</option>}
                           </select>
                         </div>
 

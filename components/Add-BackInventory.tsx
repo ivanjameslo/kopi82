@@ -368,7 +368,7 @@ const AddBackInventory = ({ onModalClose }: AddBackInventoryProps) => {
                                                         onChange={(e) => handleItemSelection(item.pd_id, e.target.checked)}
                                                     />
                                                     <label htmlFor={`item-${item.pd_id}`} className="ml-2">
-                                                        {item.item_id} {item.item.item_name} - {item.item.description} (Expiry: {formatDateTime(item.expiry_date)})
+                                                        {item.item.item_name} - {item.item.description} (Expiry: {formatDateTime(item.expiry_date)})
                                                     </label>
                                                 </div>
                                                 {selectedItems.some(selectedItem => selectedItem.pd_id === item.pd_id) && (

@@ -1,0 +1,79 @@
+import prisma from "@/lib/db";
+import { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+
+// GET function to fetch all data from Order model
+export async function GET(request: NextRequest) {
+  try {
+    const payment = await prisma.payment.findMany({
+        select: {
+            payment_id: true,
+            payment_method: true,
+            payment_status: true,
+            amount: true,
+            transaction_id: true,
+            discount: {
+                select: {
+                    discount_id: true,
+                    discount_name: true,
+                    discount_rate: true,
+                    status: true,
+                },
+            },
+            order: {
+                select: {
+                    order_id: true,
+                    customer_name: true,
+                    service_type: true,
+                    date: true,
+                },
+            },
+            createdAt: true,
+            updatedAt: true,
+        }
+    });
+    return NextResponse.json(payment, {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+  } catch (error) {
+    console.error("Error fetching order details:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch Order Details." },
+      { status: 500 }
+    );
+  }
+}
+
+// POST function to create a new payment
+export async function POST(request: NextRequest){
+    try{
+        const res = await request.json();
+        const {
+            payment_method,
+            payment_status,
+            amount,
+            transaction_id,
+            discount_id,
+            order_id,
+            createdAt 
+        } = res;
+        console.log("Data to Insert:", { payment_method, payment_status, amount, transaction_id, discount_id, order_id,createdAt });
+        const created = await prisma.payment.create({
+            data: {
+                payment_method,
+                payment_status,
+                amount,
+                transaction_id,
+                discount_id,
+                order_id,
+                createdAt: new Date(createdAt),
+
+            }
+        });
+        return NextResponse.json(created, {status: 201})    
+    } catch (error) {
+        console.log("Error creating Payment", error);
+        return NextResponse.json(error, {status: 500});
+    }
+}
