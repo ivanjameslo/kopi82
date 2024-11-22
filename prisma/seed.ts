@@ -1,4 +1,4 @@
-import prisma from "@/lib/db";
+const prisma = require('@/lib/db');
 
 async function main() {
     // Seed products
