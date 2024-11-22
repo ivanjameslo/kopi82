@@ -1,135 +1,199 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
-import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer } from 'recharts'
-// Removed ProductSalesDetail import
+import { useState, useEffect } from 'react'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle, Loader } from 'lucide-react'
-import { fetchSalesData, TimeFrame, SalesData } from '@/app/api/actions/salesactions'
-import { CgSpinner } from 'react-icons/cg'
-
-function SkeletonLoader() {
-    return (
-        <div className="space-y-2 flex items-center justify-center h-screen">
-            <CgSpinner className="animate-spin h-6 w-6" />
-        </div>
-    )
+interface SalesData {
+    month: string
+    netTotal: number
 }
+import { Bar, BarChart, Line, XAxis, YAxis, ResponsiveContainer, Pie, PieChart, Cell, Legend, Tooltip } from 'recharts'
 
-function useSalesData() {
-    const [activeTab, setActiveTab] = useState<TimeFrame>('today')
-    const [data, setData] = useState<SalesData[]>([])
-    const [isLoading, setIsLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+interface TopSellingItem {
+    name: string
+    quantity: number
+}
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { fetchYearlySalesData, fetchTopSellingItems, fetchProductsSold, TimeFrame } from '../app/api/actions/salesactions'
 
-    const fetchData = useCallback(async (timeFrame: TimeFrame) => {
-        setIsLoading(true)
-        setError(null)
-        try {
-            const result = await fetchSalesData(timeFrame)
-            setData(result.slice(0, 10)) // Limit to top 10 products
-        } catch (err) {
-            setError('Failed to fetch sales data. Please try again later.')
-            console.error('Error fetching sales data:', err)
-        } finally {
-            setIsLoading(false)
+const COLORS = ['#2D2424', '#5C4033', '#967969', '#C4A484', '#DCD7C9']
+
+export default function SalesOverview() {
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString())
+    const [salesData, setSalesData] = useState<SalesData[]>([])
+    const [topItems, setTopItems] = useState<TopSellingItem[]>([])
+    const [productsTimeframe, setProductsTimeframe] = useState<TimeFrame>('monthly')
+    const [currentPage, setCurrentPage] = useState(1)
+    const [products, setProducts] = useState<{ name: string; price: number }[]>([])
+    const [totalProducts, setTotalProducts] = useState(0)
+
+    useEffect(() => {
+        const loadSalesData = async () => {
+            const data = await fetchYearlySalesData(parseInt(selectedYear))
+            setSalesData(data)
         }
+        loadSalesData()
+    }, [selectedYear])
+
+    useEffect(() => {
+        const loadTopItems = async () => {
+            const items = await fetchTopSellingItems()
+            setTopItems(items)
+        }
+        loadTopItems()
     }, [])
 
     useEffect(() => {
-        fetchData(activeTab)
-    }, [activeTab, fetchData])
+        const loadProducts = async () => {
+            const { products, total } = await fetchProductsSold(productsTimeframe, currentPage)
+            setProducts(products)
+            setTotalProducts(total)
+        }
+        loadProducts()
+    }, [productsTimeframe, currentPage])
 
-    const handleTabChange = (timeFrame: TimeFrame) => {
-        setActiveTab(timeFrame)
-    }
-
-    return {
-        activeTab,
-        handleTabChange,
-        data,
-        isLoading,
-        error,
-    }
-}
-
-export default function SalesBarChart() {
-    const { activeTab, handleTabChange, data, isLoading, error } = useSalesData()
-    // Removed selectedProduct state
-
-    const chartConfig = {
-        count: {
-            label: 'Sales Count',
-            color: 'hsl(var(--primary))',
-        },
-    }
+    const totalPages = Math.ceil(totalProducts / 10)
 
     return (
-        <div className="flex flex-col h-screen p-6">
-            <div className="mb-4 mt-4 text-center">
-                <CardTitle className='text-3xl text-[#483C32]'>Product Sales Analytics</CardTitle>
-                <CardDescription>Top 10 products purchased (by quantity)</CardDescription>
-            </div>
+        <div className="p-6 space-y-6">
+            <h1 className="text-2xl font-bold text-center">Sales Overview</h1>
 
-            <Tabs value={activeTab} onValueChange={(value) => handleTabChange(value as TimeFrame)} className="flex-grow flex flex-col">
-                <TabsList className="grid w-full grid-cols-4 mb-4">
-                    <TabsTrigger value="today">Today</TabsTrigger>
-                    <TabsTrigger value="week">This Week</TabsTrigger>
-                    <TabsTrigger value="month">This Month</TabsTrigger>
-                    <TabsTrigger value="year">This Year</TabsTrigger>
-                </TabsList>
-                <div className="flex-grow overflow-hidden">
-                    {isLoading ? (
-                        <SkeletonLoader />
-                    ) : error ? (
-                        <Alert variant="destructive">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Error</AlertTitle>
-                            <AlertDescription>{error}</AlertDescription>
-                        </Alert>
-                    ) : (
-                        <div className="h-full max-h-screen">
-                            <ChartContainer config={chartConfig} className="h-3/4 w-screen">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart
-                                        data={data}
-                                        layout="vertical"
-                                        margin={{
-                                            top: 0,
-                                            right: 0,
-                                            left: 0,
-                                            bottom: 0,
-                                        }}
+            {/* Sales Total Section */}
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>Sales Total</CardTitle>
+                    </div>
+                    <Select value={selectedYear} onValueChange={setSelectedYear}>
+                        <SelectTrigger className="w-32">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                                <SelectItem key={year} value={year.toString()}>
+                                    {year}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </CardHeader>
+                <CardContent>
+                    <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={salesData}>
+                                <XAxis dataKey="month" />
+                                <YAxis
+                                    tickFormatter={(value) => `PHP ${value}`}
+                                    domain={[0, 'dataMax + 1000']}
+                                />
+                                <Tooltip
+                                    formatter={(value) => [`PHP ${value}`, 'Net Total']}
+                                    labelFormatter={(label) => `Month: ${label}`}
+                                />
+                                <Bar dataKey="netTotal" fill="#967969" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-2 gap-6">
+                {/* Top Selling Items */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Top Selling Items</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={topItems}
+                                        dataKey="quantity"
+                                        nameKey="name"
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        paddingAngle={5}
                                     >
-                                        <XAxis type="number" hide />
-                                        <YAxis
-                                            dataKey="product_name"
-                                            type="category"
-                                            tickLine={false}
-                                            axisLine={false}
-                                            width={120}
-                                            fontSize={12}
-                                        />
-                                        <ChartTooltip
-                                            cursor={false}
-                                            content={<ChartTooltipContent hideLabel />}
-                                        />
-                                        <Bar
-                                            dataKey="count"
-                                            fill="hsl(var(--primary))"
-                                            radius={[0, 4, 4, 0]}
-                                        />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </ChartContainer>
+                                        {topItems.map((_, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip formatter={(value, name) => [`Quantity: ${value}`, name]} />
+                                    <Legend />
+                                </PieChart>
+                            </ResponsiveContainer>
                         </div>
-                    )}
-                </div>
-            </Tabs>
+                    </CardContent>
+                </Card>
+
+                {/* Products Sold */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Products Sold</CardTitle>
+                        <Tabs value={productsTimeframe} onValueChange={(v) => setProductsTimeframe(v as TimeFrame)}>
+                            <TabsList>
+                                <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                                <TabsTrigger value="yearly">Yearly</TabsTrigger>
+                                <TabsTrigger value="all-time">All Time</TabsTrigger>
+                            </TabsList>
+                        </Tabs>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead className="text-right">Price</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {products.map((product, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell>{product.name}</TableCell>
+                                        <TableCell className="text-right">PHP {product.price}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                        <div className="flex items-center justify-center space-x-2 mt-4">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <span className="text-sm">
+                                Page {currentPage} of {totalPages}
+                            </span>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     )
 }
+

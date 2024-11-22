@@ -1,149 +1,158 @@
 'use server'
 
 import prisma from '@/lib/db'
-import { startOfDay, startOfWeek, startOfMonth, startOfYear, endOfMonth, format } from 'date-fns'
+import { startOfYear, endOfYear, startOfMonth, endOfMonth } from 'date-fns'
 
-export type TimeFrame = 'today' | 'week' | 'month' | 'year'
+export type TimeFrame = 'monthly' | 'yearly' | 'all-time'
 
-export type SalesData = {
-    product_name: string
-    count: number
+interface SalesData {
+    month: string
+    sales: number
+    expenses: number
+    netTotal: number
 }
 
-export async function fetchSalesData(timeFrame: TimeFrame): Promise<SalesData[]> {
-    const now = new Date()
-    let startDate: Date
+interface TopSellingItem {
+    name: string
+    quantity: number
+}
 
-    switch (timeFrame) {
-        case 'today':
-            startDate = startOfDay(now)
-            break
-        case 'week':
-            startDate = startOfWeek(now)
-            break
-        case 'month':
-            startDate = startOfMonth(now)
-            break
-        case 'year':
-            startDate = startOfYear(now)
-            break
-    }
+interface ProductSold {
+    name: string
+    price: number
+}
 
-    const salesData = await prisma.order_details.findMany({
+export async function fetchYearlySalesData(year: number): Promise<SalesData[]> {
+    const startDate = startOfYear(new Date(year, 0, 1))
+    const endDate = endOfYear(new Date(year, 0, 1))
+
+    const orders = await prisma.order.findMany({
         where: {
             date: {
                 gte: startDate,
+                lte: endDate,
             },
         },
         include: {
-            product: true,
-            order: true,
+            order_details: {
+                include: {
+                    product: true,
+                },
+            },
         },
     })
 
-    const productSales = salesData.reduce((acc, detail) => {
-        const productName = detail.product.product_name
-        acc[productName] = (acc[productName] || 0) + detail.quantity
-        return acc
-    }, {} as Record<string, number>)
+    const monthlyData: Record<string, SalesData> = {}
 
-    return Object.entries(productSales)
-        .map(([product_name, count]) => ({ product_name, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 10)
-}
-
-interface ProductSalesDetail {
-    date: string;
-    quantity: number;
-}
-
-export async function fetchProductSalesDetail(
-    productName: string,
-    timeView: 'month' | 'monthly' | 'yearly',
-    selectedMonth?: string
-): Promise<ProductSalesDetail[]> {
-    const product = await prisma.product.findFirst({
-        where: { product_name: productName }
-    })
-
-    if (!product) return []
-
-    const currentYear = new Date().getFullYear()
-
-    switch (timeView) {
-        case 'month': {
-            const startDate = new Date(currentYear, parseInt(selectedMonth || '0'), 1)
-            const endDate = endOfMonth(startDate)
-
-            const dailyData = await prisma.order_details.groupBy({
-                by: ['date'],
-                where: {
-                    product_id: product.product_id,
-                    date: {
-                        gte: startDate,
-                        lte: endDate,
-                    },
-                },
-                _sum: {
-                    quantity: true
-                },
-            })
-
-            return dailyData.map(item => ({
-                date: format(item.date, 'yyyy-MM-dd'),
-                quantity: item._sum.quantity || 0,
-            }))
-        }
-
-        case 'monthly': {
-            const startDate = startOfYear(new Date())
-            const monthlyData = await prisma.order_details.findMany({
-                where: {
-                    product_id: product.product_id,
-                    date: {
-                        gte: startDate,
-                    },
-                },
-                select: {
-                    date: true,
-                    quantity: true,
-                },
-            })
-
-            // Aggregate by month
-            const monthlyAggregated = monthlyData.reduce((acc, { date, quantity }) => {
-                const monthKey = format(date, 'yyyy-MM')
-                acc[monthKey] = (acc[monthKey] || 0) + quantity
-                return acc
-            }, {} as Record<string, number>)
-
-            return Object.entries(monthlyAggregated)
-                .map(([date, quantity]) => ({ date, quantity }))
-                .sort((a, b) => a.date.localeCompare(b.date))
-        }
-
-        case 'yearly': {
-            const yearlyData = await prisma.order_details.findMany({
-                where: {
-                    product_id: product.product_id,
-                },
-                select: {
-                    date: true,
-                    quantity: true,
-                },
-            })
-
-            // Aggregate by year
-            const yearlyAggregated = yearlyData.reduce((acc, { date, quantity }) => {
-                const year = date.getFullYear().toString()
-                acc[year] = (acc[year] || 0) + quantity
-                return acc
-            }, {} as Record<string, number>)
-
-            return Object.entries(yearlyAggregated)
-                .map(([date, quantity]) => ({ date, quantity }))
-                .sort((a, b) => a.date.localeCompare(b.date))
+    // Initialize all months
+    for (let i = 0; i < 12; i++) {
+        const month = new Date(year, i).toLocaleString('default', { month: 'short' })
+        monthlyData[month] = {
+            month,
+            sales: 0,
+            expenses: 0,
+            netTotal: 0,
         }
     }
+
+    // Calculate sales and expenses
+    orders.forEach((order) => {
+        const month = new Date(order.date).toLocaleString('default', { month: 'short' })
+        const sales = order.total_amount
+        const expenses = order.order_details.reduce(
+            (acc, detail) => acc + detail.quantity * detail.product.cost_price,
+            0
+        )
+
+        monthlyData[month].sales += sales
+        monthlyData[month].expenses += expenses
+        monthlyData[month].netTotal = monthlyData[month].sales - monthlyData[month].expenses
+    })
+
+    return Object.values(monthlyData)
+}
+
+export async function fetchTopSellingItems(): Promise<TopSellingItem[]> {
+    const items = await prisma.order_details.groupBy({
+        by: ['product_id'],
+        _sum: {
+            quantity: true,
+        },
+        take: 5,
+        orderBy: {
+            _sum: {
+                quantity: 'desc',
+            },
+        },
+    })
+
+    const topItems = await Promise.all(
+        items.map(async (item) => {
+            const product = await prisma.product.findUnique({
+                where: { product_id: item.product_id },
+            })
+            return {
+                name: product?.product_name || 'Unknown',
+                quantity: item._sum.quantity || 0,
+            }
+        })
+    )
+
+    return topItems
+}
+
+export async function fetchProductsSold(
+    timeFrame: TimeFrame,
+    page: number = 1,
+    limit: number = 10
+): Promise<{ products: ProductSold[]; total: number }> {
+    let dateFilter = {}
+
+    switch (timeFrame) {
+        case 'monthly':
+            dateFilter = {
+                date: {
+                    gte: startOfMonth(new Date()),
+                    lte: endOfMonth(new Date()),
+                },
+            }
+            break
+        case 'yearly':
+            dateFilter = {
+                date: {
+                    gte: startOfYear(new Date()),
+                    lte: endOfYear(new Date()),
+                },
+            }
+            break
+    }
+
+    const [products, total] = await Promise.all([
+        prisma.order_details.findMany({
+            where: dateFilter,
+            include: {
+                product: true,
+            },
+            skip: (page - 1) * limit,
+            take: limit,
+        }),
+        prisma.order_details.count({
+            where: dateFilter,
+        }),
+    ])
+
+    return {
+        products: products.map((item) => ({
+            name: item.product.product_name,
+            price: item.product.selling_price,
+        })),
+        total,
+    }
+}
+
+export async function fetchSalesOverviewData(year: number) {
+    const salesData = await fetchYearlySalesData(year)
+    const topItems = await fetchTopSellingItems()
+
+    return { salesData, topItems }
 }
