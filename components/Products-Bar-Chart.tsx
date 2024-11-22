@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer } from 'recharts'
-import { ProductSalesDetail } from '@/components/Product-Sales-Detail'
+// Removed ProductSalesDetail import
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -59,7 +59,7 @@ function useSalesData() {
 
 export default function SalesBarChart() {
     const { activeTab, handleTabChange, data, isLoading, error } = useSalesData()
-    const [selectedProduct, setSelectedProduct] = useState<string | null>(null)
+    // Removed selectedProduct state
 
     const chartConfig = {
         count: {
@@ -68,83 +68,68 @@ export default function SalesBarChart() {
         },
     }
 
-    const handleBarClick = (data: any) => {
-        setSelectedProduct(data.product_name)
-    }
-
     return (
         <div className="flex flex-col h-screen p-6">
-            {selectedProduct ? (
-                <ProductSalesDetail
-                    productName={selectedProduct}
-                    onClose={() => setSelectedProduct(null)}
-                />
-            ) : (
-                <>
-                    <div className="mb-4 mt-4 text-center">
-                        <CardTitle className='text-3xl text-[#483C32]'>Product Sales Analytics</CardTitle>
-                        <CardDescription>Top 10 products purchased (by quantity)</CardDescription>
-                    </div>
+            <div className="mb-4 mt-4 text-center">
+                <CardTitle className='text-3xl text-[#483C32]'>Product Sales Analytics</CardTitle>
+                <CardDescription>Top 10 products purchased (by quantity)</CardDescription>
+            </div>
 
-                    <Tabs value={activeTab} onValueChange={(value) => handleTabChange(value as TimeFrame)} className="flex-grow flex flex-col">
-                        <TabsList className="grid w-full grid-cols-4 mb-4">
-                            <TabsTrigger value="today">Today</TabsTrigger>
-                            <TabsTrigger value="week">This Week</TabsTrigger>
-                            <TabsTrigger value="month">This Month</TabsTrigger>
-                            <TabsTrigger value="year">This Year</TabsTrigger>
-                        </TabsList>
-                        <div className="flex-grow overflow-hidden">
-                            {isLoading ? (
-                                <SkeletonLoader />
-                            ) : error ? (
-                                <Alert variant="destructive">
-                                    <AlertCircle className="h-4 w-4" />
-                                    <AlertTitle>Error</AlertTitle>
-                                    <AlertDescription>{error}</AlertDescription>
-                                </Alert>
-                            ) : (
-                                <div className="h-full max-h-screen">
-                                    <ChartContainer config={chartConfig} className="h-3/4 w-screen">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart
-                                                data={data}
-                                                layout="vertical"
-                                                margin={{
-                                                    top: 0,
-                                                    right: 0,
-                                                    left: 0,
-                                                    bottom: 0,
-                                                }}
-                                            >
-                                                <XAxis type="number" hide />
-                                                <YAxis
-                                                    dataKey="product_name"
-                                                    type="category"
-                                                    tickLine={false}
-                                                    axisLine={false}
-                                                    width={120}
-                                                    fontSize={12}
-                                                />
-                                                <ChartTooltip
-                                                    cursor={false}
-                                                    content={<ChartTooltipContent hideLabel />}
-                                                />
-                                                <Bar
-                                                    dataKey="count"
-                                                    fill="hsl(var(--primary))"
-                                                    radius={[0, 4, 4, 0]}
-                                                    onClick={handleBarClick}
-                                                    style={{ cursor: 'pointer' }}
-                                                />
-                                            </BarChart>
-                                        </ResponsiveContainer>
-                                    </ChartContainer>
-                                </div>
-                            )}
+            <Tabs value={activeTab} onValueChange={(value) => handleTabChange(value as TimeFrame)} className="flex-grow flex flex-col">
+                <TabsList className="grid w-full grid-cols-4 mb-4">
+                    <TabsTrigger value="today">Today</TabsTrigger>
+                    <TabsTrigger value="week">This Week</TabsTrigger>
+                    <TabsTrigger value="month">This Month</TabsTrigger>
+                    <TabsTrigger value="year">This Year</TabsTrigger>
+                </TabsList>
+                <div className="flex-grow overflow-hidden">
+                    {isLoading ? (
+                        <SkeletonLoader />
+                    ) : error ? (
+                        <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Error</AlertTitle>
+                            <AlertDescription>{error}</AlertDescription>
+                        </Alert>
+                    ) : (
+                        <div className="h-full max-h-screen">
+                            <ChartContainer config={chartConfig} className="h-3/4 w-screen">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart
+                                        data={data}
+                                        layout="vertical"
+                                        margin={{
+                                            top: 0,
+                                            right: 0,
+                                            left: 0,
+                                            bottom: 0,
+                                        }}
+                                    >
+                                        <XAxis type="number" hide />
+                                        <YAxis
+                                            dataKey="product_name"
+                                            type="category"
+                                            tickLine={false}
+                                            axisLine={false}
+                                            width={120}
+                                            fontSize={12}
+                                        />
+                                        <ChartTooltip
+                                            cursor={false}
+                                            content={<ChartTooltipContent hideLabel />}
+                                        />
+                                        <Bar
+                                            dataKey="count"
+                                            fill="hsl(var(--primary))"
+                                            radius={[0, 4, 4, 0]}
+                                        />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </ChartContainer>
                         </div>
-                    </Tabs>
-                </>
-            )}
+                    )}
+                </div>
+            </Tabs>
         </div>
     )
 }
