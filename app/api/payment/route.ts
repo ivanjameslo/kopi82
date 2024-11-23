@@ -10,8 +10,16 @@ export async function GET(request: NextRequest) {
             payment_id: true,
             payment_method: true,
             payment_status: true,
+            // e-wallet
+            reference_no: true,
+            //card
+            account_number: true,
+            account_name: true,
+            cvv: true,
+            expiry_date: true,
+            //otc
             amount: true,
-            transaction_id: true,
+            change: true,
             discount: {
                 select: {
                     discount_id: true,
@@ -26,11 +34,24 @@ export async function GET(request: NextRequest) {
                     customer_name: true,
                     service_type: true,
                     date: true,
+                    order_details: {
+                        select: {
+                            orderDetails_id: true,
+                            product: {
+                                select: {
+                                    product_id: true,
+                                    product_name: true,
+                                    image_url: true,
+                                },
+                            },
+                            quantity: true,
+                            price: true,
+                        },
+                    },
                 },
             },
             createdAt: true,
-            updatedAt: true,
-        }
+        },
     });
     return NextResponse.json(payment, {
         status: 200,
@@ -52,23 +73,30 @@ export async function POST(request: NextRequest){
         const {
             payment_method,
             payment_status,
+            reference_no,
+            account_number,
+            account_name,
+            cvv,
+            expiry_date,
             amount,
-            transaction_id,
-            discount_id,
-            order_id,
-            createdAt 
+            change,
+            generated_code,
+            createdAt,
         } = res;
-        console.log("Data to Insert:", { payment_method, payment_status, amount, transaction_id, discount_id, order_id,createdAt });
+        console.log("Data to Insert:", res);
         const created = await prisma.payment.create({
             data: {
                 payment_method,
                 payment_status,
+                reference_no,
+                account_number,
+                account_name,
+                cvv,
+                expiry_date,
                 amount,
-                transaction_id,
-                discount_id,
-                order_id,
-                createdAt: new Date(createdAt),
-
+                change,
+                generated_code,
+                createdAt: new Date(createdAt)
             }
         });
         return NextResponse.json(created, {status: 201})    

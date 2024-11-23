@@ -3,13 +3,42 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/initSupabase";
 
 //GET function for fetching a single product
+// export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+//   const id = params.id
+//   const orderdetails = await prisma.order_details.findMany({
+//     where: {
+//       orderDetails_id: Number(id),
+//     }, include: {
+//       product: true,
+//       order: {
+//         select: {
+//           customer_name: true,
+//           service_type: true,
+//         }
+//       },
+//     }
+      
+//   });
+//   return NextResponse.json(orderdetails);
+// }
+
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const id = params.id
   const orderdetails = await prisma.order_details.findMany({
     where: {
-      orderDetails_id: Number(id),
+      order_id: Number(id),
     }, include: {
-      product: true,
+      product: {
+        select: {
+          product_id: true,
+          product_name: true,
+          image_url: true,
+          hotPrice: true,
+          icedPrice: true,
+          singlePrice: true,
+          frappePrice: true,
+        }
+      },
       order: {
         select: {
           customer_name: true,

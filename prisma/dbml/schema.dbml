@@ -199,14 +199,19 @@ Table payment {
   payment_id Int [pk, increment]
   payment_method String [not null]
   payment_status String [not null]
-  amount Float [not null]
-  transaction_id String
-  discount discount
+  reference_no String
+  account_number String
+  account_name String
+  cvv String
+  expiry_date DateTime
+  amount Float
+  change Float
   discount_id Int
-  order order
   order_id Int [unique]
+  generated_code String [not null]
   createdAt DateTime [default: `now()`, not null]
-  updatedAt DateTime [not null]
+  order order
+  discount discount
 }
 
 Table discount {
@@ -267,6 +272,6 @@ Ref: order_details.order_id > order.order_id
 
 Ref: order_details.product_id > product.product_id
 
-Ref: payment.discount_id > discount.discount_id
-
 Ref: payment.order_id - order.order_id
+
+Ref: payment.discount_id > discount.discount_id

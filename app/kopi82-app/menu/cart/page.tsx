@@ -85,6 +85,7 @@ const CartPage = () => {
                 order_id: order_id,
                 product_id: item.product_id,
                 quantity: item.quantity,
+                price: item.selectedPrice,
                 date: new Date(),
             }));
 
@@ -102,6 +103,7 @@ const CartPage = () => {
 
             const result = await response.json();
             alert(`Order details saved successfully. Items saved: ${result.createdCount}`);
+            router.push("/kopi82-app/menu/payment")
         } catch (error) {
             console.error("Checkout failed:", error);
             alert("Failed to save order details. Please try again.");

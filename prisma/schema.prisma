@@ -233,16 +233,34 @@ model order_details {
 
 model payment {
   payment_id      Int       @id @default(autoincrement())
-  payment_method  String    // e.g., card, gcash, paymaya
+  payment_method  String
   payment_status  String    // e.g., pending, succeeded, failed
-  amount          Float
-  transaction_id  String?   // PayMongo transaction ID or equivalent
-  discount        discount? @relation(fields: [discount_id], references: [discount_id])
+  
+  //e-wallet
+  reference_no    String?
+  //card
+  account_number  String?
+  account_name    String?
+  cvv             String?
+  expiry_date     DateTime?
+  //otc
+  amount          Float?
+  change          Float?
+
   discount_id     Int?      // Relation to the associated discount
-  order           order?    @relation(fields: [order_id], references: [order_id])
   order_id        Int?      @unique // Make order_id unique to satisfy one-to-one relation
+  generated_code  String
   createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+
+
+  // pm_eWallet_id   Int?      @unique
+  // pm_otc_id       Int?      @unique
+  // pm_card_id      Int?      @unique
+  order           order?    @relation(fields: [order_id], references: [order_id])
+  discount        discount? @relation(fields: [discount_id], references: [discount_id])
+  // eWallet payment_method_eWallet? @relation(fields: [pm_eWallet_id], references: [p_method_id])
+  // otc payment_method_otc?     @relation(fields: [pm_otc_id], references: [p_method_id])
+  // card payment_method_card? @relation(fields: [pm_card_id], references: [p_method_id])
 }
 
 model discount {
@@ -257,7 +275,7 @@ model discount {
 //   p_method_id  Int      @id @default(autoincrement())
 //   mode         String
 //   reference_no String
-//   payment      payment?
+//   payment      payment? 
 // }
 
 // model payment_method_otc {
@@ -265,6 +283,15 @@ model discount {
 //   mode        String
 //   amount      Float
 //   change      Float
+//   payment     payment?
+// }
+
+// model payment_method_card {
+//   p_method_id Int      @id @default(autoincrement())
+//   account_number String
+//   account_name String
+//   cvv String
+//   expiry_date DateTime
 //   payment     payment?
 // }
 
