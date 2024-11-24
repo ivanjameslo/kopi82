@@ -59,9 +59,8 @@ export async function fetchYearlySalesData(year: number): Promise<SalesData[]> {
     orders.forEach((order) => {
         const month = new Date(order.date).toLocaleString('default', { month: 'short' })
         const sales = order.order_details.reduce(
-            (acc, detail) => acc + detail.quantity * detail.product.singlePrice,
-            0
-        )
+            (acc, detail) => acc + detail.quantity * detail.product.hotPrice,
+            0)
         const expenses = order.order_details.reduce(
             (acc, detail) => acc + detail.quantity * detail.product.hotPrice,
             0
@@ -147,7 +146,7 @@ export async function fetchProductsSold(
     return {
         products: products.map((item) => ({
             name: item.product.product_name,
-            price: item.product.singlePrice,
+            price: item.product.hotPrice,
         })),
         total,
     }

@@ -6,7 +6,7 @@ interface SalesData {
     month: string
     netTotal: number
 }
-import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, Pie, PieChart, Cell, Legend, Tooltip } from 'recharts'
+import { Bar, BarChart, Line, XAxis, YAxis, ResponsiveContainer, Pie, PieChart, Cell, Legend, Tooltip } from 'recharts'
 
 interface TopSellingItem {
     name: string
@@ -69,7 +69,7 @@ export default function SalesOverview() {
         <div className="p-6 space-y-6">
             <h1 className="text-2xl font-bold text-center">Sales Overview</h1>
 
-            {/* Sales Total Section here*/}
+            {/* Sales Total Section */}
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
