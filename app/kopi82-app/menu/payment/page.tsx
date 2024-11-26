@@ -237,32 +237,34 @@ const PaymentPage = () => {
                 let errorMessage = "Failed to update payment.";
                 try {
                     const errorResponse = await response.json();
+                    console.error("Error Response from Server:", errorResponse);
                     errorMessage = errorResponse.message || errorMessage;
                 } catch (err) {
                     console.error("Non-JSON error response:", response);
                 }
                 throw new Error(errorMessage);
             }
+            
    
             const result = await response.json();
             console.log("Payment updated successfully:", result);
 
             // Trigger stock-out using the stock_out_payment API
-        const stockOutResponse = await fetch(`/api/stock_out_payment`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ payment_id: result.payment_id }),
-        });
+            // const stockOutResponse = await fetch(`/api/stock_out_payment`, {
+            //     method: "POST",
+            //     headers: { "Content-Type": "application/json" },
+            //     body: JSON.stringify({ payment_id: result.payment_id }),
+            // });
 
-        if (!stockOutResponse.ok) {
-            const stockOutError = await stockOutResponse.json();
-            console.error("Stock-out API error:", stockOutError);
-            toast.error("Payment succeeded, but stock-out process failed.");
-        } else {
-            const stockOutResult = await stockOutResponse.json();
-            console.log("Stock-out processed successfully:", stockOutResult);
-            toast.success("Payment and stock-out processed successfully!");
-        }
+            // if (!stockOutResponse.ok) {
+            //     const stockOutError = await stockOutResponse.json();
+            //     console.error("Stock-out API error:", stockOutError);
+            //     toast.error("Payment succeeded, but stock-out process failed.");
+            // } else {
+            //     const stockOutResult = await stockOutResponse.json();
+            //     console.log("Stock-out processed successfully:", stockOutResult);
+            //     toast.success("Payment and stock-out processed successfully!");
+            // }
    
             toast.success("Payment successfully processed!");
             router.push(`/kopi82-app/menu/payment/generatecode/${generatedCode}`);
