@@ -21,11 +21,21 @@ interface Product {
   status: string;
   description: string;
   image_url: string;
+  selectedItems: SelectedItem[];
+}
+
+interface SelectedItem {
+  item_id: number;
+  item_name: string;
+  required_quantity: number;
+  description: string; // Add this property
+  status: string;       // Add this property
 }
 
 const ViewProduct = () => {
   const [product, setProduct] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
@@ -43,6 +53,20 @@ const ViewProduct = () => {
   useEffect(() => {
     fetchProduct();
   }, []);
+
+  // Fetch ProductInventory for the selected product
+  const fetchSelectedItems = async (product_id: number) => {
+    try {
+      const response = await fetch(`/api/product/${product_id}/inventory`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch product inventory");
+      }
+      const data = await response.json();
+      setSelectedItems(data);
+    } catch (error) {
+      console.error("Failed to fetch selected items", error);
+    }
+  };
 
   // Group products by category
   const groupedProducts = product.reduce(
@@ -74,6 +98,10 @@ const ViewProduct = () => {
       }
       const data = await response.json();
       setSelectedProduct(data);
+
+      // Fetch related selectedItems
+      await fetchSelectedItems(product_id);
+
       setIsViewModalOpen(true); // Set modal open to true
     } catch (error) {
       console.error("Failed to view product", error);
@@ -246,6 +274,14 @@ const ViewProduct = () => {
                     {selectedProduct.singlePrice}
                     </div>
                 )}
+
+                <Horizontal />
+                {selectedItems.map((item) => (
+                  <div key={item.item_id} className="mb-2">
+                    <span className="font-semibold">Item: </span>
+                    {item.item_name} - Required Quantity: {item.required_quantity}
+                  </div>
+                ))}
                 
                 <Horizontal />
                 <div

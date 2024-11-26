@@ -125,7 +125,7 @@ model inventory_shelf {
   @@unique([bd_id, sl_id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  ProductInventory ProductInventory[]
+  // ProductInventory ProductInventory[]
 }
 
 model item {
@@ -138,6 +138,7 @@ model item {
   category         category           @relation(fields: [category_id], references: [category_id])
   purchased_detail purchased_detail[]
   createdAt        DateTime           @default(now())
+  ProductInventory ProductInventory[]
 }
 
 model supplier {
@@ -155,11 +156,13 @@ model inventory_tracking {
   source_shelf_id      Int?
   destination_shelf_id Int?
   unit_id              Int
+  payment_id           Int?
   date_moved           DateTime          @default(now())
   action               String
   back_inventory       back_inventory    @relation(fields: [bd_id], references: [bd_id])
   source_shelf         shelf_location?    @relation("SourceShelf", fields: [source_shelf_id], references: [sl_id])
   destination_shelf    shelf_location ?   @relation("DestinationShelf", fields: [destination_shelf_id], references: [sl_id])
+  payment              payment?           @relation(fields:[payment_id], references: [payment_id])
   unit                 unit              @relation(fields: [unit_id], references: [unit_id])
 }
 
@@ -188,12 +191,15 @@ model product {
 model ProductInventory {
   id              Int              @id @default(autoincrement())
   product_id      Int
-  inventory_shelf_id Int
+  item_id         Int
+  // inventory_shelf_id Int
   required_quantity Int              // Quantity needed for product
   product         product           @relation(fields: [product_id], references: [product_id])
-  inventory_shelf inventory_shelf   @relation(fields: [inventory_shelf_id], references: [is_id])
+  item            item              @relation(fields: [item_id], references: [item_id])
+  // inventory_shelf inventory_shelf   @relation(fields: [inventory_shelf_id], references: [is_id])
 
-  @@unique([product_id, inventory_shelf_id])
+  // @@unique([product_id, item_id, inventory_shelf_id])
+  @@unique([product_id, item_id])
 }
 
 
@@ -258,6 +264,7 @@ model payment {
   // pm_card_id      Int?      @unique
   order           order?    @relation(fields: [order_id], references: [order_id])
   discount        discount? @relation(fields: [discount_id], references: [discount_id])
+  inventory_tracking  inventory_tracking[]
   // eWallet payment_method_eWallet? @relation(fields: [pm_eWallet_id], references: [p_method_id])
   // otc payment_method_otc?     @relation(fields: [pm_otc_id], references: [p_method_id])
   // card payment_method_card? @relation(fields: [pm_card_id], references: [p_method_id])

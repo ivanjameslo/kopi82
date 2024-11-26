@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
       singlePrice,
       status,
       description,
+      selectedItems,
     } = res;
 
     // Validate required fields
@@ -91,6 +92,19 @@ export async function POST(request: NextRequest) {
         image_url,
       },
     });
+
+    // Add ProductInventory records if selectedItems are provided
+    if (selectedItems && selectedItems.length > 0) {
+      const inventoryData = selectedItems.map((item: any) => ({
+        product_id: created.product_id,
+        item_id: item.item_id,
+        required_quantity: item.required_quantity,
+      }));
+
+      await prisma.productInventory.createMany({
+        data: inventoryData,
+      });
+    }
 
     return NextResponse.json(created, { status: 201 });
   } catch (error) {

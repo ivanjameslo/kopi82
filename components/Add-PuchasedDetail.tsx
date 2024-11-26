@@ -240,7 +240,7 @@ const AddPurchaseDetails = () => {
         <Table className="min-w-full">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-20">ID</TableHead>
+              {/* <TableHead className="w-20">ID</TableHead> */}
               <TableHead className="w-96">Item Name</TableHead>
               <TableHead className="w-40">Quantity</TableHead>
               <TableHead className="w-40">Unit</TableHead>
@@ -254,7 +254,7 @@ const AddPurchaseDetails = () => {
           <TableBody>
             {formDataArray.map((formData, index) => (
               <TableRow key={index}>
-                <TableCell className="font-medium">
+                {/* <TableCell className="font-medium">
                   <input
                     type="number"
                     name="pi_id"
@@ -263,7 +263,7 @@ const AddPurchaseDetails = () => {
                     readOnly
                     className="w-full"
                   />
-                </TableCell>
+                </TableCell> */}
                 <TableCell>
                 <select
                     name="item_id"

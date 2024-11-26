@@ -401,7 +401,6 @@ const ViewBackInventory = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Expand</TableHead>
-              <TableHead>Item ID</TableHead>
               <TableHead>Item Name</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Category</TableHead>
@@ -448,7 +447,6 @@ const ViewBackInventory = () => {
                         />
                       )}
                     </TableCell>
-                    <TableCell>{group.item_id}</TableCell>
                     <TableCell>{group.item_name}</TableCell>
                     <TableCell>{group.description}</TableCell>
                     <TableCell>{group.category_name}</TableCell>
@@ -496,7 +494,6 @@ const ViewBackInventory = () => {
                                 style={{ width: "20px", height: "20px" }}
                               />
                               </TableCell>
-                              <TableCell>{group.item_id}</TableCell>
                               <TableCell>{group.item_name}</TableCell>
                               <TableCell>{group.description}</TableCell>
                               <TableCell>{group.category_name}</TableCell>

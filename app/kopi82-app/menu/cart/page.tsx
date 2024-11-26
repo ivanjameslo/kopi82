@@ -14,7 +14,14 @@ const CartPage = () => {
     const [serviceType, setServiceType] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
-    const [productDetails, setProductDetails] = useState<{ [key: number]: { product_name: string, image_url: string } }>({});
+    const [productDetails, setProductDetails] = useState<{ [key: number]: {
+        hotPrice: number;
+        icedPrice: number;
+        frappePrice: number;
+        singlePrice: number; 
+        product_name: string;
+        image_url: string;
+} }>({});
 
     // Fetch customer name based on order_id
     const fetchOrderDetails = async (order_id: number) => {
@@ -39,7 +46,14 @@ const CartPage = () => {
             if (!response.ok) {
                 throw new Error("Failed to fetch product details");
             }
-            return await response.json(); // Expecting { product_name, image_url }
+            const product = await response.json();
+            return {
+                ...product,
+                hotPrice: product.hotPrice || 0,
+                icedPrice: product.icedPrice || 0,
+                frappePrice: product.frappePrice || 0,
+                singlePrice: product.singlePrice || 0,
+            }; // Ensure all properties are included
         } catch (error) {
             console.error("Error fetching product details:", error);
             return { product_name: "Unknown", image_url: "/placeholder.png" };
@@ -54,22 +68,28 @@ const CartPage = () => {
 
     useEffect(() => {
         const fetchDetails = async () => {
-            const details: { [key: number]: { product_name: string, image_url: string } } = {};
+            const details: { [key: number]: {
+                hotPrice: number;
+                icedPrice: number;
+                frappePrice: number;
+                singlePrice: number;
+                product_name: string;
+                image_url: string;
+            } } = {};
+    
             for (const item of Object.values(cart)) {
                 if (!productDetails[item.product_id]) {
                     const product = await fetchProductDetails(item.product_id);
-                    details[item.product_id] = {
-                        product_name: product.product_name,
-                        image_url: product.image_url,
-                    };
+                    details[item.product_id] = product;
                 }
             }
+    
             setProductDetails((prev) => ({ ...prev, ...details }));
         };
-
+    
         fetchDetails();
     }, [cart]);
-
+    
     const cartItems = Object.values(cart);
 
     const removeItem = (uniqueKey: string) => {
@@ -143,7 +163,7 @@ const CartPage = () => {
                     <thead>
                         <tr>
                             <th className="border border-gray-300 px-4 py-2">Product</th>
-                           
+                            <th className="border border-gray-300 px-4 py-2">Drink Preference</th>
                             <th className="border border-gray-300 px-4 py-2">Quantity</th>
                             <th className="border border-gray-300 px-4 py-2">Price</th>
                             <th className="border border-gray-300 px-4 py-2">Total</th>
@@ -157,6 +177,13 @@ const CartPage = () => {
                                 image_url: "/placeholder.png",
                             };
 
+                            // Determine the drink preference based on selectedPrice
+                            let drinkPreference = "N/A";
+                            if (product.hotPrice === item.selectedPrice) drinkPreference = "Hot";
+                            else if (product.icedPrice === item.selectedPrice) drinkPreference = "Iced";
+                            else if (product.frappePrice === item.selectedPrice) drinkPreference = "Frappe";
+                            else if (product.singlePrice === item.selectedPrice) drinkPreference = "Single";
+
                             return (
                                 <tr key={key}>
                                     <td className="border border-gray-300 px-4 py-2 flex items-center space-x-4">
@@ -167,6 +194,9 @@ const CartPage = () => {
                                             height={50}
                                         />
                                         <span>{product.product_name}</span>
+                                    </td>
+                                    <td className="border border-gray-300 px-4 py-2 text-center">
+                                        {drinkPreference}
                                     </td>
                                     <td className="border border-gray-300 px-4 py-2 text-center">
                                         {item.quantity}

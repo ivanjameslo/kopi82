@@ -1,11 +1,12 @@
 "use client";
 
-
 import { useCartContext } from "../../context/cartContext";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { toast } from "react-toastify";
 import crypto from "crypto";
+import { useRouter } from "next/navigation";
+import CardForm from "./cardForm/page";
 
 interface PaymentData {
     payment_method: string;
@@ -42,6 +43,7 @@ interface DiscountData {
 
 const PaymentPage = () => {
     const { cart, order_id } = useCartContext();
+    const router = useRouter();
     const [orderDetails, setOrderDetails] = useState<any[]>([]);
     const [discounts, setDiscounts] = useState<DiscountData[]>([]);
     const [discountPercentage, setDiscountPercentage] = useState<number>(0);
@@ -71,7 +73,7 @@ const PaymentPage = () => {
             setError("Order ID is missing. Please try again.");
             return;
         }
-    
+
         setLoading(true);
         try {
             const response = await fetch(`/api/order_details/${order_id}`, {
@@ -80,13 +82,13 @@ const PaymentPage = () => {
                     "Content-Type": "application/json",
                 },
             });
-    
+
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error("Error response from server:", errorData);
                 throw new Error("Failed to fetch order details");
             }
-    
+
             const data = await response.json();
             setOrderDetails(data);
         } catch (err: any) {
@@ -96,15 +98,14 @@ const PaymentPage = () => {
             setLoading(false);
         }
     };
-    
 
     useEffect(() => {
         if (!order_id) {
-          console.error("order_id is undefined or null");
-          return;
+            console.error("order_id is undefined or null");
+            return;
         }
         fetchOrderDetails();
-      }, [order_id]);
+    }, [order_id]);
 
     const fetchDiscounts = async () => {
         setLoading(true);
@@ -131,15 +132,15 @@ const PaymentPage = () => {
         const selectedId = parseInt(e.target.value);
         const selectedDiscount = discounts.find((d) => d.discount_id === selectedId);
         if (selectedDiscount) {
-          setDiscountPercentage(selectedDiscount.discount_rate);
-          setPayment((prev) => ({ ...prev, discount_id: selectedDiscount.discount_id }));
+            setDiscountPercentage(selectedDiscount.discount_rate);
+            setPayment((prev) => ({ ...prev, discount_id: selectedDiscount.discount_id }));
         }
-      };
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setPayment((prev) => ({ ...prev, [name]: value }));
-    };    
+    };
 
     // Calculate subtotal
     const calculateSubtotal = () => {
@@ -147,19 +148,19 @@ const PaymentPage = () => {
             return subtotal + item.quantity * item.price;
         }, 0).toFixed(2);
     };
-    
+
     // Calculate total after discount
     const calculateTotal = () => {
         const subtotal = parseFloat(calculateSubtotal());
-    
+
         let discountAmount = 0;
-    
+
         if (payment.discount_id === 1 || payment.discount_id === 2) {
             // Apply discount to only one product (e.g., the most expensive one)
             const mostExpensiveProduct = orderDetails.reduce((max, item) =>
                 item.price > max.price ? item : max
             );
-    
+
             if (mostExpensiveProduct) {
                 discountAmount =
                     mostExpensiveProduct.price * (discountPercentage / 100);
@@ -168,121 +169,124 @@ const PaymentPage = () => {
             // Apply discount to the entire order
             discountAmount = subtotal * (discountPercentage / 100);
         }
-    
+
         const total = subtotal - discountAmount;
         return total > 0 ? total.toFixed(2) : "0.00";
     };
-    
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+   
         try {
-            // Ensure a payment method is selected
+            // Validate order_id
+            if (!order_id) {
+                toast.error("Order ID is missing.");
+                return;
+            }
+   
+            // Validate payment method
             if (!paymentMethod) {
                 toast.error("Please select a payment method.");
                 return;
             }
-
+   
+            // Construct the payment data
             const generatedCode = crypto.randomBytes(4).toString("hex").toUpperCase();
-    
-            // Prepare the payment data
-            let paymentData: any = {
+            const discountId = discounts.find((d) => d.discount_rate === discountPercentage)?.discount_id ?? null;
+   
+            const paymentData: any = {
                 payment_method: paymentMethod,
-                payment_status: "pending", // Default status
+                payment_status: "pending",
                 order_id,
-                discount_id: discounts.find((d) => d.discount_rate === discountPercentage)?.discount_id || null, // Match the discount
+                discount_id: discountId,
                 generated_code: generatedCode,
+                createdAt: new Date(),
             };
-    
-            // Validate and collect data based on the payment method
-            switch (paymentMethod) {
-                case "gcash":
-                case "paymaya":
-                    if (!payment.reference_no) {
-                        toast.error("Please enter a reference number for e-wallet payment.");
-                        return;
-                    }
-                    paymentData.reference_no = payment.reference_no;
-                    break;
-    
-                case "card":
-                    if (
-                        !payment.account_number ||
-                        !payment.account_name ||
-                        !payment.cvv ||
-                        !payment.expiry_date
-                    ) {
-                        toast.error("Please fill in all card details.");
-                        return;
-                    }
-                    paymentData.account_number = payment.account_number;
-                    paymentData.account_name = payment.account_name;
-                    paymentData.cvv = payment.cvv;
-                    paymentData.expiry_date = payment.expiry_date;
-                    break;
-    
-                case "otc":
-                    // No additional data needed for OTC
-                    break;
-    
-                default:
-                    toast.error("Invalid payment method selected.");
+   
+            // Add additional fields based on the payment method
+            if (paymentMethod === "gcash" || paymentMethod === "paymaya") {
+                if (!payment.reference_no) {
+                    toast.error("Please enter a reference number for e-wallet payment.");
                     return;
+                }
+                paymentData.reference_no = payment.reference_no;
             }
-    
-            // Send the payment data to the server
-            const response = await fetch("/api/payment", {
+   
+            if (paymentMethod === "card") {
+                if (!payment.account_number || !payment.account_name || !payment.cvv || !payment.expiry_date) {
+                    toast.error("Please fill in all card details.");
+                    return;
+                }
+                paymentData.account_number = payment.account_number;
+                paymentData.account_name = payment.account_name;
+                paymentData.cvv = payment.cvv;
+                paymentData.expiry_date = payment.expiry_date;
+            }
+   
+            // Log the payment data for debugging
+            console.log("Payment Data Sent:", paymentData);
+   
+            // Send the PATCH request
+            const response = await fetch(`/api/payment`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(paymentData),
             });
-    
+   
             if (!response.ok) {
-                throw new Error("Failed to process payment. Please try again.");
+                let errorMessage = "Failed to update payment.";
+                try {
+                    const errorResponse = await response.json();
+                    errorMessage = errorResponse.message || errorMessage;
+                } catch (err) {
+                    console.error("Non-JSON error response:", response);
+                }
+                throw new Error(errorMessage);
             }
-    
+   
             const result = await response.json();
-            toast.success("Payment successfully processed!");
-            console.log("Payment result:", result);
+            console.log("Payment updated successfully:", result);
 
+            // Trigger stock-out using the stock_out_payment API
+        const stockOutResponse = await fetch(`/api/stock_out_payment`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ payment_id: result.payment_id }),
+        });
+
+        if (!stockOutResponse.ok) {
+            const stockOutError = await stockOutResponse.json();
+            console.error("Stock-out API error:", stockOutError);
+            toast.error("Payment succeeded, but stock-out process failed.");
+        } else {
+            const stockOutResult = await stockOutResponse.json();
+            console.log("Stock-out processed successfully:", stockOutResult);
+            toast.success("Payment and stock-out processed successfully!");
+        }
+   
+            toast.success("Payment successfully processed!");
+            router.push(`/kopi82-app/menu/payment/generatecode/${generatedCode}`);
             setConfirmationCode(generatedCode);
-    
-            // Optional: Redirect or clear the form
         } catch (error: any) {
             console.error("Payment error:", error.message);
             toast.error(error.message || "An error occurred during payment.");
         }
     };
-
-    const ConfirmationModal = ({ isOpen, onClose, code }: { isOpen: boolean; onClose: () => void; code: string | null }) => {
-        if (!isOpen || !code) return null;
-    
-        return (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                <div className="bg-white p-6 rounded-md shadow-md w-80 text-center">
-                    <h2 className="text-lg font-bold mb-4">Confirmation Code</h2>
-                    <p className="text-xl font-mono">{code}</p>
-                    <button
-                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                        onClick={onClose}
-                    >
-                        Close
-                    </button>
-                </div>
-            </div>
-        );
-    };
-
+   
     const renderPaymentForm = () => {
         switch (paymentMethod) {
             case "card":
-                return <CardForm />;
+                return <CardForm payment={payment} handleChange={handleChange} />;
             case "gcash":
                 return (
                     <div className="mt-4">
                         <h3 className="text-lg font-bold mb-2">GCash Payment</h3>
                         <input
                             type="text"
-                            placeholder="GCash Mobile Number"
+                            name="reference_no"
+                            value={payment.reference_no}
+                            onChange={handleChange}
+                            placeholder="GCash Reference Number"
                             className="w-full p-2 border rounded"
                         />
                     </div>
@@ -293,7 +297,10 @@ const PaymentPage = () => {
                         <h3 className="text-lg font-bold mb-2">PayMaya Payment</h3>
                         <input
                             type="text"
-                            placeholder="PayMaya Account Number"
+                            name="reference_no"
+                            value={payment.reference_no}
+                            onChange={handleChange}
+                            placeholder="PayMaya Reference Number"
                             className="w-full p-2 border rounded"
                         />
                     </div>
@@ -302,6 +309,7 @@ const PaymentPage = () => {
                 return null;
         }
     };
+
 
     return (
         <div className="m-14">
@@ -313,49 +321,58 @@ const PaymentPage = () => {
             ) : (
                 <div>
                     <p className="text-gray-600">Order ID: {order_id}</p>
-
-
                     <table className="w-full table-auto border-collapse border border-gray-300 mt-6">
                         <thead>
                             <tr>
                                 <th className="border border-gray-300 px-4 py-2">Product</th>
+                                <th className="border border-gray-300 px-4 py-2">Drink Preference</th>
                                 <th className="border border-gray-300 px-4 py-2">Quantity</th>
                                 <th className="border border-gray-300 px-4 py-2">Price</th>
                                 <th className="border border-gray-300 px-4 py-2">Total</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {orderDetails.map((item, index) => (
-                                <tr key={index}>
-                                    <td className="border border-gray-300 px-4 py-2 flex items-center space-x-4">
-                                    <Image
-                                        src={item.image_url || "/placeholder.png"}
-                                        alt={item.product_name || "Product image"}
-                                        width={50}
-                                        height={50}
-                                        className="rounded"
-                                    />
-                                        <span>{item.product_name}</span>
-                                    </td>
-                                    <td className="border border-gray-300 px-4 py-2 text-center">
-                                        {item.quantity || 0}
-                                    </td>
-                                    <td className="border border-gray-300 px-4 py-2 text-center">
-                                        ₱{item.price?.toFixed(2) || "0.00"}
-                                    </td>
-                                    <td className="border border-gray-300 px-4 py-2 text-center">
-                                        ₱{(item.quantity * item.price).toFixed(2) || "0.00"}
-                                    </td>
-                                </tr>
-                            ))}
+                            {orderDetails.map((item, index) => {
+                                // Determine the drink preference based on selectedPrice
+                                let drinkPreference = "N/A";
+                                if (item.hotPrice === item.price) drinkPreference = "Hot";
+                                else if (item.icedPrice === item.price) drinkPreference = "Iced";
+                                else if (item.frappePrice === item.price) drinkPreference = "Frappe";
+                                else if (item.singlePrice === item.price) drinkPreference = "Single";
+
+                                return (
+                                    <tr key={index}>
+                                        <td className="border border-gray-300 px-4 py-2 flex items-center space-x-4">
+                                            <Image
+                                                src={item.image_url || "/placeholder.png"}
+                                                alt={item.product_name || "Product image"}
+                                                width={50}
+                                                height={50}
+                                                className="rounded"
+                                            />
+                                            <span>{item.product_name}</span>
+                                        </td>
+                                        <td className="border border-gray-300 px-4 py-2 text-center">
+                                            {drinkPreference}
+                                        </td>
+                                        <td className="border border-gray-300 px-4 py-2 text-center">
+                                            {item.quantity || 0}
+                                        </td>
+                                        <td className="border border-gray-300 px-4 py-2 text-center">
+                                            ₱{item.price?.toFixed(2) || "0.00"}
+                                        </td>
+                                        <td className="border border-gray-300 px-4 py-2 text-center">
+                                            ₱{(item.quantity * item.price).toFixed(2) || "0.00"}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
-
 
                     <div className="mt-6 text-right">
                         <p className="text-lg font-bold">Subtotal: ₱{calculateSubtotal()}</p>
                     </div>
-
 
                     <div className="mt-6">
                         <h2 className="text-lg font-bold">Discount</h2>
@@ -393,95 +410,32 @@ const PaymentPage = () => {
                     </div>
 
                     <form onSubmit={handleSubmit}>
-                    <div className="mt-6">
-                        <h2 className="text-lg font-bold">Select Payment Method</h2>
-                        <select
-                            className="w-full p-2 mt-2 border rounded"
-                            value={paymentMethod}
-                            onChange={(e) => setPaymentMethod(e.target.value)}
+                        <div className="mt-6">
+                            <h2 className="text-lg font-bold">Select Payment Method</h2>
+                            <select
+                                className="w-full p-2 mt-2 border rounded"
+                                value={paymentMethod}
+                                onChange={(e) => setPaymentMethod(e.target.value)}
+                            >
+                                <option value="card">Card/Debit</option>
+                                <option value="gcash">GCash</option>
+                                <option value="paymaya">PayMaya</option>
+                            </select>
+                        </div>
+
+                        {renderPaymentForm()}
+                        <button
+                            type="submit"
+                            className="mt-6 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+
                         >
-                            <option value="card">Card/Debit</option>
-                            <option value="gcash">GCash</option>
-                            <option value="paymaya">PayMaya</option>
-                        </select>
-                    </div>
-
-
-                    {renderPaymentForm()}
-
-
-                    <button
-                        type="submit"
-                        className="mt-6 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                    >
-                        Confirm Payment
-                    </button>
-
-                    {confirmationCode && (
-                    <button
-                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                        onClick={() => setIsModalOpen(true)}
-                    >
-                        Show Confirmation Code
-                    </button>
-                    )}
-
-                    <ConfirmationModal
-                        isOpen={isModalOpen}
-                        onClose={() => setIsModalOpen(false)}
-                        code={confirmationCode}
-                    />
-
-                </form>
+                            Confirm Payment
+                        </button>
+                    </form>
                 </div>
             )}
         </div>
     );
 };
-
-const CardForm = () => {
-    return (
-        <div className="mt-4">
-            <h3 className="text-lg font-bold mb-2">Card Payment</h3>
-            <div className="space-y-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Card Number</label>
-                    <input
-                        type="text"
-                        placeholder="1234 5678 9012 3456"
-                        className="w-full p-2 border rounded"
-                    />
-                </div>
-                <div className="flex space-x-4">
-                    <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700">Expiry Date</label>
-                        <input
-                            type="text"
-                            placeholder="MM/YY"
-                            className="w-full p-2 border rounded"
-                        />
-                    </div>
-                    <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700">CVV</label>
-                        <input
-                            type="text"
-                            placeholder="123"
-                            className="w-full p-2 border rounded"
-                        />
-                    </div>
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Cardholder Name</label>
-                    <input
-                        type="text"
-                        placeholder="Taylor Swift"
-                        className="w-full p-2 border rounded"
-                    />
-                </div>
-            </div>
-        </div>
-    );
-};
-
 
 export default PaymentPage;

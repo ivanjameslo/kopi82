@@ -22,34 +22,63 @@ import { supabase } from "@/lib/initSupabase";
 //   return NextResponse.json(orderdetails);
 // }
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id
-  const orderdetails = await prisma.order_details.findMany({
-    where: {
-      order_id: Number(id),
-    }, include: {
-      product: {
-        select: {
-          product_id: true,
-          product_name: true,
-          image_url: true,
-          hotPrice: true,
-          icedPrice: true,
-          singlePrice: true,
-          frappePrice: true,
-        }
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const id = params.id;
+
+  try {
+    const orderDetails = await prisma.order_details.findMany({
+      where: {
+        order_id: Number(id),
       },
-      order: {
-        select: {
-          customer_name: true,
-          service_type: true,
-        }
+      include: {
+        product: {
+          select: {
+            product_id: true,
+            product_name: true,
+            image_url: true,
+            hotPrice: true,
+            icedPrice: true,
+            singlePrice: true,
+            frappePrice: true,
+          },
+        },
+        order: {
+          select: {
+            customer_name: true,
+            service_type: true,
+          },
+        },
       },
-    }
-      
-  });
-  return NextResponse.json(orderdetails);
+    });
+
+    // Transform the response for easier frontend consumption
+    const transformedDetails = orderDetails.map((detail) => ({
+      product_id: detail.product.product_id,
+      product_name: detail.product.product_name,
+      image_url: detail.product.image_url,
+      hotPrice: detail.product.hotPrice,
+      icedPrice: detail.product.icedPrice,
+      singlePrice: detail.product.singlePrice,
+      frappePrice: detail.product.frappePrice,
+      quantity: detail.quantity,
+      price: detail.price,
+      customer_name: detail.order?.customer_name || "Unknown",
+      service_type: detail.order?.service_type || "Unknown",
+    }));
+
+    return NextResponse.json(transformedDetails);
+  } catch (error) {
+    console.error("Error fetching order details:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch order details" },
+      { status: 500 }
+    );
+  }
 }
+
 
 // export async function POST(request: Request, {params}: {params: {id: string}}) {
 //   try {
