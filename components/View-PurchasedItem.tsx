@@ -4,9 +4,9 @@ import React, { useEffect, useState, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Button } from "./ui/button";
-import { set } from "react-hook-form";
 import { HiClipboardDocumentList } from "react-icons/hi2";
 import { MdDelete } from "react-icons/md";
+import { CgSpinnerAlt } from "react-icons/cg"; // Import spinner icon
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, } from "./ui/pagination";
 
 interface PurchasedItemData {
@@ -60,9 +60,11 @@ const ViewPurchaseOrder = () => {
   const [suppliers, setSupplier] = useState<SupplierData[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+  const [loading, setLoading] = useState(false); // Loading state
 
   const fetchPurchasedItem = async () => {
     try {
+      setLoading(true); // Start loading
       const response = await fetch("/api/purchased_item", {
         method: "GET",
       });
@@ -70,10 +72,10 @@ const ViewPurchaseOrder = () => {
         throw new Error("Network response was not ok");
       }
       const data = await response.json();
-  
+
       // Sort data in descending order based on pi_id
       const sortedData = data.sort((a: PurchasedItemData, b: PurchasedItemData) => b.pi_id - a.pi_id);
-  
+
       const formattedData = sortedData.map((item: any) => {
         const [purchaseDate, purchaseTime] = item.purchase_date.split("T");
         return {
@@ -82,16 +84,19 @@ const ViewPurchaseOrder = () => {
           purchase_time: purchaseTime.split("Z")[0],
         };
       });
-  
+
       setData(formattedData);
     } catch (error) {
       console.error("Error fetching purchase orders:", error);
+    } finally {
+      setLoading(false); // End loading
     }
   };
-  
+
 
   const fetchItemDeets = async () => {
     try {
+      setLoading(true); // Start loading
       const [itemsResponse, unitsResponse, categoriesResponse, suppliersResponse] = await Promise.all([
         fetch("/api/item"),
         fetch("/api/unit"),
@@ -114,6 +119,8 @@ const ViewPurchaseOrder = () => {
       setSupplier(suppliersData);
     } catch (error) {
       console.error("Error fetching items and units:", error);
+    } finally {
+      setLoading(false); // End loading
     }
   };
 
@@ -157,18 +164,18 @@ const ViewPurchaseOrder = () => {
   const handleDelete = async (pi_id: number) => {
     const isConfirmed = window.confirm("Are you sure you want to delete this item?");
     if (!isConfirmed) {
-        return;
+      return;
     }
     try {
-        await fetch(`/api/purchased_item/${pi_id}`, {
-            method: 'DELETE',
-        });
+      await fetch(`/api/purchased_item/${pi_id}`, {
+        method: 'DELETE',
+      });
 
-        setData(data.filter(pi => pi.pi_id !== pi_id));
+      setData(data.filter(pi => pi.pi_id !== pi_id));
     } catch (error) {
-        console.error('Failed to delete item', error);
+      console.error('Failed to delete item', error);
     };
-}
+  }
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -191,7 +198,7 @@ const ViewPurchaseOrder = () => {
         </div>
       )
     }
-    return  "Unknown Item";
+    return "Unknown Item";
   };
 
   const getUnitName = (unit_id: number) => {
@@ -220,6 +227,14 @@ const ViewPurchaseOrder = () => {
     };
     return new Date(dateTimeString).toLocaleString('en-US', options);
   };
+
+  if (loading) {
+    return (
+      <div className='flex h-full w-full items-center justify-center'>
+        <CgSpinnerAlt className="animate-spin h-10 w-10 text-center" />
+      </div>
+    );
+  }
 
   return (
     <div className="mt-12 ml-40 mr-40">

@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, } from "./ui/pagination";
 import { toast } from 'react-toastify';
 import AddBackInventory from '@/components/Add-BackInventory';
+import { CgSpinnerAlt } from "react-icons/cg";
 
 export interface EmployeeData {
     id: number;
@@ -84,6 +85,13 @@ const ViewEmployee = () => {
         setCurrentPage(page);
     };
 
+    if (loading) {
+        return (
+            <div className='flex h-screen w-full items-center justify-center'>
+                <CgSpinnerAlt className="animate-spin h-10 w-10 text-center" />
+            </div>
+        )
+    }
     return (
         <div className="mt-12 ml-40 mr-40">
             <p className="flex text-3xl text-[#483C32] font-bold justify-center mb-2">Employee</p>
@@ -138,40 +146,40 @@ const ViewEmployee = () => {
             {/* Pagination Controls */}
             <div className="flex justify-center mt-4">
                 <Pagination>
-                <PaginationContent>
-                    <PaginationItem>
-                    <PaginationPrevious
-                        href="#"
-                        onClick={currentPage === 1 ? undefined : () => currentPage > 1 && goToPage(currentPage - 1)}
-                        style={{ pointerEvents: currentPage === 1 ? 'none' : 'auto', opacity: currentPage === 1 ? 0.5 : 1 }}
-                    />
-                    </PaginationItem>
-                    {[...Array(totalPages)].map((_, index) => {
-                    const page = index + 1;
-                    return (
-                        <PaginationItem key={page}>
-                        <PaginationLink
-                            href="#"
-                            onClick={(e) => {
-                            e.preventDefault();
-                            goToPage(page);
-                            }}
-                            isActive={page === currentPage}
-                        >
-                            {page}
-                        </PaginationLink>
+                    <PaginationContent>
+                        <PaginationItem>
+                            <PaginationPrevious
+                                href="#"
+                                onClick={currentPage === 1 ? undefined : () => currentPage > 1 && goToPage(currentPage - 1)}
+                                style={{ pointerEvents: currentPage === 1 ? 'none' : 'auto', opacity: currentPage === 1 ? 0.5 : 1 }}
+                            />
                         </PaginationItem>
-                    );
-                    })}
-                    {totalPages > 5 && <PaginationEllipsis />}
-                    <PaginationItem>
-                    <PaginationNext
-                        href="#"
-                        onClick={() => currentPage < totalPages && goToPage(currentPage + 1)}
-                        style={{ pointerEvents: currentPage === totalPages ? 'none' : 'auto', opacity: currentPage === totalPages ? 0.5 : 1 }}
-                    />
-                    </PaginationItem>
-                </PaginationContent>
+                        {[...Array(totalPages)].map((_, index) => {
+                            const page = index + 1;
+                            return (
+                                <PaginationItem key={page}>
+                                    <PaginationLink
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            goToPage(page);
+                                        }}
+                                        isActive={page === currentPage}
+                                    >
+                                        {page}
+                                    </PaginationLink>
+                                </PaginationItem>
+                            );
+                        })}
+                        {totalPages > 5 && <PaginationEllipsis />}
+                        <PaginationItem>
+                            <PaginationNext
+                                href="#"
+                                onClick={() => currentPage < totalPages && goToPage(currentPage + 1)}
+                                style={{ pointerEvents: currentPage === totalPages ? 'none' : 'auto', opacity: currentPage === totalPages ? 0.5 : 1 }}
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
                 </Pagination>
             </div>
 
