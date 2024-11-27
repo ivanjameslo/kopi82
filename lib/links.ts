@@ -3,10 +3,12 @@ export enum Routes {
   MENU = "/Menu",
   EMPLOYEE = "/Employee",
   // ORDERS = "/Orders",
-  INVENTORY = "/Inventory",
+  INVENTORY = "/Back&FrontInventory",
   SALES = "/Sales",
-  DISCOUNT="/Discount",
-  PAYMENT="/Payment",
+  DISCOUNT = "/Discount",
+  PAYMENT = "/Payment",
+  PURCHASED_ITEM = "/PurchasedItem",
+  ITEM = "/Item",
 }
 
 export const NAVBAR_LINKS = [
@@ -29,6 +31,14 @@ export const NAVBAR_LINKS = [
   {
     label: "Inventory",
     href: Routes.INVENTORY,
+  },
+  {
+    label: "Purchased Item",
+    href: Routes.PURCHASED_ITEM,
+  },
+  {
+    label: "Item",
+    href: Routes.ITEM,
   },
   {
     label: "Payment",
