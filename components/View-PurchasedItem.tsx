@@ -231,7 +231,7 @@ const ViewPurchaseOrder = () => {
   if (loading) {
     return (
       <div className='flex h-full w-full items-center justify-center'>
-        <CgSpinnerAlt className="animate-spin h-10 w-10 text-center" />
+        <CgSpinnerAlt className="animate-spin h-10 w-10 text-center text-[#5C4033]" />
       </div>
     );
   }

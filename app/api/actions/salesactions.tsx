@@ -20,6 +20,7 @@ interface TopSellingItem {
 interface ProductSold {
     name: string
     price: number
+    date: Date
 }
 
 export async function fetchYearlySalesData(year: number): Promise<SalesData[]> {
@@ -147,6 +148,7 @@ export async function fetchProductsSold(
         products: products.map((item) => ({
             name: item.product.product_name,
             price: item.product.hotPrice,
+            date: item.date
         })),
         total,
     }
@@ -158,3 +160,84 @@ export async function fetchSalesOverviewData(year: number) {
 
     return { salesData, topItems }
 }
+
+
+export type ProductOrderDetail = {
+    product_name: string
+    price: number
+    date: Date
+}
+
+export async function fetchProductOrderDetails(timeframe: 'monthly' | 'yearly' | 'all-time'): Promise<ProductOrderDetail[]> {
+    const currentDate = new Date()
+    let startDate: Date | undefined
+
+    if (timeframe === 'monthly') {
+        startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
+    } else if (timeframe === 'yearly') {
+        startDate = new Date(currentDate.getFullYear(), 0, 1)
+    }
+
+    const orderDetails = await prisma.order_details.findMany({
+        where: startDate ? {
+            date: {
+                gte: startDate
+            }
+        } : undefined,
+        select: {
+            price: true,
+            date: true,
+            product: {
+                select: {
+                    product_name: true
+                }
+            }
+        },
+        orderBy: {
+            date: 'desc'
+        }
+    })
+
+    return orderDetails.map(detail => ({
+        product_name: detail.product.product_name,
+        price: detail.price,
+        date: detail.date
+    }))
+}
+
+
+export type MonthlySales = {
+    month: number
+    total: number
+}
+
+export async function fetchSalesData(year: number): Promise<MonthlySales[]> {
+    // First get raw data from Prisma with correct grouping
+    const salesData = await prisma.$queryRaw<Array<{ month: number, total: number }>>`
+      SELECT 
+        EXTRACT(MONTH FROM date) as month,
+        SUM(price * quantity) as total
+      FROM order_details
+      WHERE 
+        date >= ${new Date(year, 0, 1)} AND 
+        date < ${new Date(year + 1, 0, 1)}
+      GROUP BY EXTRACT(MONTH FROM date)
+      ORDER BY month
+    `
+
+    // Initialize array with all months
+    const monthlyTotals: MonthlySales[] = Array.from({ length: 12 }, (_, i) => ({
+        month: i + 1,
+        total: 0
+    }))
+
+    // Fill in the actual data
+    salesData.forEach((record) => {
+        const monthIndex = record.month - 1
+        monthlyTotals[monthIndex].total = Number(record.total)
+    })
+
+    return monthlyTotals
+}
+
+
