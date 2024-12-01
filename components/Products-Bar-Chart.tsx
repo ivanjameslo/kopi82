@@ -6,7 +6,7 @@ interface SalesData {
     month: string
     netTotal: number
 }
-import { Bar, BarChart, Line, XAxis, YAxis, ResponsiveContainer, Pie, PieChart, Cell, Legend, Tooltip } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Pie, Cell, Legend, PieChart, Bar, BarChart } from 'recharts'
 
 interface TopSellingItem {
     name: string
@@ -15,36 +15,48 @@ interface TopSellingItem {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { fetchYearlySalesData, fetchTopSellingItems, fetchProductsSold, TimeFrame } from '../app/api/actions/salesactions'
+import { DataTableTemplate } from './ui/data-table-template'
+import { columns } from './Columns-Products-Sold'
+import { ProductOrderDetailsTable } from './Product-Order-Details-Table'
+import { useSalesData } from '@/lib/hooks/useProducts'
+import { CgSpinnerAlt } from 'react-icons/cg'
 
 const COLORS = ['#2D2424', '#5C4033', '#967969', '#C4A484', '#DCD7C9']
+
+const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+]
 
 export default function SalesOverview() {
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString())
     const [salesData, setSalesData] = useState<SalesData[]>([])
     const [topItems, setTopItems] = useState<TopSellingItem[]>([])
-    const [productsTimeframe, setProductsTimeframe] = useState<TimeFrame>('monthly')
-    const [currentPage, setCurrentPage] = useState(1)
-    const [products, setProducts] = useState<{ name: string; price: number }[]>([])
-    const [totalProducts, setTotalProducts] = useState(0)
+    const { data, isLoading, error, year, setYear } = useSalesData()
+    const currentYear = new Date().getFullYear()
+    const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear - i)
 
-    useEffect(() => {
-        const loadSalesData = async () => {
-            const data = await fetchYearlySalesData(parseInt(selectedYear))
-            setSalesData(data)
-        }
-        loadSalesData()
-    }, [selectedYear])
+    const formattedData = data.map((item) => ({
+        ...item,
+        month: months[item.month - 1],
+        total: Number(item.total)
+    }))
+
+    if (error) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Sales Total</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="text-destructive">{error}</div>
+                </CardContent>
+            </Card>
+        )
+    }
 
     useEffect(() => {
         const loadTopItems = async () => {
@@ -54,33 +66,23 @@ export default function SalesOverview() {
         loadTopItems()
     }, [])
 
-    useEffect(() => {
-        const loadProducts = async () => {
-            const { products, total } = await fetchProductsSold(productsTimeframe, currentPage)
-            setProducts(products)
-            setTotalProducts(total)
-        }
-        loadProducts()
-    }, [productsTimeframe, currentPage])
-
-    const totalPages = Math.ceil(totalProducts / 10)
-
     return (
         <div className="p-6 space-y-6">
             <h1 className="text-2xl font-bold text-center">Sales Overview</h1>
 
             {/* Sales Total Section */}
             <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>Sales Total</CardTitle>
-                    </div>
-                    <Select value={selectedYear} onValueChange={setSelectedYear}>
-                        <SelectTrigger className="w-32">
-                            <SelectValue />
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-7">
+                    <CardTitle>Sales Total</CardTitle>
+                    <Select
+                        value={year.toString()}
+                        onValueChange={(value) => setYear(parseInt(value))}
+                    >
+                        <SelectTrigger className="w-[100px]">
+                            <SelectValue placeholder="Year" />
                         </SelectTrigger>
                         <SelectContent>
-                            {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                            {yearOptions.map((year) => (
                                 <SelectItem key={year} value={year.toString()}>
                                     {year}
                                 </SelectItem>
@@ -89,33 +91,80 @@ export default function SalesOverview() {
                     </Select>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={salesData}>
-                                <XAxis dataKey="month" />
-                                <YAxis
-                                    tickFormatter={(value) => `PHP ${value}`}
-                                    domain={[0, 'dataMax + 1000']}
-                                />
-                                <Tooltip
-                                    formatter={(value) => [`PHP ${value}`, 'Net Total']}
-                                    labelFormatter={(label) => `Month: ${label}`}
-                                />
-                                <Bar dataKey="netTotal" fill="#967969" />
-                            </BarChart>
-                        </ResponsiveContainer>
+                    <div className="h-[400px]">
+                        {isLoading ? (
+                            <div className='flex h-full w-full items-center justify-center'>
+                                <CgSpinnerAlt className="animate-spin h-10 w-10 text-center text-[#5C4033]" />
+                            </div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                    data={formattedData}
+                                    margin={{
+                                        top: 5,
+                                        right: 30,
+                                        left: 20,
+                                        bottom: 5,
+                                    }}
+                                >
+                                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                                    <XAxis
+                                        dataKey="month"
+                                        className="text-xs fill-muted-foreground"
+                                    />
+                                    <YAxis
+                                        className="text-xs fill-muted-foreground"
+                                        tickFormatter={(value) => `PHP ${value}`}
+                                    />
+                                    <Tooltip
+                                        content={({ active, payload }) => {
+                                            if (active && payload && payload.length) {
+                                                return (
+                                                    <div className="rounded-lg border bg-background p-2 shadow-sm">
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                                                    Month
+                                                                </span>
+                                                                <span className="font-bold text-muted-foreground">
+                                                                    {payload[0].payload.month}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                                                    Sales
+                                                                </span>
+                                                                <span className="font-bold">
+                                                                    PHP {payload[0].value}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            }
+                                            return null
+                                        }}
+                                    />
+                                    <Bar
+                                        dataKey="total"
+                                        fill='#5C4033'
+                                        radius={[4, 4, 0, 0]}
+                                    />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
                     </div>
                 </CardContent>
             </Card>
 
             <div className="grid grid-cols-2 gap-6">
                 {/* Top Selling Items */}
-                <Card>
+                <Card className='h-[450px]'>
                     <CardHeader>
                         <CardTitle>Top Selling Items</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[300px]">
+                        <div className="h-[300px] flex items-center justify-center">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
@@ -144,52 +193,9 @@ export default function SalesOverview() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Products Sold</CardTitle>
-                        <Tabs value={productsTimeframe} onValueChange={(v) => setProductsTimeframe(v as TimeFrame)}>
-                            <TabsList>
-                                <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                                <TabsTrigger value="yearly">Yearly</TabsTrigger>
-                                <TabsTrigger value="all-time">All Time</TabsTrigger>
-                            </TabsList>
-                        </Tabs>
                     </CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead className="text-right">Price</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {products.map((product, index) => (
-                                    <TableRow key={index}>
-                                        <TableCell>{product.name}</TableCell>
-                                        <TableCell className="text-right">PHP {product.price}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                        <div className="flex items-center justify-center space-x-2 mt-4">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                                disabled={currentPage === 1}
-                            >
-                                <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <span className="text-sm">
-                                Page {currentPage} of {totalPages}
-                            </span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                                disabled={currentPage === totalPages}
-                            >
-                                <ChevronRight className="h-4 w-4" />
-                            </Button>
-                        </div>
+                        <ProductOrderDetailsTable />
                     </CardContent>
                 </Card>
             </div>

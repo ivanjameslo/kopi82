@@ -3,11 +3,13 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, Home, User, Box, ShoppingCart, TicketMinus, Wallet, HandCoins, LogOut } from "lucide-react";
+import { Menu, Home, User, Box, ShoppingCart, TicketMinus, Wallet, HandCoins, LogOut, Coffee } from "lucide-react";
 import { supabase } from "@/lib/initSupabase";
 import { NAVBAR_LINKS } from "@/lib/links";
 import { usePathname, useRouter } from "next/navigation";
 import { destroyCookie } from "nookies";
+import { MdOutlineMoney } from "react-icons/md";
+import { IoBagOutline } from "react-icons/io5";
 
 export default function Sidebar() {
     const router = useRouter();
@@ -28,7 +30,7 @@ export default function Sidebar() {
             console.error("Error signing out:", error);
             // Optionally, display a notification to the user
             return;
-          }
+        }
         router.push("/")
     };
 
@@ -36,9 +38,8 @@ export default function Sidebar() {
         <div
             onMouseEnter={() => setIsOpen(true)}
             onMouseLeave={() => setIsOpen(false)}
-            className={`flex flex-col min-h-screen relative transition-all duration-500 ${
-                isOpen ? 'w-64' : 'w-28'
-            } bg-gradient-to-b from-[#FAEED1] to-[#B19470] p-4 shadow-lg`}
+            className={`flex flex-col min-h-screen relative transition-all duration-500 ${isOpen ? 'w-64' : 'w-28'
+                } bg-gradient-to-b from-[#FAEED1] to-[#B19470] p-4 shadow-lg`}
         >
             <div className="flex flex-col flex-grow space-y-4">
                 <Link href="/Home" className="flex justify-center">
@@ -56,22 +57,22 @@ export default function Sidebar() {
                         <Link
                             key={link.label}
                             href={link.href}
-                            className={`text-lg flex items-center space-x-2 ${
-                                isOpen ? 'justify-start pl-4' : 'justify-center'
-                            } transition-all duration-500 group relative`}
+                            className={`text-lg flex items-center space-x-2 ${isOpen ? 'justify-start pl-4' : 'justify-center'
+                                } transition-all duration-500 group relative`}
                         >
                             {link.label === "Home" && <Home className="h-6 w-6 flex-shrink-0" />}
                             {link.label === "Employee" && <User className="h-6 w-6 flex-shrink-0" />}
                             {link.label === "Menu" && <ShoppingCart className="h-6 w-6 flex-shrink-0" />}
                             {link.label === "Inventory" && <Box className="h-6 w-6 flex-shrink-0" />}
+                            {link.label === "Purchased Item" && <MdOutlineMoney className="h-6 w-6 flex-shrink-0" />}
+                            {link.label === "Item" && <IoBagOutline className="h-6 w-6 flex-shrink-0" />}
                             {link.label === "Payment" && <HandCoins className="h-6 w-6 flex-shrink-0" />}
                             {link.label === "Discount" && <TicketMinus className="h-6 w-6 flex-shrink-0" />}
                             {link.label === "Sales" && <Wallet className="h-6 w-6 flex-shrink-0" />}
                             {isOpen && (
                                 <span
-                                    className={`transition-opacity duration-500 ${
-                                        isOpen ? 'opacity-100 delay-1000' : 'opacity-0 delay-0'
-                                    } whitespace-nowrap relative after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-[2px] after:bg-black after:w-0 after:transition-all after:duration-300 hover:after:w-full`}
+                                    className={`transition-opacity duration-500 ${isOpen ? 'opacity-100 delay-1000' : 'opacity-0 delay-0'
+                                        } whitespace-nowrap relative after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-[2px] after:bg-black after:w-0 after:transition-all after:duration-300 hover:after:w-full`}
                                     style={{ visibility: isOpen ? 'visible' : 'hidden' }}
                                 >
                                     {link.label}

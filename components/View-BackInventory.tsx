@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { RiArrowDropDownLine, RiArrowDropUpLine } from "react-icons/ri";
+import { CgSpinnerAlt } from "react-icons/cg"; // Import spinner icon
 import { Button } from "./ui/button";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, } from "./ui/pagination";
 import { set } from "date-fns";
@@ -65,26 +66,33 @@ const ViewBackInventory = () => {
   const [filteredInventory, setFilteredInventory] = useState<Record<string, any>>({});
   const [selectedLocation, setSelectedLocation] = useState<string>("All");
   const [disableCheckBox, setDisableCheckBox] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(false); // Loading state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
   const fetchShelfLocations = async () => {
     try {
+      setLoading(true); // Start loading
       const response = await fetch("/api/shelf_location");
       const data = await response.json();
       setShelfLocations([{ sl_id: 0, sl_name: "All", inv_type: "Back Inventory" }, ...data]);
     } catch (error) {
       console.log("Error fetching shelf locations", error);
+    } finally {
+      setLoading(false); // End loading
     }
   };
 
   const fetchBackInventory = async () => {
     try {
+      setLoading(true); // Start loading
       const response = await fetch("/api/back_inventory");
       const data = await response.json();
       groupInventoryByItem(data);
     } catch (error) {
       console.log("Error fetching back inventory", error);
+    } finally {
+      setLoading(false); // End loading
     }
   };
 
@@ -137,7 +145,7 @@ const ViewBackInventory = () => {
 
   const updateDisabledStatus = () => {
     const updatedDisableCheckBox: Record<string, boolean> = {};
-  
+
     // Loop through the inventory to enable the first batch for each location
     Object.values(groupedInventory).forEach((group: any) => {
       const sortedItems = group.items
@@ -155,13 +163,13 @@ const ViewBackInventory = () => {
           if (b.expiry_date === "NA") return 1;
           return new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime();
         });
-  
+
       const enabledLocations: Set<string> = new Set();
-  
+
       sortedItems.forEach((shelf: { bd_id: any; sl_id: any; shelf_location: { sl_name: any; }; quantity: number; }) => {
         const key = `${shelf.bd_id}-${group.item_id}-${shelf.sl_id}`;
         const locationName = shelf.shelf_location.sl_name;
-  
+
         // Enable the first batch for each location with quantity > 0
         if (shelf.quantity > 0 && !enabledLocations.has(locationName)) {
           updatedDisableCheckBox[key] = false; // Enable this checkbox
@@ -171,13 +179,13 @@ const ViewBackInventory = () => {
         }
       });
     });
-  
+
     setDisableCheckBox(updatedDisableCheckBox);
-  };  
+  };
 
   const handleLocationFilter = (location: string) => {
     setSelectedLocation(location);
-  
+
     if (location === "All") {
       setFilteredInventory(groupedInventory);
     } else {
@@ -185,7 +193,7 @@ const ViewBackInventory = () => {
         const filteredItems = group.items.filter((item: BackInventory) =>
           item.inventory_shelf.some((shelf) => shelf.shelf_location.sl_name === location)
         );
-  
+
         if (filteredItems.length > 0) {
           acc[key] = {
             ...group,
@@ -194,11 +202,11 @@ const ViewBackInventory = () => {
         }
         return acc;
       }, {} as Record<string, any>); // Specify Record<string, any> to avoid implicit any
-  
+
       setFilteredInventory(filtered);
     }
   };
-  
+
   const clearCheckedForItem = (itemId: number) => {
     setIsChecked((prevChecked) => {
       const updatedChecked = { ...prevChecked };
@@ -209,29 +217,29 @@ const ViewBackInventory = () => {
       });
       return updatedChecked;
     });
-  
+
     // Also remove the item from selectedItemsForMove and selectedItemsForStockOut
     setSelectedItemsForMove((prev) => prev.filter((item) => item.purchased_detail.item.item_id !== itemId));
     setSelectedItemsForStockOut((prev) => prev.filter((item) => item.purchased_detail.item.item_id !== itemId));
   };
-  
+
   const toggleExpanded = (itemId: number) => {
     setExpandedItems((prev) => {
       const isCurrentlyExpanded = prev[itemId];
-  
+
       // Clear checkboxes if the item is being collapsed
       if (isCurrentlyExpanded) {
         clearCheckedForItem(itemId);
       }
-  
+
       return { ...prev, [itemId]: !isCurrentlyExpanded };
     });
-  };  
+  };
 
   const handleItemSelection = (inventory: BackInventory, sl_id: number, checked: boolean) => {
     const key = `${inventory.bd_id}-${inventory.purchased_detail.item.item_id}-${sl_id}`; // unique key
     setIsChecked((prevChecked) => ({ ...prevChecked, [key]: checked }));
-  
+
     if (checked) {
       const selectedShelf = inventory.inventory_shelf.find((shelf) => shelf.sl_id === sl_id);
       if (selectedShelf) {
@@ -248,7 +256,7 @@ const ViewBackInventory = () => {
       );
     }
     updateDisabledStatus();
-  };  
+  };
 
   const openMoveInventoryModal = () => {
     if (selectedItemsForMove.length === 0) {
@@ -329,12 +337,20 @@ const ViewBackInventory = () => {
   const totalItems = Object.keys(filteredInventory).length;
 
   const paginatedInventory = Object.values(filteredInventory)
-  .slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+    .slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
 
   const goToPage = (pageNumber: number) => setCurrentPage(pageNumber);
+
+  if (loading) {
+    return (
+      <div className='flex h-screen w-full items-center justify-center'>
+        <CgSpinnerAlt className="animate-spin h-10 w-10 text-center text-[#5C4033]" />
+      </div>
+    );
+  }
 
   return (
     <div className="mt-24 ml-32 mr-32">
@@ -374,9 +390,8 @@ const ViewBackInventory = () => {
       {/* Shelf location labels for filtering */}
       <div className="flex space-x-4 mt-8 mb-4">
         <span
-          className={`cursor-pointer ${
-            selectedLocation === "All" ? "text-yellow-900 font-bold" : "text-gray-500"
-          }`}
+          className={`cursor-pointer ${selectedLocation === "All" ? "text-yellow-900 font-bold" : "text-gray-500"
+            }`}
           onClick={() => handleLocationFilter("All")}
         >
           All
@@ -386,9 +401,8 @@ const ViewBackInventory = () => {
           .map((location) => (
             <span
               key={location.sl_id}
-              className={`cursor-pointer ${
-                selectedLocation === location.sl_name ? "text-yellow-900 font-bold" : "text-gray-500"
-              }`}
+              className={`cursor-pointer ${selectedLocation === location.sl_name ? "text-yellow-900 font-bold" : "text-gray-500"
+                }`}
               onClick={() => handleLocationFilter(location.sl_name)}
             >
               {location.sl_name}
@@ -419,96 +433,96 @@ const ViewBackInventory = () => {
               </TableRow>
             ) : (
               // Display items based on the selected shelf location (All or specific
-            paginatedInventory.map((group: any) => {
-              // Calculate total quantity based on the selected shelf location
-              const filteredQuantity = group.items.reduce((sum: number, item: BackInventory) => {
-                const shelfQuantity = item.inventory_shelf
-                  .filter((shelf) => selectedLocation === "All" || shelf.shelf_location.sl_name === selectedLocation)
-                  .reduce((shelfSum, shelf) => shelfSum + shelf.quantity, 0);
-                return sum + shelfQuantity;
-              }, 0);
-              const isGroupExpired = group.items.some((item: BackInventory) =>
-                item.inventory_shelf.some((shelf) => isExpired(item.purchased_detail.expiry_date))
-              );
+              paginatedInventory.map((group: any) => {
+                // Calculate total quantity based on the selected shelf location
+                const filteredQuantity = group.items.reduce((sum: number, item: BackInventory) => {
+                  const shelfQuantity = item.inventory_shelf
+                    .filter((shelf) => selectedLocation === "All" || shelf.shelf_location.sl_name === selectedLocation)
+                    .reduce((shelfSum, shelf) => shelfSum + shelf.quantity, 0);
+                  return sum + shelfQuantity;
+                }, 0);
+                const isGroupExpired = group.items.some((item: BackInventory) =>
+                  item.inventory_shelf.some((shelf) => isExpired(item.purchased_detail.expiry_date))
+                );
 
-              return (
-                <React.Fragment key={group.item_id}>
-                  <TableRow className={isGroupExpired ? "text-red-600" : ""}>
-                    <TableCell className="text-center">
-                      {expandedItems[group.item_id] ? (
-                        <RiArrowDropUpLine
-                          onClick={() => toggleExpanded(group.item_id)}
-                          style={{ fontSize: "2rem", color: "#493628", cursor: "pointer" }}
-                        />
-                      ) : (
-                        <RiArrowDropDownLine
-                          onClick={() => toggleExpanded(group.item_id)}
-                          style={{ fontSize: "2rem", color: "#493628", cursor: "pointer" }}
-                        />
-                      )}
-                    </TableCell>
-                    <TableCell>{group.item_name}</TableCell>
-                    <TableCell>{group.description}</TableCell>
-                    <TableCell>{group.category_name}</TableCell>
-                    <TableCell>{filteredQuantity}</TableCell>
-                    <TableCell>{group.unit_name}</TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {(() => {
-                        const uniqueLocations = Array.from(
-                          new Set(
-                            group.items.flatMap((item: BackInventory) =>
-                              item.inventory_shelf.map((shelf) => shelf.shelf_location.sl_name)
+                return (
+                  <React.Fragment key={group.item_id}>
+                    <TableRow className={isGroupExpired ? "text-red-600" : ""}>
+                      <TableCell className="text-center">
+                        {expandedItems[group.item_id] ? (
+                          <RiArrowDropUpLine
+                            onClick={() => toggleExpanded(group.item_id)}
+                            style={{ fontSize: "2rem", color: "#493628", cursor: "pointer" }}
+                          />
+                        ) : (
+                          <RiArrowDropDownLine
+                            onClick={() => toggleExpanded(group.item_id)}
+                            style={{ fontSize: "2rem", color: "#493628", cursor: "pointer" }}
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell>{group.item_name}</TableCell>
+                      <TableCell>{group.description}</TableCell>
+                      <TableCell>{group.category_name}</TableCell>
+                      <TableCell>{filteredQuantity}</TableCell>
+                      <TableCell>{group.unit_name}</TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {(() => {
+                          const uniqueLocations = Array.from(
+                            new Set(
+                              group.items.flatMap((item: BackInventory) =>
+                                item.inventory_shelf.map((shelf) => shelf.shelf_location.sl_name)
+                              )
                             )
-                          )
-                        );
-                        return uniqueLocations.length > 1 ? "Varied" : (uniqueLocations[0] as React.ReactNode);
-                      })()}
-                    </TableCell>
-                    <TableCell>
-                      {group.expiryRange.min === group.expiryRange.max 
-                        ? formatDateTime(group.expiryRange.min) 
-                        : <>
+                          );
+                          return uniqueLocations.length > 1 ? "Varied" : (uniqueLocations[0] as React.ReactNode);
+                        })()}
+                      </TableCell>
+                      <TableCell>
+                        {group.expiryRange.min === group.expiryRange.max
+                          ? formatDateTime(group.expiryRange.min)
+                          : <>
                             {formatDateTime(group.expiryRange.min)} - <br /> {formatDateTime(group.expiryRange.max)}
                           </>}
-                    </TableCell>
-                  </TableRow>
+                      </TableCell>
+                    </TableRow>
 
-                  {/* Expanded rows for individual items */}
-                  {expandedItems[group.item_id] &&
-                    group.items.map((item: BackInventory) =>
-                      item.inventory_shelf
-                        .filter((shelf) =>
-                          selectedLocation === "All" || shelf.shelf_location.sl_name === selectedLocation
-                        )
-                        .map((shelf) => {
-                          const isRowExpired = isExpired(item.purchased_detail.expiry_date); // Check if the item is expired
-                          return (
-                            <TableRow key={`${group.item_id}-${shelf.sl_id}`} 
-                            className={isRowExpired ? "bg-red-100 text-red-600" : "bg-gray-100"}>
-                              <TableCell className="text-center">
-                              <input
-                                type="checkbox"
-                                checked={Boolean(isChecked[`${item.bd_id}-${group.item_id}-${shelf.sl_id}`])} // unique key here
-                                disabled={disableCheckBox[`${item.bd_id}-${group.item_id}-${shelf.sl_id}`]}
-                                onChange={(e) => handleItemSelection(item, shelf.sl_id, e.target.checked)}
-                                style={{ width: "20px", height: "20px" }}
-                              />
-                              </TableCell>
-                              <TableCell>{group.item_name}</TableCell>
-                              <TableCell>{group.description}</TableCell>
-                              <TableCell>{group.category_name}</TableCell>
-                              <TableCell>{shelf.quantity}</TableCell>
-                              <TableCell>{group.unit_name}</TableCell>
-                              <TableCell>{shelf.shelf_location.sl_name}</TableCell>
-                              <TableCell>{formatDateTime(item.purchased_detail.expiry_date)}</TableCell>
-                            </TableRow>
-                          );
-                        })
-                    )}
-                </React.Fragment>
-              );
-            })
-          )}
+                    {/* Expanded rows for individual items */}
+                    {expandedItems[group.item_id] &&
+                      group.items.map((item: BackInventory) =>
+                        item.inventory_shelf
+                          .filter((shelf) =>
+                            selectedLocation === "All" || shelf.shelf_location.sl_name === selectedLocation
+                          )
+                          .map((shelf) => {
+                            const isRowExpired = isExpired(item.purchased_detail.expiry_date); // Check if the item is expired
+                            return (
+                              <TableRow key={`${group.item_id}-${shelf.sl_id}`}
+                                className={isRowExpired ? "bg-red-100 text-red-600" : "bg-gray-100"}>
+                                <TableCell className="text-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={Boolean(isChecked[`${item.bd_id}-${group.item_id}-${shelf.sl_id}`])} // unique key here
+                                    disabled={disableCheckBox[`${item.bd_id}-${group.item_id}-${shelf.sl_id}`]}
+                                    onChange={(e) => handleItemSelection(item, shelf.sl_id, e.target.checked)}
+                                    style={{ width: "20px", height: "20px" }}
+                                  />
+                                </TableCell>
+                                <TableCell>{group.item_name}</TableCell>
+                                <TableCell>{group.description}</TableCell>
+                                <TableCell>{group.category_name}</TableCell>
+                                <TableCell>{shelf.quantity}</TableCell>
+                                <TableCell>{group.unit_name}</TableCell>
+                                <TableCell>{shelf.shelf_location.sl_name}</TableCell>
+                                <TableCell>{formatDateTime(item.purchased_detail.expiry_date)}</TableCell>
+                              </TableRow>
+                            );
+                          })
+                      )}
+                  </React.Fragment>
+                );
+              })
+            )}
           </TableBody>
         </Table>
       </div>
