@@ -12,11 +12,6 @@ export async function GET(request: NextRequest) {
               payment_status: true,
               // e-wallet
               reference_no: true,
-              //card
-              account_number: true,
-              account_name: true,
-              cvv: true,
-              expiry_date: true,
               //otc
               amount: true,
               change: true,
@@ -116,10 +111,6 @@ export async function POST(request: NextRequest){
             payment_method,
             payment_status,
             reference_no,
-            account_number,
-            account_name,
-            cvv,
-            expiry_date,
             amount,
             change,
             generated_code,
@@ -133,10 +124,6 @@ export async function POST(request: NextRequest){
                 payment_method,
                 payment_status,
                 reference_no,
-                account_number,
-                account_name,
-                cvv,
-                expiry_date,
                 amount,
                 change,
                 generated_code,
