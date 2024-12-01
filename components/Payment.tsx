@@ -256,8 +256,6 @@ const PaymentAndVerifyWithSidebar = () => {
                     <p><strong>Status:</strong> {verifiedDetails.payment_status}</p>
                     <p><strong>Discount:</strong> {verifiedDetails.discount?.discount_name || "No Discount"}</p>
                    
-
-
                     {verifiedDetails.discount?.discount_name === "PWD" ||
                     verifiedDetails.discount?.discount_name === "Senior Citizen" ? (
                         <div className="mt-4 space-y-2">
