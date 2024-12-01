@@ -4,61 +4,6 @@ import { NextResponse } from "next/server";
 
 // GET function to fetch all data from Order model
 export async function GET(request: NextRequest) {
-<<<<<<< HEAD
-  try {
-    const payment = await prisma.payment.findMany({
-        
-      select: {
-            payment_id: true,
-            payment_method: true,
-            payment_status: true,
-            // e-wallet
-            reference_no: true,
-            //card
-            account_number: true,
-            account_name: true,
-            cvv: true,
-            expiry_date: true,
-            //otc
-            amount: true,
-            change: true,
-            discount: {
-                select: {
-                    discount_id: true,
-                    discount_name: true,
-                    discount_rate: true,
-                    status: true,
-                },
-            },
-            order: {
-                select: {
-                  order_id: true,
-                  customer_name: true,
-                  service_type: true,
-                  date: true,
-                    order_details: {
-                        select: {
-                            orderDetails_id: true,
-                            product: {
-                                select: {
-                                    product_id: true,
-                                    product_name: true,
-                                    image_url: true,
-                                },
-                            },
-                            quantity: true,
-                            price: true,
-                        },
-                    },
-                },
-            },
-            createdAt: true,
-        },
-    });
-    return NextResponse.json(payment, {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-=======
     try {
       const payment = await prisma.payment.findMany({
           select: {
@@ -107,7 +52,6 @@ export async function GET(request: NextRequest) {
               },
               createdAt: true,
           },
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
       });
       return NextResponse.json(payment, {
           status: 200,
@@ -181,16 +125,10 @@ export async function POST(request: NextRequest){
             generated_code,
             createdAt,
             order_id,
-<<<<<<< HEAD
             discount_id,  
         } = res;
         console.log("Data to Insert:", res);
-        const created = await prisma.payment.create({
-=======
-        } = res;
-        console.log("Data to Insert:", res);
         const createdPayment = await prisma.payment.create({
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
             data: {
                 payment_method,
                 payment_status,
@@ -199,25 +137,15 @@ export async function POST(request: NextRequest){
                 account_name,
                 cvv,
                 expiry_date,
-<<<<<<< HEAD
-                amount: amount ? parseFloat(amount) : null, // Convert to Float
-                change: change ? parseFloat(change) : null, // Convert to Float
-                generated_code,
-                createdAt: new Date(createdAt),
-                order: {
-                  connect: { order_id: parseInt(order_id) },
-              },
-                discount: {
-                  connect: { discount_id: parseInt(discount_id) },
-                },
-                
-=======
                 amount,
                 change,
                 generated_code,
                 createdAt: new Date(createdAt),
                 order: {
                     connect: { order_id: parseInt(order_id) },
+                },
+                discount: {
+                    connect: { discount_id: parseInt(discount_id) },
                 }
             },
             include: {
@@ -240,7 +168,6 @@ export async function POST(request: NextRequest){
                         }
                     }
                 }
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
             }
         });
 

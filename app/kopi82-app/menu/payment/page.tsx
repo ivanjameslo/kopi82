@@ -3,22 +3,13 @@
 import { useCartContext } from "../../context/cartContext";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-<<<<<<< HEAD
 import { toast, ToastContainer } from "react-toastify";
 import crypto from "crypto";
 import { useRouter } from "next/navigation";
-import CardForm from "./cardForm/page";
+// import CardForm from "./cardForm/page";
 import "react-toastify/dist/ReactToastify.css";
-
 import "./payment.css";
 
-=======
-import { toast } from "react-toastify";
-import crypto from "crypto";
-import { useRouter } from "next/navigation";
-import CardForm from "./cardForm/page";
-
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
 interface PaymentData {
     payment_method: string;
     payment_status: string;
@@ -164,33 +155,17 @@ const PaymentPage = () => {
     // Calculate total after discount
     const calculateTotal = () => {
         const subtotal = parseFloat(calculateSubtotal());
-<<<<<<< HEAD
         let discountAmount = 0;
 
         if (payment.discount_id === 1 || payment.discount_id === 2) {
             const mostExpensiveProduct = orderDetails.reduce((max, item) =>
                 item.price > max.price ? item : max
             );
-=======
-
-        let discountAmount = 0;
-
-        if (payment.discount_id === 1 || payment.discount_id === 2) {
-            // Apply discount to only one product (e.g., the most expensive one)
-            const mostExpensiveProduct = orderDetails.reduce((max, item) =>
-                item.price > max.price ? item : max
-            );
-
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
             if (mostExpensiveProduct) {
                 discountAmount =
                     mostExpensiveProduct.price * (discountPercentage / 100);
             }
         } else {
-<<<<<<< HEAD
-=======
-            // Apply discount to the entire order
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
             discountAmount = subtotal * (discountPercentage / 100);
         }
 
@@ -198,7 +173,6 @@ const PaymentPage = () => {
         return total > 0 ? total.toFixed(2) : "0.00";
     };
 
-<<<<<<< HEAD
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -206,18 +180,12 @@ const PaymentPage = () => {
         // Calculate the total amount
         const totalAmount = calculateTotal();
 
-=======
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-   
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
         try {
             // Validate order_id
             if (!order_id) {
                 toast.error("Order ID is missing.");
                 return;
             }
-<<<<<<< HEAD
 
             // Validate payment method
             if (!paymentMethod) {
@@ -228,28 +196,12 @@ const PaymentPage = () => {
 
                 });
                 return;
-            }
-
-
-            ;
+            };
 
             // Construct the payment data
             const generatedCode = crypto.randomBytes(4).toString("hex").toUpperCase();
             const discountId = discounts.find((d) => d.discount_rate === discountPercentage)?.discount_id ?? null;
 
-=======
-   
-            // Validate payment method
-            if (!paymentMethod) {
-                toast.error("Please select a payment method.");
-                return;
-            }
-   
-            // Construct the payment data
-            const generatedCode = crypto.randomBytes(4).toString("hex").toUpperCase();
-            const discountId = discounts.find((d) => d.discount_rate === discountPercentage)?.discount_id ?? null;
-   
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
             const paymentData: any = {
                 payment_method: paymentMethod,
                 payment_status: "pending",
@@ -257,11 +209,8 @@ const PaymentPage = () => {
                 discount_id: discountId,
                 generated_code: generatedCode,
                 createdAt: new Date(),
-<<<<<<< HEAD
                 amount: totalAmount,
             };
-
-
 
             paymentData.payment_method = paymentMethod;
             if (!paymentMethod) {
@@ -273,44 +222,12 @@ const PaymentPage = () => {
             // Log the payment data for debugging
             console.log("Payment Data Sent:", paymentData);
 
-=======
-            };
-   
-            // Add additional fields based on the payment method
-            if (paymentMethod === "gcash" || paymentMethod === "paymaya") {
-                if (!payment.reference_no) {
-                    toast.error("Please enter a reference number for e-wallet payment.");
-                    return;
-                }
-                paymentData.reference_no = payment.reference_no;
-            }
-   
-            if (paymentMethod === "card") {
-                if (!payment.account_number || !payment.account_name || !payment.cvv || !payment.expiry_date) {
-                    toast.error("Please fill in all card details.");
-                    return;
-                }
-                paymentData.account_number = payment.account_number;
-                paymentData.account_name = payment.account_name;
-                paymentData.cvv = payment.cvv;
-                paymentData.expiry_date = payment.expiry_date;
-            }
-   
-            // Log the payment data for debugging
-            console.log("Payment Data Sent:", paymentData);
-   
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
             // Send the PATCH request
             const response = await fetch(`/api/payment`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(paymentData),
             });
-<<<<<<< HEAD
-
-=======
-   
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
             if (!response.ok) {
                 let errorMessage = "Failed to update payment.";
                 try {
@@ -322,13 +239,7 @@ const PaymentPage = () => {
                 }
                 throw new Error(errorMessage);
             }
-<<<<<<< HEAD
 
-
-=======
-            
-   
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
             const result = await response.json();
             console.log("Payment updated successfully:", result);
 
@@ -348,11 +259,6 @@ const PaymentPage = () => {
             //     console.log("Stock-out processed successfully:", stockOutResult);
             //     toast.success("Payment and stock-out processed successfully!");
             // }
-<<<<<<< HEAD
-
-=======
-   
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
             toast.success("Payment successfully processed!");
             router.push(`/kopi82-app/menu/payment/generatecode/${generatedCode}`);
             setConfirmationCode(generatedCode);
@@ -361,85 +267,6 @@ const PaymentPage = () => {
             toast.error(error.message || "An error occurred during payment.");
         }
     };
-<<<<<<< HEAD
-
-    // const renderPaymentForm = () => {
-    //     switch (paymentMethod) {
-    //         case "card":
-    //             return <CardForm payment={payment} handleChange={handleChange} />;
-    //         case "gcash":
-    //             return (
-    //                 <div className="payment-method-gcash">
-    //                     <h3 className="payment-method-title">GCash Payment</h3>
-    //                     <input
-    //                         type="text"
-    //                         name="reference_no"
-    //                         value={payment.reference_no}
-    //                         onChange={handleChange}
-    //                         placeholder="GCash Reference Number"
-    //                         className="payment-method-input"
-    //                     />
-    //                 </div>
-    //             );
-    //         case "paymaya":
-    //             return (
-    //                 <div className="payment-method-paymaya">
-    //                     <h3 className="payment-method-title">PayMaya Payment</h3>
-    //                     <input
-    //                         type="text"
-    //                         name="reference_no"
-    //                         value={payment.reference_no}
-    //                         onChange={handleChange}
-    //                         placeholder="PayMaya Reference Number"
-    //                         className="payment-method-input"
-    //                     />
-    //                 </div>
-    //             );
-    //         default:
-    //             return null;
-    //     }
-    // };
-
-=======
-   
-    const renderPaymentForm = () => {
-        switch (paymentMethod) {
-            case "card":
-                return <CardForm payment={payment} handleChange={handleChange} />;
-            case "gcash":
-                return (
-                    <div className="mt-4">
-                        <h3 className="text-lg font-bold mb-2">GCash Payment</h3>
-                        <input
-                            type="text"
-                            name="reference_no"
-                            value={payment.reference_no}
-                            onChange={handleChange}
-                            placeholder="GCash Reference Number"
-                            className="w-full p-2 border rounded"
-                        />
-                    </div>
-                );
-            case "paymaya":
-                return (
-                    <div className="mt-4">
-                        <h3 className="text-lg font-bold mb-2">PayMaya Payment</h3>
-                        <input
-                            type="text"
-                            name="reference_no"
-                            value={payment.reference_no}
-                            onChange={handleChange}
-                            placeholder="PayMaya Reference Number"
-                            className="w-full p-2 border rounded"
-                        />
-                    </div>
-                );
-            default:
-                return null;
-        }
-    };
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
-
 
     return (
         <div className="page-wrapper">
@@ -450,7 +277,6 @@ const PaymentPage = () => {
                 <p className="error-message">{error}</p>
             ) : (
                 <div>
-<<<<<<< HEAD
                     <p className="order-id">Order ID: {order_id}</p>
                     <table className="table">
                         <thead>
@@ -460,17 +286,6 @@ const PaymentPage = () => {
                                 <th className="table-header">Quantity</th>
                                 <th className="table-header">Price</th>
                                 <th className="table-header">Total</th>
-=======
-                    <p className="text-gray-600">Order ID: {order_id}</p>
-                    <table className="w-full table-auto border-collapse border border-gray-300 mt-6">
-                        <thead>
-                            <tr>
-                                <th className="border border-gray-300 px-4 py-2">Product</th>
-                                <th className="border border-gray-300 px-4 py-2">Drink Preference</th>
-                                <th className="border border-gray-300 px-4 py-2">Quantity</th>
-                                <th className="border border-gray-300 px-4 py-2">Price</th>
-                                <th className="border border-gray-300 px-4 py-2">Total</th>
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
                             </tr>
                         </thead>
                         <tbody>
@@ -484,7 +299,6 @@ const PaymentPage = () => {
 
                                 return (
                                     <tr key={index}>
-<<<<<<< HEAD
                                         <td className="table-cell">
                                             <div className="product-info">
                                                 <Image
@@ -508,28 +322,6 @@ const PaymentPage = () => {
                                             ₱{item.price?.toFixed(2) || "0.00"}
                                         </td>
                                         <td className="table-cell">
-=======
-                                        <td className="border border-gray-300 px-4 py-2 flex items-center space-x-4">
-                                            <Image
-                                                src={item.image_url || "/placeholder.png"}
-                                                alt={item.product_name || "Product image"}
-                                                width={50}
-                                                height={50}
-                                                className="rounded"
-                                            />
-                                            <span>{item.product_name}</span>
-                                        </td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">
-                                            {drinkPreference}
-                                        </td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">
-                                            {item.quantity || 0}
-                                        </td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">
-                                            ₱{item.price?.toFixed(2) || "0.00"}
-                                        </td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
                                             ₱{(item.quantity * item.price).toFixed(2) || "0.00"}
                                         </td>
                                     </tr>
@@ -538,23 +330,12 @@ const PaymentPage = () => {
                         </tbody>
                     </table>
 
-<<<<<<< HEAD
                     <div className="discount-section">
                         <p className="subtotal">Subtotal: ₱{calculateSubtotal()}</p>
 
                         <h2 className="discount-title">Discount</h2>
                         <select
                             className="discount-dropdown"
-=======
-                    <div className="mt-6 text-right">
-                        <p className="text-lg font-bold">Subtotal: ₱{calculateSubtotal()}</p>
-                    </div>
-
-                    <div className="mt-6">
-                        <h2 className="text-lg font-bold">Discount</h2>
-                        <select
-                            className="w-full p-2 mt-2 border rounded"
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
                             value={payment.discount_id || ""}
                             name="discount_id"
                             onChange={(e) => {
@@ -582,7 +363,6 @@ const PaymentPage = () => {
                         </select>
                     </div>
 
-<<<<<<< HEAD
                     <div className="totals">
                         <p className="subtotal">Total: ₱{calculateTotal()}</p>
                     </div>
@@ -597,38 +377,17 @@ const PaymentPage = () => {
                             >
                                 <option value="">Select Payment Method</option>
                                 <option value="otc">Over-the-Counter</option>
-=======
-                    <div className="mt-6 text-right">
-                        <p className="text-lg font-bold">Total: ₱{calculateTotal()}</p>
-                    </div>
-
-                    <form onSubmit={handleSubmit}>
-                        <div className="mt-6">
-                            <h2 className="text-lg font-bold">Select Payment Method</h2>
-                            <select
-                                className="w-full p-2 mt-2 border rounded"
-                                value={paymentMethod}
-                                onChange={(e) => setPaymentMethod(e.target.value)}
-                            >
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
                                 <option value="card">Card/Debit</option>
                                 <option value="gcash">GCash</option>
                                 <option value="paymaya">PayMaya</option>
                             </select>
                         </div>
 
-<<<<<<< HEAD
 
                         {/* {renderPaymentForm()} */}
                         <button
                             type="submit"
                             className="submit-button"
-=======
-                        {renderPaymentForm()}
-                        <button
-                            type="submit"
-                            className="mt-6 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
 
                         >
                             Confirm Payment
