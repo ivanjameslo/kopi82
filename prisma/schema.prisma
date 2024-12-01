@@ -222,16 +222,9 @@ model ProductInventory {
   item            item              @relation(fields: [item_id], references: [item_id])
   // inventory_shelf inventory_shelf   @relation(fields: [inventory_shelf_id], references: [is_id])
 
-<<<<<<< HEAD
-
-  @@unique([product_id, inventory_shelf_id])
-=======
   // @@unique([product_id, item_id, inventory_shelf_id])
   @@unique([product_id, item_id])
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
 }
-
-
 
 
 //ORDER
@@ -278,11 +271,7 @@ model payment {
   payment_id      Int       @id @default(autoincrement())
   payment_method  String
   payment_status  String    // e.g., pending, succeeded, failed
-<<<<<<< HEAD
- 
-=======
   
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
   //e-wallet
   reference_no    String?
   //card
@@ -294,30 +283,17 @@ model payment {
   amount          Float?
   change          Float?
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
   discount_id     Int?      // Relation to the associated discount
   order_id        Int?      @unique // Make order_id unique to satisfy one-to-one relation
   generated_code  String
   createdAt       DateTime  @default(now())
 
-
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
   // pm_eWallet_id   Int?      @unique
   // pm_otc_id       Int?      @unique
   // pm_card_id      Int?      @unique
   order           order?    @relation(fields: [order_id], references: [order_id])
   discount        discount? @relation(fields: [discount_id], references: [discount_id])
-<<<<<<< HEAD
-=======
   inventory_tracking  inventory_tracking[]
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
   // eWallet payment_method_eWallet? @relation(fields: [pm_eWallet_id], references: [p_method_id])
   // otc payment_method_otc?     @relation(fields: [pm_otc_id], references: [p_method_id])
   // card payment_method_card? @relation(fields: [pm_card_id], references: [p_method_id])
@@ -349,10 +325,6 @@ model discount {
 //   payment     payment?
 // }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
 // model payment_method_card {
 //   p_method_id Int      @id @default(autoincrement())
 //   account_number String
@@ -362,12 +334,7 @@ model discount {
 //   payment     payment?
 // }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
 //SALES
-
 
 model product_sales {
   sales_id        Int      @id @default(autoincrement())
