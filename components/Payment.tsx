@@ -1,12 +1,10 @@
 "use client";
 
-
 import { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 import { IoIosArrowDropleftCircle, IoIosArrowDroprightCircle } from "react-icons/io";
-
 
 interface PaymentData {
     payment_id: number;
@@ -32,14 +30,12 @@ interface PaymentData {
     createdAt: string;
 }
 
-
 interface DiscountData {
     discount_id: number;
     discount_name: string;
     discount_rate: number;
     status: string;
 }
-
 
 const PaymentAndVerifyWithSidebar = () => {
     const [data, setData] = useState<PaymentData[]>([]);
