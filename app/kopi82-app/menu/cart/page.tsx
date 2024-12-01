@@ -1,12 +1,11 @@
 "use client";
 
-
 import { useCartContext } from "../../context/cartContext";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import "./cart.css";
-
+import { toast, ToastContainer } from "react-toastify";
 
 const CartPage = () => {
     const { cart, order_id, updateCart } = useCartContext();
@@ -14,7 +13,6 @@ const CartPage = () => {
     const [customerName, setCustomerName] = useState<string | null>(null);
     const [serviceType, setServiceType] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-
 
     const [productDetails, setProductDetails] = useState<{ [key: number]: {
         hotPrice: number;
@@ -24,7 +22,6 @@ const CartPage = () => {
         product_name: string;
         image_url: string;
     } }>({});
-
 
     const fetchOrderDetails = async (order_id: number) => {
         try {
@@ -41,7 +38,6 @@ const CartPage = () => {
             setServiceType("Unknown");
         }
     };
-
 
     const fetchProductDetails = async (productId: number) => {
         try {
@@ -63,13 +59,11 @@ const CartPage = () => {
         }
     };
 
-
     useEffect(() => {
         if (order_id) {
             fetchOrderDetails(order_id);
         }
     }, [order_id]);
-
 
     useEffect(() => {
         const fetchDetails = async () => {
@@ -81,26 +75,19 @@ const CartPage = () => {
                 product_name: string;
                 image_url: string;
             } } = {};
-
-
             for (const item of Object.values(cart)) {
                 if (!productDetails[item.product_id]) {
                     const product = await fetchProductDetails(item.product_id);
                     details[item.product_id] = product;
                 }
             }
-
-
             setProductDetails((prev) => ({ ...prev, ...details }));
         };
-
-
+    
         fetchDetails();
     }, [cart]);
-
-
+    
     const cartItems = Object.values(cart);
-
 
     const removeItem = (uniqueKey: string) => {
         const updatedCart = { ...cart };
@@ -108,17 +95,32 @@ const CartPage = () => {
         updateCart(updatedCart);
     };
 
+    
 
     const handleQuantityChange = (uniqueKey: string, increment: boolean) => {
-        const updatedCart = { ...cart };
-        if (increment) {
-            updatedCart[uniqueKey].quantity += 1;
-        } else if (updatedCart[uniqueKey].quantity > 1) {
-            updatedCart[uniqueKey].quantity -= 1;
+      const updatedCart = { ...cart };
+      if (increment) {
+        if (updatedCart[uniqueKey].quantity < 10) {
+          updatedCart[uniqueKey].quantity += 1;
+        } else {
+          toast.error("Quantity cannot exceed 1000");
         }
-        updateCart(updatedCart);
+      } else if (updatedCart[uniqueKey].quantity > 1) {
+        updatedCart[uniqueKey].quantity -= 1;
+      }
+      updateCart(updatedCart);
     };
 
+    const handleQuantityInputChange = (uniqueKey: string, value: string) => {
+      const updatedCart = { ...cart };
+      const quantity = parseInt(value, 10);
+      if (!isNaN(quantity) && quantity > 0 && quantity <= 1000) {
+      updatedCart[uniqueKey].quantity = quantity;
+      } else {
+      toast.error("Please enter a valid quantity between 1 and 1000");
+      }
+      updateCart(updatedCart);
+    };
 
     const handleCheckout = async () => {
         setLoading(true);
@@ -131,7 +133,6 @@ const CartPage = () => {
                 date: new Date(),
             }));
 
-
             const response = await fetch("/api/order_details", {
                 method: "POST",
                 headers: {
@@ -140,11 +141,9 @@ const CartPage = () => {
                 body: JSON.stringify(formDataArray),
             });
 
-
             if (!response.ok) {
                 throw new Error("Failed to save order details.");
             }
-
 
             const result = await response.json();
             alert(`Order details saved successfully. Items saved: ${result.createdCount}`);
@@ -156,7 +155,6 @@ const CartPage = () => {
             setLoading(false);
         }
     };
-
 
     if (cartItems.length === 0) {
         return (
@@ -173,7 +171,6 @@ const CartPage = () => {
         );
     }
 
-
     return (
         <div className="container">
   <h1 className="heading">Cart</h1>
@@ -184,13 +181,11 @@ const CartPage = () => {
         image_url: "/placeholder.png",
       };
 
-
       let drinkPreference = "N/A";
       if (product.hotPrice === item.selectedPrice) drinkPreference = "Hot";
       else if (product.icedPrice === item.selectedPrice) drinkPreference = "Iced";
       else if (product.frappePrice === item.selectedPrice) drinkPreference = "Frappe";
       else if (product.singlePrice === item.selectedPrice) drinkPreference = "Single";
-
 
       return (
         <div className="cart-item">
@@ -218,7 +213,16 @@ const CartPage = () => {
         >
           -
         </button>
-        <span>{item.quantity}</span>
+        <div>
+          <input
+            type="number"
+            value={item.quantity}
+            onChange={(e) => handleQuantityInputChange(key, e.target.value)}
+            min="1"
+            max="1000"
+            className="quantity-input"
+          />
+        </div>
         <button
           className="quantity-button"
           onClick={() => handleQuantityChange(key, true)}
@@ -236,7 +240,6 @@ const CartPage = () => {
   </div>
 </div>
 
-
       );
     })}
   </div>
@@ -252,12 +255,11 @@ const CartPage = () => {
   <button className="button button-checkout" onClick={handleCheckout} disabled={loading}>
     {loading ? "Processing..." : "Checkout"}
   </button>
+  <ToastContainer />
 </div>
 
-
-     
+      
     );
 };
-
 
 export default CartPage;
