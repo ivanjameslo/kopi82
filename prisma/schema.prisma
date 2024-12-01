@@ -241,15 +241,9 @@ model payment {
   payment_id      Int       @id @default(autoincrement())
   payment_method  String
   payment_status  String    // e.g., pending, succeeded, failed
-  
-  //e-wallet
+
   reference_no    String?
-  //card
-  account_number  String?
-  account_name    String?
-  cvv             String?
-  expiry_date     DateTime?
-  //otc
+
   amount          Float?
   change          Float?
 
@@ -258,16 +252,9 @@ model payment {
   generated_code  String
   createdAt       DateTime  @default(now())
 
-
-  // pm_eWallet_id   Int?      @unique
-  // pm_otc_id       Int?      @unique
-  // pm_card_id      Int?      @unique
   order           order?    @relation(fields: [order_id], references: [order_id])
   discount        discount? @relation(fields: [discount_id], references: [discount_id])
   inventory_tracking  inventory_tracking[]
-  // eWallet payment_method_eWallet? @relation(fields: [pm_eWallet_id], references: [p_method_id])
-  // otc payment_method_otc?     @relation(fields: [pm_otc_id], references: [p_method_id])
-  // card payment_method_card? @relation(fields: [pm_card_id], references: [p_method_id])
 }
 
 model discount {

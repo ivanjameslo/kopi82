@@ -202,10 +202,6 @@ Table payment {
   payment_method String [not null]
   payment_status String [not null]
   reference_no String
-  account_number String
-  account_name String
-  cvv String
-  expiry_date DateTime
   amount Float
   change Float
   discount_id Int
