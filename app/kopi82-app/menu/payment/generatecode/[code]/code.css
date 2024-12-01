@@ -1,0 +1,100 @@
+/* General Styles */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #DCD7C9;
+    color: #2D2424;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+/* Page Container */
+.page-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #DCD7C9;
+}
+
+/* Code Card */
+.code-card {
+    background-color: #FFFFFF;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.code-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0px 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Title */
+.code-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #5C4033;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Generated Code Display */
+.code-display {
+    font-size: 1.2rem;
+    font-family: 'Courier New', Courier, monospace;
+    background-color: #967969;
+    color: #FFFFFF;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+    box-shadow: inset 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Back Button */
+.back-button {
+    display: inline-block;
+    padding: 0.8rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    background-color: #5C4033;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.back-button:hover {
+    background-color: #967969;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .code-card {
+        padding: 1.5rem;
+    }
+
+    .code-title {
+        font-size: 1.8rem;
+    }
+
+    .code-display {
+        font-size: 1rem;
+    }
+
+    .back-button {
+        width: 100%;
+        font-size: 1rem;
+    }
+}

@@ -1,0 +1,288 @@
+/* General Styles */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-image: url('/background.png');
+      background-position: center;
+    background-blend-mode: darken;   background-color: rgba(0, 0, 0, 0.8);
+    background-size: cover;
+    background-position: center;
+    color: #2D2424;
+    margin: 0;
+    padding: 0;
+    line-height: 1.4;
+}
+
+/* Page Wrapper */
+.page-wrapper {
+    margin: 2rem auto;
+    padding: 2rem;
+    max-width: 800px;
+    background-color: #ffffffcd;
+    border-radius: 16px;
+    box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.page-wrapper:hover {
+    transform: translateY(-4px);
+    box-shadow: 0px 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* Page Header */
+.page-header {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #5C4033;
+    text-align: center;
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading and Error Messages */
+.loading-message {
+    color: #5C4033;
+    font-style: italic;
+    text-align: center;
+    font-size: 1.2rem;
+    margin-top: 1rem;
+}
+
+.error-message {
+    color: red;
+    font-weight: 700;
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 1.1rem;
+}
+
+/* Order Table */
+.table {
+    width: 100%;
+    margin-top: 2rem;
+    border-collapse: collapse;
+    background-color: #F9F5F0;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Table Header */
+.table-header {
+    background-color: #967969;
+    color: #FFFFFF;
+    padding: 1rem;
+    text-transform: uppercase;
+    text-align: left;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    border-bottom: 2px solid #C4A484;
+}
+
+/* Table Rows */
+.table-row {
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.table-row:nth-child(even) {
+    background-color: #F5F0EC;
+}
+
+.table-row:hover {
+    background-color: #EDE3D9;
+    transform: translateX(4px);
+}
+
+/* Table Cells */
+.table-cell {
+    padding: 1rem;
+    text-align: center;
+    font-size: 1rem;
+    color: #2D2424;
+    border-bottom: 1px solid #C4A484;
+    font-weight: 500;
+}
+
+/* Product Info */
+.product-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-align: left;
+}
+
+.product-image {
+    border-radius: 12px;
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-image:hover {
+    transform: scale(1.1);
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Discount Section */
+.discount-section {
+    margin-top: 2.5rem;
+    position: relative;
+    padding: 1rem;
+    border-radius: 8px;
+
+    
+}
+
+.discount-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #5C4033;
+    margin-bottom: 1rem;
+}
+
+.discount-dropdown {
+    width: 100%;
+    padding: 0.8rem;
+    border: 2px solid #C4A484;
+    border-radius: 12px;
+    background-color: #F7F4F1;
+    font-size: 1rem;
+    color: #2D2424;
+    appearance: none; /* Hide native dropdown arrow */
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* Custom Arrow */
+.discount-dropdown::after {
+    content: "▼";
+    font-size: 0.9rem;
+    color: #5C4033;
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+/* Hover Effects */
+.discount-dropdown:hover {
+    background-color: #EDE3D9;
+    border-color: #967969;
+}
+
+/* Focus Effects */
+.discount-dropdown:focus {
+    outline: none;
+    box-shadow: 0px 0px 8px 2px rgba(150, 121, 105, 0.5);
+    border-color: #5C4033;
+}
+
+/* Option Styles */
+.discount-dropdown option {
+    font-size: 1rem;
+    color: #2D2424;
+    background-color: #F7F4F1;
+    padding: 0.6rem;
+}
+
+/* Totals Section */
+.totals, .subtotal {
+    margin-top: 2rem;
+    text-align: right;
+}
+
+.subtotal, .total {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #5C4033;
+    margin: 0.5rem 0;
+}
+
+/* Payment Form */
+.payment-form {
+    margin-top: 3rem;
+}
+
+.payment-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #5C4033;
+    margin-bottom: 1rem;
+}
+
+.payment-method-select {
+    width: 100%;
+    padding: 0.8rem;
+    border: 2px solid #C4A484;
+    border-radius: 12px;
+    background-color: #F7F4F1;
+    font-size: 1rem;
+    color: #2D2424;
+    cursor: pointer;
+    appearance: none;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+/* Hover Effects */
+.payment-method-select:hover {
+    background-color: #EDE3D9;
+    border-color: #967969;
+}
+
+/* Buttons */
+.submit-button {
+    display: inline-block;
+    margin-top: 2rem;
+    padding: 0.9rem 2.5rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: white;
+    background-color: #5C4033;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.15);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.submit-button:hover {
+    background-color: #967969;
+    box-shadow: 0px 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-header {
+        font-size: 2rem;
+    }
+
+    .table-header {
+        font-size: 0.85rem;
+        padding: 0.8rem;
+    }
+
+    .table-cell {
+        font-size: 0.9rem;
+        padding: 0.8rem;
+    }
+
+    .product-info {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .product-image {
+        width: 50px;
+        height: 50px;
+    }
+
+    .submit-button {
+        width: 100%;
+    }
+}

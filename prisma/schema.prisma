@@ -1,21 +1,26 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
+
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 
 generator client {
   provider = "prisma-client-js"
 }
 
+
 generator dbml {
   provider = "prisma-dbml-generator"
 }
+
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 
 model employee {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid // References auth.users.id
@@ -26,17 +31,21 @@ model employee {
   middle_name String?
   status      String
 
+
   @@map("employee") // Optional: specify the exact name of the table if it differs
 }
 
 
+
+
 //INVENTORY
+
 
 model back_inventory {
   bd_id                   Int               @id @default(autoincrement())
   item_id                 Int
-  pd_id                   Int 
-  pi_id                   Int?         
+  pd_id                   Int
+  pi_id                   Int?        
   stock_in_date           DateTime?
   stock_out_date          DateTime?
   stock_damaged           Int
@@ -49,6 +58,7 @@ model back_inventory {
   inventory_tracking      inventory_tracking[]
 }
 
+
 model purchased_item {
   pi_id            Int                @id @default(autoincrement())
   receipt_no       Int
@@ -59,6 +69,7 @@ model purchased_item {
   back_inventory   back_inventory[]
   createdAt        DateTime           @default(now())
 }
+
 
 model purchased_detail {
   pd_id                      Int                        @id @default(autoincrement())
@@ -78,12 +89,14 @@ model purchased_detail {
   createdAt                  DateTime                   @default(now())
 }
 
+
 model ProcessedPurchaseDetails {
   ppd_id           Int              @id @default(autoincrement())
   pd_id            Int              @unique
   processed_at     DateTime         @default(now())
   purchased_detail purchased_detail @relation(fields: [pd_id], references: [pd_id])
 }
+
 
 model unit {
   unit_id          Int                @id @default(autoincrement())
@@ -94,12 +107,14 @@ model unit {
   inventory_tracking inventory_tracking[]
 }
 
+
 model category {
   category_id   Int    @id @default(autoincrement())
   category_name String
   item          item[]
   purchased_detail purchased_detail[]
 }
+
 
 model shelf_location {
   sl_id   Int    @id @default(autoincrement())
@@ -109,8 +124,10 @@ model shelf_location {
   source_shelf inventory_tracking[] @relation("SourceShelf")
   destination_shelf inventory_tracking[] @relation("DestinationShelf")
 
+
   @@map("shelf_location")
 }
+
 
 model inventory_shelf {
   is_id   Int    @id @default(autoincrement())
@@ -128,6 +145,7 @@ model inventory_shelf {
   ProductInventory ProductInventory[]
 }
 
+
 model item {
   item_id          Int                @id @default(autoincrement())
   item_name        String
@@ -140,6 +158,7 @@ model item {
   createdAt        DateTime           @default(now())
 }
 
+
 model supplier {
   supplier_id   Int    @id @default(autoincrement())
   supplier_name String
@@ -147,6 +166,7 @@ model supplier {
   address       String
   purchased_item purchased_item[]
 }
+
 
 model inventory_tracking {
   id                   Int               @id @default(autoincrement())
@@ -163,7 +183,9 @@ model inventory_tracking {
   unit                 unit              @relation(fields: [unit_id], references: [unit_id])
 }
 
+
 //PRODUCT
+
 
 model product {
   product_id      Int               @id @default(autoincrement())
@@ -182,8 +204,10 @@ model product {
   order_details   order_details[]
   // ProductOrderDetails ProductOrderDetails[] (!!!!for many-to-many relation)
 
+
   ProductInventory ProductInventory[]
 }
+
 
 model ProductInventory {
   id              Int              @id @default(autoincrement())
@@ -193,11 +217,15 @@ model ProductInventory {
   product         product           @relation(fields: [product_id], references: [product_id])
   inventory_shelf inventory_shelf   @relation(fields: [inventory_shelf_id], references: [is_id])
 
+
   @@unique([product_id, inventory_shelf_id])
 }
 
 
+
+
 //ORDER
+
 
 model order {
   order_id      Int             @id @default(autoincrement())
@@ -208,6 +236,7 @@ model order {
   payment       payment?        // Relation to payment (one-to-one relationship)
 }
 
+
 model order_details {
   orderDetails_id Int     @id @default(autoincrement())
   order_id        Int
@@ -217,8 +246,9 @@ model order_details {
   date            DateTime @default(now())
   order           order   @relation(fields: [order_id], references: [order_id])
   product         product @relation(fields: [product_id], references: [product_id])
-  // ProductOrderDetails ProductOrderDetails[] 
+  // ProductOrderDetails ProductOrderDetails[]
 }
+
 
 // model ProductOrderDetails {
 //   product_id Int
@@ -226,24 +256,49 @@ model order_details {
 //   product product @relation(fields: [product_id], references: [product_id])
 //   order_details order_details @relation(fields: [orderDetails_id], references: [orderDetails_id])
 
+
 //   @@id([product_id, orderDetails_id])
-// } 
+// }
+
 
 //PAYMENT
 
+
 model payment {
   payment_id      Int       @id @default(autoincrement())
-  payment_method  String    // e.g., card, gcash, paymaya
+  payment_method  String
   payment_status  String    // e.g., pending, succeeded, failed
-  amount          Float
-  transaction_id  String?   // PayMongo transaction ID or equivalent
-  discount        discount? @relation(fields: [discount_id], references: [discount_id])
+ 
+  //e-wallet
+  reference_no    String?
+  //card
+  account_number  String?
+  account_name    String?
+  cvv             String?
+  expiry_date     DateTime?
+  //otc
+  amount          Float?
+  change          Float?
+
+
   discount_id     Int?      // Relation to the associated discount
-  order           order?    @relation(fields: [order_id], references: [order_id])
   order_id        Int?      @unique // Make order_id unique to satisfy one-to-one relation
+  generated_code  String
   createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+
+
+
+
+  // pm_eWallet_id   Int?      @unique
+  // pm_otc_id       Int?      @unique
+  // pm_card_id      Int?      @unique
+  order           order?    @relation(fields: [order_id], references: [order_id])
+  discount        discount? @relation(fields: [discount_id], references: [discount_id])
+  // eWallet payment_method_eWallet? @relation(fields: [pm_eWallet_id], references: [p_method_id])
+  // otc payment_method_otc?     @relation(fields: [pm_otc_id], references: [p_method_id])
+  // card payment_method_card? @relation(fields: [pm_card_id], references: [p_method_id])
 }
+
 
 model discount {
   discount_id   Int       @id @default(autoincrement())
@@ -253,12 +308,14 @@ model discount {
   payment       payment[]
 }
 
+
 // model payment_method_eWallet {
 //   p_method_id  Int      @id @default(autoincrement())
 //   mode         String
 //   reference_no String
 //   payment      payment?
 // }
+
 
 // model payment_method_otc {
 //   p_method_id Int      @id @default(autoincrement())
@@ -268,7 +325,19 @@ model discount {
 //   payment     payment?
 // }
 
+
+// model payment_method_card {
+//   p_method_id Int      @id @default(autoincrement())
+//   account_number String
+//   account_name String
+//   cvv String
+//   expiry_date DateTime
+//   payment     payment?
+// }
+
+
 //SALES
+
 
 model product_sales {
   sales_id        Int      @id @default(autoincrement())

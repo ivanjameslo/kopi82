@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Container from "../app-components/Container";
 import Image from "next/image";
-import { MdShoppingBasket } from "react-icons/md";
+import { MdSearch, MdShoppingBasket } from "react-icons/md";
 
 // import CartContextProvider from "../../Cart/page";
 // import CartCount, { CartContextProvider } from "./CartCount";
@@ -12,7 +12,7 @@ const Navbar = () => {
         sticky
         top-0
         w-full
-        bg-slate-200
+        bg-[#B19470]
         z-30
         shadow-sm">
         
@@ -28,9 +28,11 @@ const Navbar = () => {
                 <Image src="/kopi.png" alt="Kopi82" width={40} height={40} />
                 <Link href="/kopi82-app/menu">Kopi82</Link>
                 </div> 
-                <div className="hidden md:block">Search</div>
+                {/* <div className="hidden md:block">Search</div> */}
                 <div className="flex items-center gap-8
                 md:gap-12">
+                {/* <MdSearch/> */}
+                {/* <Link href="/kopi82-app/searchbar"></Link> */}
                     
                   <div className="flex items-center gap-2">
                   <MdShoppingBasket/>

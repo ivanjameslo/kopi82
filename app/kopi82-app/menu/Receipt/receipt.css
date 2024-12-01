@@ -1,0 +1,88 @@
+.page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background-color: #DCD7C9;
+    min-height: 100vh;
+}
+
+.receipt-container {
+    background: #C4A484;
+    border: 1px solid #967969;
+    border-radius: 8px;
+    padding: 20px;
+    width: 100%;
+    max-width: 400px;
+    text-align: left;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.receipt-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2D2424;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.company-info {
+    font-size: 14px;
+    color: #5C4033;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.divider {
+    border: none;
+    border-top: 1px solid #967969;
+    margin: 10px 0;
+}
+
+.receipt-details p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #5C4033;
+}
+
+.receipt-amount {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.receipt-status {
+    font-weight: bold;
+}
+
+.receipt-status.text-green {
+    color: #28a745;
+}
+
+.receipt-status.text-pending {
+    color: #ff9f00;
+}
+
+.receipt-footer {
+    margin-top: 20px;
+    font-size: 12px;
+    text-align: center;
+    color: #5C4033;
+}
+
+.download-button {
+    background-color: #5C4033;
+    color: #DCD7C9;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+    font-size: 16px;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.download-button:hover {
+    background-color: #2D2424;
+    transform: scale(1.05);
+}

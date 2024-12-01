@@ -2,15 +2,17 @@
 
 
 import { FormEvent, useEffect, useState } from "react";
-import { FiPlus } from "react-icons/fi";
+import { FiArrowDown, FiArrowUp, FiPlus } from "react-icons/fi";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import MenuRow from "@/components/MenuRow";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { useCartContext } from "../context/cartContext";
 import HomeBanner from "../app-components/Homebanner"
 import Modal from "../modal";
 import Navbar from "../app-components/Navbar";
+import "./menu.css";
 
 interface Product {
     product_id: number;
@@ -24,6 +26,11 @@ interface Product {
     status: string;
     description: string;
     image_url: string;
+}
+
+interface order {
+    customer_name: string;
+    service_type: string;
 }
 
 const AppMenu = () => {
@@ -45,6 +52,8 @@ const AppMenu = () => {
     const [uploading, setUploading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [order, setOrder] = useState<order | null>(null);
+    const [toastActive, setToastActive] = useState(false);
 
     const fetchProduct = async () => {
         try {
@@ -56,8 +65,19 @@ const AppMenu = () => {
         }
     }
 
+    const fetchOrder = async () => {
+        try {
+            const response = await fetch("/api/order");
+            const data = await response.json();
+            setOrder(data);
+        } catch (error) {
+            console.error("Failed to fetch products", error);
+        }
+    }
+
     useEffect(() => {
         fetchProduct();
+
     }, []);
 
     const groupedProducts = product.reduce(
@@ -88,6 +108,13 @@ const AppMenu = () => {
     };
 
     const handleTypeSelection = (productId: number, selectedPrice: number) => {
+        if (selectedPrice <= 0) {
+            toast.error("Invalid price selected!");
+            setToastActive(true);
+            setTimeout(() => setToastActive(false), 3000);
+            return;
+        }
+
         setFormData((prevFormData) => {
             const existingProductIndex = prevFormData.products.findIndex(
                 (p) => p.product_id === productId
@@ -124,22 +151,26 @@ const AppMenu = () => {
             );
             if (existingProductIndex > -1) {
                 const updatedProducts = [...prevFormData.products];
+                const newQuantity = updatedProducts[existingProductIndex].quantity + 1;
+                if (newQuantity > 1000) {
+                    toast.error("Quantity cannot exceed 1000!");
+                    setToastActive(true);
+                    setTimeout(() => setToastActive(false), 3000);
+                    return prevFormData;
+                }
                 updatedProducts[existingProductIndex] = {
                     ...updatedProducts[existingProductIndex],
-                    quantity: updatedProducts[existingProductIndex].quantity + 1
+                    quantity: newQuantity
                 };
                 return {
                     ...prevFormData,
                     products: updatedProducts,
                 };
             } else {
-                return {
-                    ...prevFormData,
-                    products: [
-                        ...prevFormData.products,
-                        { product_id: productId, quantity: 1, selectedPrice: 0 },
-                    ],
-                };
+                toast.error("Please select a drink preference before adding to cart!");
+                setToastActive(true);
+                setTimeout(() => setToastActive(false), 3000);
+                return prevFormData;
             }
         });
     };
@@ -151,9 +182,15 @@ const AppMenu = () => {
             );
             if (existingProductIndex > -1) {
                 const updatedProducts = [...prevFormData.products];
+                const newQuantity = Math.max(updatedProducts[existingProductIndex].quantity - 1, 0);
+                if (newQuantity === 0) {
+                    toast.error("Quantity cannot be less than zero!");
+                    setToastActive(true);
+                    setTimeout(() => setToastActive(false), 3000);
+                }
                 updatedProducts[existingProductIndex] = {
                     ...updatedProducts[existingProductIndex],
-                    quantity: Math.max(updatedProducts[existingProductIndex].quantity - 1, 0)
+                    quantity: newQuantity
                 };
                 return {
                     ...prevFormData,
@@ -164,7 +201,22 @@ const AppMenu = () => {
         });
     };
 
+
     const handleQuantityInput = (productId: number, quantity: number) => {
+        if (quantity < 0) {
+            toast.error("Quantity cannot be less than zero!");
+            setToastActive(true);
+            setTimeout(() => setToastActive(false), 3000);
+            return;
+        }
+
+        if (quantity > 1000) {
+            toast.error("Quantity cannot exceed 1000!");
+            setToastActive(true);
+            setTimeout(() => setToastActive(false), 3000);
+            return;
+        }
+
         setFormData((prevFormData) => {
             const existingProductIndex = prevFormData.products.findIndex(
                 (p) => p.product_id === productId
@@ -172,7 +224,7 @@ const AppMenu = () => {
 
             if (existingProductIndex > -1) {
                 const updatedProducts = [...prevFormData.products];
-                updatedProducts[existingProductIndex].quantity = Math.max(quantity, 0);
+                updatedProducts[existingProductIndex].quantity = quantity;
 
                 return {
                     ...prevFormData,
@@ -185,7 +237,7 @@ const AppMenu = () => {
                         ...prevFormData.products,
                         {
                             product_id: productId,
-                            quantity: Math.max(quantity, 0),
+                            quantity: quantity,
                             selectedPrice: 0,
                         },
                     ],
@@ -199,38 +251,60 @@ const AppMenu = () => {
 
         if (formData.products.length === 0) {
             toast.error("No items in the cart!");
+            setToastActive(true);
+            setTimeout(() => setToastActive(false), 3000);
             return;
         }
 
-        const updatedCart: { [key: string]: { product_id: number; quantity: number; selectedPrice: number; order_id: number } } = { ...cart }; // Start with the existing cart context
+        // Validate that all selected products have a valid price and quantity
+        for (const product of formData.products) {
+            if (product.selectedPrice <= 0 || product.quantity <= 0) {
+                toast.error("Please select drink preference");
+                setToastActive(true);
+                setTimeout(() => setToastActive(false), 3000);
+                return;
+            }
+        }
+
+        const updatedCart: {
+            [key: string]: {
+                product_id: number;
+                quantity: number;
+                selectedPrice: number;
+                order_id: number;
+                price: number;
+            };
+        } = { ...cart }; // Start with the existing cart
 
         formData.products.forEach((product) => {
-            // Create a unique key for the combination of product_id and selectedPrice
             const uniqueKey = `${product.product_id}-${product.selectedPrice}`;
 
             if (updatedCart[uniqueKey]) {
-                // If the same preference already exists, increment the quantity
+                // Update existing item quantity
                 updatedCart[uniqueKey].quantity += product.quantity;
             } else {
-                // Otherwise, add it as a new row
+                // Add new item to cart
                 updatedCart[uniqueKey] = {
                     product_id: product.product_id,
-                    quantity: product.quantity,
+                    quantity: product.quantity || 1, // Default to 1 if quantity is undefined
                     selectedPrice: product.selectedPrice,
                     order_id: formData.order_id,
+                    price: product.selectedPrice,
                 };
             }
         });
 
-        updateCart(updatedCart); // Pass the updated cart object
-
+        // Update the cart in context
+        updateCart(updatedCart);
         toast.success("Items added to the cart!");
         setFormData((prevFormData) => ({
             ...prevFormData,
             products: [], // Clear formData after saving to the cart context
         }));
-        console.log("Context contains: ", updatedCart);
+
+        console.log("Updated Cart:", updatedCart); // Debugging log
     };
+
 
     const openProductModal = (product: Product) => {
         setSelectedProduct(product);
@@ -243,15 +317,16 @@ const AppMenu = () => {
     };
 
     return (
-        <div>
+        <div className="background">
             <Navbar />
-            <div className="m-14">
-                <HomeBanner />
+            <HomeBanner />
+
+            <div className="maindiv">
                 <form onSubmit={handleAddToCart}>
                     {Object.keys(groupedProducts).map((category) => (
                         <div key={category}>
                             <MenuRow label={category} />
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            <div className="seconddiv">
                                 {groupedProducts[category].map((product) => {
                                     const selectedCartItem =
                                         formData.products.find(
@@ -261,23 +336,20 @@ const AppMenu = () => {
                                     return (
                                         <div
                                             key={product.product_id}
-                                            className={`flex flex-col p-4 border rounded-lg shadow-md text-center ${visibility[product.product_id]
-                                                    ? "border-blue-500"
-                                                    : ""
-                                                }`}
+                                            className={`product-card ${visibility[product.product_id] ? "selected" : ""}`}
                                             onClick={() => openProductModal(product)}
                                         >
                                             <Image
-                                                className="object-contain w-full h-32"
+                                                className="product-image"
                                                 src={product.image_url}
                                                 alt={product.product_name}
                                                 width={128}
                                                 height={128}
                                             />
-                                            <span className="text-lg font-bold">
+                                            <span className="product-name">
                                                 {product.product_name}
                                             </span>
-                                            <div className="text-sm text-gray-500 mt-2">
+                                            <div className="product-prices">
                                                 {product.hotPrice > 0 && (
                                                     <span>Hot: {product.hotPrice}</span>
                                                 )}
@@ -293,19 +365,24 @@ const AppMenu = () => {
                                             </div>
                                             <button
                                                 type="button"
-                                                className="bg-gray-300 p-2 mt-4"
+                                                className="visibility-toggle-button"
                                                 onClick={(e) => {
                                                     e.stopPropagation(); // Prevents modal opening
                                                     handleVisibilityToggle(product.product_id);
                                                 }}
+
+
                                             >
-                                                <FiPlus size={20} />
+                                                {visibility[product.product_id] ? <FiArrowDown size={30} /> : <FiPlus size={30} />}
                                                 {visibility[product.product_id] && (
                                                     <div className="mt-4">
-                                                        <div className="grid grid-cols-2 gap-2 mt-2 pl-5 pr-5">
+                                                        <div className="price-selection-grid">
                                                             {product.hotPrice > 0 && (
                                                                 <label
-                                                                    className="flex items-center space-x-2 cursor-pointer"
+                                                                className={`price-selection-label ${
+                                                                    selectedCartItem.selectedPrice === product.hotPrice ? 'selected' : ''
+                                                                }`}
+                                                                    
                                                                     onClick={(e) => e.stopPropagation()}>
                                                                     <input
                                                                         type="radio"
@@ -326,7 +403,9 @@ const AppMenu = () => {
                                                             )}
                                                             {product.icedPrice > 0 && (
                                                                 <label
-                                                                    className="flex items-center space-x-2 cursor-pointer"
+                                                                className={`price-selection-label ${
+                                                                    selectedCartItem.selectedPrice === product.icedPrice ? 'selected' : ''
+                                                                }`}
                                                                     onClick={(e) => e.stopPropagation()}>
                                                                     <input
                                                                         type="radio"
@@ -347,7 +426,9 @@ const AppMenu = () => {
                                                             )}
                                                             {product.frappePrice > 0 && (
                                                                 <label
-                                                                    className="flex items-center space-x-2 cursor-pointer"
+                                                                className={`price-selection-label ${
+                                                                    selectedCartItem.selectedPrice === product.frappePrice ? 'selected' : ''
+                                                                }`}
                                                                     onClick={(e) => e.stopPropagation()}>
                                                                     <input
                                                                         type="radio"
@@ -368,7 +449,9 @@ const AppMenu = () => {
                                                             )}
                                                             {product.singlePrice > 0 && (
                                                                 <label
-                                                                    className="flex items-center space-x-2 cursor-pointer"
+                                                                className={`price-selection-label ${
+                                                                    selectedCartItem.selectedPrice === product.singlePrice ? 'selected' : ''
+                                                                }`}
                                                                     onClick={(e) => e.stopPropagation()}>
                                                                     <input
                                                                         type="radio"
@@ -388,14 +471,14 @@ const AppMenu = () => {
                                                                 </label>
                                                             )}
                                                         </div>
-                                                        <div className="flex items-center mt-2 space-x-2">
+                                                        <div className="quantity-controls">
                                                             <button
                                                                 type="button"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     decrementQuantity(product.product_id);
                                                                 }}
-                                                                className="px-3 py-1 rounded bg-gray-200"
+                                                                className="quantity-button"
                                                             >
                                                                 -
                                                             </button>
@@ -409,7 +492,7 @@ const AppMenu = () => {
                                                                         Math.max(0, parseInt(e.target.value))
                                                                     )
                                                                 }
-                                                                className="w-full pl-4 text-center border border-gray-300 rounded"
+                                                                className="quantity-input"
                                                             />
                                                             <button
                                                                 type="button"
@@ -417,7 +500,7 @@ const AppMenu = () => {
                                                                     e.stopPropagation();
                                                                     incrementQuantity(product.product_id);
                                                                 }}
-                                                                className="px-3 py-1 rounded bg-gray-200"
+                                                                className="quantity-button"
                                                             >
                                                                 +
                                                             </button>
@@ -425,7 +508,7 @@ const AppMenu = () => {
 
                                                         <button
                                                             onClick={(e) => e.stopPropagation()}
-                                                            className="bg-yellow-950 text-white px-4 py-2 rounded mt-2 hover:bg-blue-600 transition"
+                                                            className="add-to-cart-button"
                                                             type="submit"
                                                             disabled={uploading}
                                                         >
@@ -447,19 +530,20 @@ const AppMenu = () => {
                     title={selectedProduct?.product_name || "Product Details"}
                 >
                     {selectedProduct && (
-                        <div className="flex flex-col items-center">
+                        <div className="modal-content">
                             <Image
                                 src={selectedProduct.image_url}
                                 alt={selectedProduct.product_name}
                                 width={200}
                                 height={200}
-                                className="mb-4"
+                                className="modal-image"
                             />
-                            <p className="text-gray-600">{selectedProduct.description}</p>
+                            <p className="modal-description">{selectedProduct.description}</p>
                         </div>
                     )}
                 </Modal>
             </div>
+            <ToastContainer position="top-right" autoClose={5000} hideProgressBar newestOnTop closeOnClick />
         </div>
     );
 };

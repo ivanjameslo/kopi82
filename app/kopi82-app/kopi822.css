@@ -1,64 +1,168 @@
-/* Reset default margins and padding on html and body */
-html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    overflow-x: hidden; /* Prevent horizontal scrolling */
-    overflow-y: hidden; /* Prevent vertical scrolling */
-}
-
-/* Background container styling */
+/* Background Styling */
 .background {
-    @apply bg-[url('/kopimural3.jpg')] bg-cover bg-center flex justify-center items-center;
-    
-    /* Ensure the background covers the entire viewport height */
-    min-height: 100vh; /* For tailwind utility compatibility */
-    height: 100vh; /* Makes sure background fills viewport height */
-    width: 100vw; /* Ensures full width coverage */
-    overflow: hidden; /* Prevents scrollbars */
-
-    /* Fixes mobile-specific issues with background positioning */
-    background-attachment: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    height: 100vh;
+    width: 100vw;
+    background: url('/background.png') no-repeat center center;
+    background-size: cover;
+    position: relative;
 }
 
-/* Adjust container styles for mobile */
-@media (max-width: 640px) {
-    .background {
-        background-size: cover;
-        background-attachment: scroll; /* Changes to scroll on small screens to prevent overflow */
-        background-position: center; /* Keeps the image centered */
+/* Overlay for better contrast */
+.background::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(7, 7, 7, 0.841); /* Semi-transparent overlay using #2D2424 */
+    z-index: 0;
+}
+
+/* Squarebox Styling */
+.squarebox {
+    background: rgba(74, 40, 23, 0.912); /* Transparent background using #5C4033 */
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 15px rgba(45, 36, 36, 0.492); /* Shadow using #2D2424 */
+    max-width: 400px;
+    width: 90%;
+    z-index: 1;
+    text-align: center;
+    color: #DCD7C9; /* Light text color from palette */
+}
+
+/* Make squarebox fill more space on larger screens */
+@media (min-width: 1024px) {
+    .squarebox {
+        max-width: 600px;
+        padding: 3rem;
     }
 }
 
-
-.squarebox {
-    /* Default for mobile */
-    @apply bg-black bg-opacity-70 p-6 rounded-lg text-white text-center w-full max-w-sm;
-
-    /* Larger screens */
-    @apply sm:p-8 md:p-12 lg:w-[80%] lg:max-w-lg;
+/* Logo Styling */
+img {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+    filter: invert(100%) brightness(120%);
 }
 
-.squarebox1 {
-    /* Default for mobile */
-    @apply border border-gray-200 p-6 rounded-md bg-transparent;
-
-    /* Larger screens */
-    @apply sm:p-8 md:p-10;
+/* Title Styling */
+h1 {
+    font-size: 2rem; /* Text size equivalent to text-3xl */
+    font-weight: bold;
+    margin-top: 1rem;
+    color: #DCD7C9; /* Use palette */
 }
 
-.radio {
-    /* Default for mobile */
-    @apply mb-4 flex justify-center space-x-4;
-
-    /* Larger screens */
-    @apply sm:space-x-6 md:space-x-8;
+/* Input Field */
+input[type="text"] {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background: #C4A484; /* Background from palette */
+    border: 1px solid #967969; /* Border from palette */
+    color: #2D2424; /* Text color from palette */
+    text-align: center;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s ease;
 }
 
-.button {
-    /* Default for mobile */
-    @apply bg-white text-black px-4 py-2 rounded hover:bg-gray-300 transition;
+input[type="text"]::placeholder {
+    color: #5C4033; /* Placeholder color */
+}
 
-    /* Larger screens */
-    @apply sm:px-6 sm:py-2;
+input[type="text"]:focus {
+    border-color: #DCD7C9; /* Highlight border */
+    box-shadow: 0 0 10px #DCD7C9; /* Focus glow */
+}
+
+/* Radio Buttons Container */
+.flex {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+}
+
+label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #DCD7C9; /* Text color from palette */
+    font-size: 1rem;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+input[type="radio"] {
+    display: none; /* Hide default radio button */
+}
+
+label input:checked + span {
+    color: #C4A484; /* Highlighted text color from palette */
+    font-weight: bold;
+}
+
+/* Button */
+button {
+    padding: 1rem 2rem;
+    background: #967969; /* Button background from palette */
+    color: #DCD7C9; /* Button text color */
+    font-weight: bold;
+    border-radius: 9999px; /* Full rounded */
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background: #C4A484; /* Hover background */
+    box-shadow: 0 4px 15px rgba(92, 64, 51, 0.5); /* Hover shadow */
+}
+
+button:disabled {
+    background: #5C4033; /* Disabled background */
+    cursor: not-allowed;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.loading-spinner svg {
+    width: 2rem;
+    height: 2rem;
+    color: #DCD7C9; /* Spinner color */
+}
+
+.loading-spinner p {
+    margin-top: 0.5rem;
+    font-size: 1rem;
+    color: #DCD7C9; /* Spinner text color */
+}
+
+/* Responsive Design */
+
+/* Mobile */
+@media (max-width: 640px) {
+    .squarebox {
+        padding: 1rem;
+        width: 90%;
+    }
+
+    input[type="text"] {
+        font-size: 0.875rem;
+    }
+
+    button {
+        font-size: 0.875rem;
+        padding: 0.75rem 1.5rem;
+    }
 }
