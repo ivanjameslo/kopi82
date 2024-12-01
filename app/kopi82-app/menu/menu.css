@@ -1,0 +1,290 @@
+/* Main container */
+.background {
+    background-color: #fdf8f4;
+    font-family: 'Arial', sans-serif;
+}
+
+
+.maindiv {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+
+/* Product grid container */
+.seconddiv {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive grid */
+    gap: 20px;
+    max-width: 1200px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+
+/* Responsive styles for product grid */
+@media (max-width: 768px) {
+    .seconddiv {
+        grid-template-columns: repeat(2, 1fr); /* Two columns per row */
+        gap: 16px;
+    }
+}
+
+
+@media (max-width: 480px) {
+    .seconddiv {
+        grid-template-columns: repeat(1, 1fr); /* One column per row for small screens */
+        gap: 16px;
+    }
+}
+
+
+/* Product card */
+.product-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px; /* Increased padding */
+    border: none;
+    border-radius: 12px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Softer shadow */
+    text-align: left;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+
+.product-card:hover {
+    transform: translateY(-6px); /* Slight lift on hover */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+
+/* Product image */
+.product-image {
+    object-fit: contain;
+    width: 100%;
+    height: 160px; /* Slightly larger height */
+    margin-bottom: 12px;
+    border-radius: 8px;
+    background-color: #f5f5f5;
+}
+
+
+/* Product name */
+.product-name {
+    font-size: 1.2rem; /* Larger font */
+    font-weight: bold;
+    margin: 10px 0; /* More spacing around */
+    color: #2d3748;
+}
+
+
+/* Price selection grid */
+.price-selection-grid {
+    display: flex;
+    flex-direction: column; /* Stack options vertically */
+    align-items: flex-start;
+    gap: 20px; /* Add more space between options */
+    margin-top: 16px;
+    width: 100%;
+}
+
+
+.price-selection-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    color: #4b5563;
+    cursor: pointer;
+    padding: 10px 14px;
+    background-color: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    width: 100%;
+}
+
+
+.price-selection-label:hover {
+    background-color: #967969; /* Brown hover color */
+    color: white;
+}
+.price-selection-label.selected {
+    background-color: #5C4033; /* Persistent brown color */
+    color: white;
+    border-color: #5C4033; /* Optional border color for selected */
+}
+
+
+.price-selection-label input[type="radio"] {
+    display: none;
+}
+
+
+/* Quantity controls */
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    margin-top: 16px;
+    width: 100%;
+}
+
+
+.quantity-button {
+    background-color: #C4A484; /* Apply theme color */
+    border: none;
+    border-radius: 50%;
+    width: 48px; /* Slightly larger circular button */
+    height: 48px;
+    font-size: 1.4rem; /* Larger font */
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+
+.quantity-button:hover {
+    background-color: #967969; /* Apply theme color for hover */
+    transform: scale(1.1);
+}
+
+
+.quantity-input {
+    width: 75px; /* Wider input */
+    height: 41px; /* Taller input */
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    font-size: 1.2rem; /* Larger font size */
+    border-radius: 6px;
+}
+
+
+/* Add to cart button */
+.add-to-cart-button {
+    background-color: #2D2424; /* Apply theme color */
+    color: white;
+    padding: 12px 20px; /* Larger padding */
+    border-radius: 8px;
+    margin-top: 16px;
+    cursor: pointer;
+    font-size: 1rem; /* Slightly larger font */
+    font-weight: bold;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    width: 100%;
+}
+
+
+.add-to-cart-button:hover {
+    background-color: #5C4033; /* Apply hover color from theme */
+    transform: scale(1.05);
+}
+
+
+/* Responsive Styles for Mobile */
+@media (max-width: 480px) {
+    .product-card {
+        flex-direction: column; /* Ensure everything stacks vertically */
+        align-items: flex-start;
+    }
+
+
+    .product-name {
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+    }
+
+
+    .price-selection-grid {
+        gap: 12px; /* Adjust spacing for very small screens */
+        margin-top: 16px;
+    }
+
+
+    .quantity-controls {
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+
+    .quantity-button {
+        width: 42px;
+        height: 42px;
+        font-size: 1.2rem;
+    }
+
+
+    .quantity-input {
+        width: 64px;
+        height: 42px;
+        font-size: 1.1rem;
+    }
+
+
+    .add-to-cart-button {
+        font-size: 0.95rem;
+        padding: 10px 14px;
+    }
+}
+
+
+/* Plus toggle button */
+.toggle-button {
+    background-color: #DCD7C9; /* Light background from theme */
+    border: 1px solid #e2e8f0;
+    border-radius: 50%; /* Circular button */
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #2D2424; /* Dark color from theme */
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin-top: 12px;
+}
+
+
+.toggle-button:hover {
+    background-color: #5C4033;
+    color: white;
+    transform: scale(1.1);
+}
+
+
+.toggle-button:active {
+    transform: scale(0.95);
+}
+
+
+/* Expanded section styling */
+.expanded-section {
+    margin-top: 16px;
+    width: 100%;
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+
+.expanded-section.active {
+    display: flex; /* Show when active */
+}
+
+
+.extra-content {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}

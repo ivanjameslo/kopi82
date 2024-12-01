@@ -1,5 +1,6 @@
 "use client";
 
+
 import { useCartContext } from "../../context/cartContext";
 import { useEffect, useState } from "react";
 import Image from "next/image";
@@ -7,6 +8,8 @@ import { toast } from "react-toastify";
 import crypto from "crypto";
 import { useRouter } from "next/navigation";
 import CardForm from "./cardForm/page";
+import "./payment.css";
+
 
 interface PaymentData {
     payment_method: string;
@@ -23,6 +26,7 @@ interface PaymentData {
     discount: DiscountData;
 }
 
+
 interface OrderData {
     order_id: number;
     customer_name: string;
@@ -34,12 +38,14 @@ interface OrderData {
     }[]
 }
 
+
 interface DiscountData {
     discount_id: number;
     discount_name: string;
     discount_rate: number;
     status: string;
 }
+
 
 const PaymentPage = () => {
     const { cart, order_id } = useCartContext();
@@ -67,12 +73,14 @@ const PaymentPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+
     const fetchOrderDetails = async () => {
         if (!order_id) {
             console.error("order_id is missing. Cannot fetch order details.");
             setError("Order ID is missing. Please try again.");
             return;
         }
+
 
         setLoading(true);
         try {
@@ -83,11 +91,13 @@ const PaymentPage = () => {
                 },
             });
 
+
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error("Error response from server:", errorData);
                 throw new Error("Failed to fetch order details");
             }
+
 
             const data = await response.json();
             setOrderDetails(data);
@@ -99,6 +109,7 @@ const PaymentPage = () => {
         }
     };
 
+
     useEffect(() => {
         if (!order_id) {
             console.error("order_id is undefined or null");
@@ -106,6 +117,7 @@ const PaymentPage = () => {
         }
         fetchOrderDetails();
     }, [order_id]);
+
 
     const fetchDiscounts = async () => {
         setLoading(true);
@@ -124,9 +136,11 @@ const PaymentPage = () => {
         }
     };
 
+
     useEffect(() => {
         fetchDiscounts();
     }, [])
+
 
     const handleDiscountChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedId = parseInt(e.target.value);
@@ -137,10 +151,12 @@ const PaymentPage = () => {
         }
     };
 
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setPayment((prev) => ({ ...prev, [name]: value }));
     };
+
 
     // Calculate subtotal
     const calculateSubtotal = () => {
@@ -149,33 +165,35 @@ const PaymentPage = () => {
         }, 0).toFixed(2);
     };
 
+
     // Calculate total after discount
     const calculateTotal = () => {
         const subtotal = parseFloat(calculateSubtotal());
-
         let discountAmount = 0;
-
+   
         if (payment.discount_id === 1 || payment.discount_id === 2) {
-            // Apply discount to only one product (e.g., the most expensive one)
             const mostExpensiveProduct = orderDetails.reduce((max, item) =>
                 item.price > max.price ? item : max
             );
-
             if (mostExpensiveProduct) {
                 discountAmount =
                     mostExpensiveProduct.price * (discountPercentage / 100);
             }
         } else {
-            // Apply discount to the entire order
             discountAmount = subtotal * (discountPercentage / 100);
         }
-
+   
         const total = subtotal - discountAmount;
         return total > 0 ? total.toFixed(2) : "0.00";
     };
+   
+
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+       
+        // Calculate the total amount
+        const totalAmount = calculateTotal();
    
         try {
             // Validate order_id
@@ -189,6 +207,10 @@ const PaymentPage = () => {
                 toast.error("Please select a payment method.");
                 return;
             }
+
+
+           
+;
    
             // Construct the payment data
             const generatedCode = crypto.randomBytes(4).toString("hex").toUpperCase();
@@ -201,6 +223,7 @@ const PaymentPage = () => {
                 discount_id: discountId,
                 generated_code: generatedCode,
                 createdAt: new Date(),
+                amount: totalAmount,
             };
    
             // Add additional fields based on the payment method
@@ -220,8 +243,11 @@ const PaymentPage = () => {
                 paymentData.account_number = payment.account_number;
                 paymentData.account_name = payment.account_name;
                 paymentData.cvv = payment.cvv;
-                paymentData.expiry_date = payment.expiry_date;
+                paymentData.expiry_date = new Date(`${payment.expiry_date}-01T00:00:00Z`).toISOString();
             }
+
+
+            paymentData.amount = totalAmount; // Persist total amount here
    
             // Log the payment data for debugging
             console.log("Payment Data Sent:", paymentData);
@@ -244,10 +270,11 @@ const PaymentPage = () => {
                 }
                 throw new Error(errorMessage);
             }
-            
+           
    
             const result = await response.json();
             console.log("Payment updated successfully:", result);
+
 
             // Trigger stock-out using the stock_out_payment API
             // const stockOutResponse = await fetch(`/api/stock_out_payment`, {
@@ -255,6 +282,7 @@ const PaymentPage = () => {
             //     headers: { "Content-Type": "application/json" },
             //     body: JSON.stringify({ payment_id: result.payment_id }),
             // });
+
 
             // if (!stockOutResponse.ok) {
             //     const stockOutError = await stockOutResponse.json();
@@ -281,29 +309,29 @@ const PaymentPage = () => {
                 return <CardForm payment={payment} handleChange={handleChange} />;
             case "gcash":
                 return (
-                    <div className="mt-4">
-                        <h3 className="text-lg font-bold mb-2">GCash Payment</h3>
+                    <div className="payment-method-gcash">
+                        <h3 className="payment-method-title">GCash Payment</h3>
                         <input
                             type="text"
                             name="reference_no"
                             value={payment.reference_no}
                             onChange={handleChange}
                             placeholder="GCash Reference Number"
-                            className="w-full p-2 border rounded"
+                            className="payment-method-input"
                         />
                     </div>
                 );
             case "paymaya":
                 return (
-                    <div className="mt-4">
-                        <h3 className="text-lg font-bold mb-2">PayMaya Payment</h3>
+                    <div className="payment-method-paymaya">
+                        <h3 className="payment-method-title">PayMaya Payment</h3>
                         <input
                             type="text"
                             name="reference_no"
                             value={payment.reference_no}
                             onChange={handleChange}
                             placeholder="PayMaya Reference Number"
-                            className="w-full p-2 border rounded"
+                            className="payment-method-input"
                         />
                     </div>
                 );
@@ -313,24 +341,27 @@ const PaymentPage = () => {
     };
 
 
+   
+
+
     return (
-        <div className="m-14">
-            <h1 className="text-2xl font-bold">Payment</h1>
+        <div className="page-wrapper">
+            <h1 className="page-header">Payment</h1>
             {loading ? (
-                <p className="text-gray-600 mt-4">Loading...</p>
+                <p className="loading-message">Loading...</p>
             ) : error ? (
-                <p className="text-red-500">{error}</p>
+                <p className="error-message">{error}</p>
             ) : (
                 <div>
-                    <p className="text-gray-600">Order ID: {order_id}</p>
-                    <table className="w-full table-auto border-collapse border border-gray-300 mt-6">
+                    <p className="order-id">Order ID: {order_id}</p>
+                    <table className="table">
                         <thead>
                             <tr>
-                                <th className="border border-gray-300 px-4 py-2">Product</th>
-                                <th className="border border-gray-300 px-4 py-2">Drink Preference</th>
-                                <th className="border border-gray-300 px-4 py-2">Quantity</th>
-                                <th className="border border-gray-300 px-4 py-2">Price</th>
-                                <th className="border border-gray-300 px-4 py-2">Total</th>
+                                <th className="table-header">Product</th>
+                                <th className="table-header">Drink Preference</th>
+                                <th className="table-header">Quantity</th>
+                                <th className="table-header">Price</th>
+                                <th className="table-header">Total</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -342,9 +373,11 @@ const PaymentPage = () => {
                                 else if (item.frappePrice === item.price) drinkPreference = "Frappe";
                                 else if (item.singlePrice === item.price) drinkPreference = "Single";
 
+
                                 return (
                                     <tr key={index}>
-                                        <td className="border border-gray-300 px-4 py-2 flex items-center space-x-4">
+                                        <td className="table-cell">
+                                            <div className="product-info">
                                             <Image
                                                 src={item.image_url || "/placeholder.png"}
                                                 alt={item.product_name || "Product image"}
@@ -353,17 +386,19 @@ const PaymentPage = () => {
                                                 className="rounded"
                                             />
                                             <span>{item.product_name}</span>
+                                            </div>
+ 
                                         </td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">
+                                        <td className="table-cell">
                                             {drinkPreference}
                                         </td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">
+                                        <td className="table-cell">
                                             {item.quantity || 0}
                                         </td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">
+                                        <td className="table-cell">
                                             ₱{item.price?.toFixed(2) || "0.00"}
                                         </td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">
+                                        <td className="table-cell">
                                             ₱{(item.quantity * item.price).toFixed(2) || "0.00"}
                                         </td>
                                     </tr>
@@ -372,14 +407,13 @@ const PaymentPage = () => {
                         </tbody>
                     </table>
 
-                    <div className="mt-6 text-right">
-                        <p className="text-lg font-bold">Subtotal: ₱{calculateSubtotal()}</p>
-                    </div>
 
-                    <div className="mt-6">
-                        <h2 className="text-lg font-bold">Discount</h2>
+                    <div className="discount-section">
+                        <p className="text-lg font-bold">Subtotal: ₱{calculateSubtotal()}</p>
+                         
+                        <h2 className="discount-title">Discount</h2>
                         <select
-                            className="w-full p-2 mt-2 border rounded"
+                            className="discount-dropdown"
                             value={payment.discount_id || ""}
                             name="discount_id"
                             onChange={(e) => {
@@ -407,28 +441,35 @@ const PaymentPage = () => {
                         </select>
                     </div>
 
-                    <div className="mt-6 text-right">
-                        <p className="text-lg font-bold">Total: ₱{calculateTotal()}</p>
+
+                    <div className="totals">
+                        <p className="subtotal">Total: ₱{calculateTotal()}</p>
                     </div>
 
-                    <form onSubmit={handleSubmit}>
+
+                    <form onSubmit={handleSubmit} className="payment-form">
                         <div className="mt-6">
-                            <h2 className="text-lg font-bold">Select Payment Method</h2>
+                            <h2 className="payment-title">Select Payment Method</h2>
                             <select
-                                className="w-full p-2 mt-2 border rounded"
+                                className="payment-method-select"
                                 value={paymentMethod}
                                 onChange={(e) => setPaymentMethod(e.target.value)}
                             >
+                                <option value="">Select Payment Method</option>
+                                <option value="otc">Over-the-Counter</option>
                                 <option value="card">Card/Debit</option>
                                 <option value="gcash">GCash</option>
                                 <option value="paymaya">PayMaya</option>
                             </select>
                         </div>
 
+
+                       
                         {renderPaymentForm()}
                         <button
                             type="submit"
-                            className="mt-6 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                            className="submit-button"
+
 
                         >
                             Confirm Payment
@@ -440,4 +481,6 @@ const PaymentPage = () => {
     );
 };
 
+
 export default PaymentPage;
+

@@ -125,6 +125,7 @@ export async function POST(request: NextRequest){
             generated_code,
             createdAt,
             order_id,
+            discount_id,
         } = res;
         console.log("Data to Insert:", res);
         const createdPayment = await prisma.payment.create({
@@ -142,6 +143,9 @@ export async function POST(request: NextRequest){
                 createdAt: new Date(createdAt),
                 order: {
                     connect: { order_id: parseInt(order_id) },
+                },
+                discount: {
+                    connect: { discount_id: parseInt(discount_id) },
                 }
             },
             include: {
