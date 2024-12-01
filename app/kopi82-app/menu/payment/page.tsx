@@ -1,15 +1,14 @@
 "use client";
 
-
 import { useCartContext } from "../../context/cartContext";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import crypto from "crypto";
 import { useRouter } from "next/navigation";
-import CardForm from "./cardForm/page";
+// import CardForm from "./cardForm/page";
+import "react-toastify/dist/ReactToastify.css";
 import "./payment.css";
-
 
 interface PaymentData {
     payment_method: string;
@@ -26,7 +25,6 @@ interface PaymentData {
     discount: DiscountData;
 }
 
-
 interface OrderData {
     order_id: number;
     customer_name: string;
@@ -38,14 +36,12 @@ interface OrderData {
     }[]
 }
 
-
 interface DiscountData {
     discount_id: number;
     discount_name: string;
     discount_rate: number;
     status: string;
 }
-
 
 const PaymentPage = () => {
     const { cart, order_id } = useCartContext();
@@ -72,7 +68,7 @@ const PaymentPage = () => {
     const [confirmationCode, setConfirmationCode] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
+    const [toastActive, setToastActive] = useState(false);
 
     const fetchOrderDetails = async () => {
         if (!order_id) {
@@ -80,7 +76,6 @@ const PaymentPage = () => {
             setError("Order ID is missing. Please try again.");
             return;
         }
-
 
         setLoading(true);
         try {
@@ -91,13 +86,11 @@ const PaymentPage = () => {
                 },
             });
 
-
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error("Error response from server:", errorData);
                 throw new Error("Failed to fetch order details");
             }
-
 
             const data = await response.json();
             setOrderDetails(data);
@@ -109,7 +102,6 @@ const PaymentPage = () => {
         }
     };
 
-
     useEffect(() => {
         if (!order_id) {
             console.error("order_id is undefined or null");
@@ -117,7 +109,6 @@ const PaymentPage = () => {
         }
         fetchOrderDetails();
     }, [order_id]);
-
 
     const fetchDiscounts = async () => {
         setLoading(true);
@@ -136,11 +127,9 @@ const PaymentPage = () => {
         }
     };
 
-
     useEffect(() => {
         fetchDiscounts();
     }, [])
-
 
     const handleDiscountChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedId = parseInt(e.target.value);
@@ -151,12 +140,10 @@ const PaymentPage = () => {
         }
     };
 
-
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setPayment((prev) => ({ ...prev, [name]: value }));
     };
-
 
     // Calculate subtotal
     const calculateSubtotal = () => {
@@ -165,12 +152,11 @@ const PaymentPage = () => {
         }, 0).toFixed(2);
     };
 
-
     // Calculate total after discount
     const calculateTotal = () => {
         const subtotal = parseFloat(calculateSubtotal());
         let discountAmount = 0;
-   
+
         if (payment.discount_id === 1 || payment.discount_id === 2) {
             const mostExpensiveProduct = orderDetails.reduce((max, item) =>
                 item.price > max.price ? item : max
@@ -182,40 +168,40 @@ const PaymentPage = () => {
         } else {
             discountAmount = subtotal * (discountPercentage / 100);
         }
-   
+
         const total = subtotal - discountAmount;
         return total > 0 ? total.toFixed(2) : "0.00";
     };
-   
 
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-       
+
         // Calculate the total amount
         const totalAmount = calculateTotal();
-   
+
         try {
             // Validate order_id
             if (!order_id) {
                 toast.error("Order ID is missing.");
                 return;
             }
-   
+
             // Validate payment method
             if (!paymentMethod) {
-                toast.error("Please select a payment method.");
+                toast.error("Please select a payment method.", {
+                    position: "top-center",
+                    autoClose: 3000,
+                    hideProgressBar: true,
+
+                });
                 return;
-            }
+            };
 
-
-           
-;
-   
             // Construct the payment data
             const generatedCode = crypto.randomBytes(4).toString("hex").toUpperCase();
             const discountId = discounts.find((d) => d.discount_rate === discountPercentage)?.discount_id ?? null;
-   
+
             const paymentData: any = {
                 payment_method: paymentMethod,
                 payment_status: "pending",
@@ -225,40 +211,23 @@ const PaymentPage = () => {
                 createdAt: new Date(),
                 amount: totalAmount,
             };
-   
-            // Add additional fields based on the payment method
-            if (paymentMethod === "gcash" || paymentMethod === "paymaya") {
-                if (!payment.reference_no) {
-                    toast.error("Please enter a reference number for e-wallet payment.");
-                    return;
-                }
-                paymentData.reference_no = payment.reference_no;
-            }
-   
-            if (paymentMethod === "card") {
-                if (!payment.account_number || !payment.account_name || !payment.cvv || !payment.expiry_date) {
-                    toast.error("Please fill in all card details.");
-                    return;
-                }
-                paymentData.account_number = payment.account_number;
-                paymentData.account_name = payment.account_name;
-                paymentData.cvv = payment.cvv;
-                paymentData.expiry_date = new Date(`${payment.expiry_date}-01T00:00:00Z`).toISOString();
-            }
 
-
+            paymentData.payment_method = paymentMethod;
+            if (!paymentMethod) {
+                toast.error("Please select a payment method.");
+                return;
+            }
             paymentData.amount = totalAmount; // Persist total amount here
-   
+
             // Log the payment data for debugging
             console.log("Payment Data Sent:", paymentData);
-   
+
             // Send the PATCH request
             const response = await fetch(`/api/payment`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(paymentData),
             });
-   
             if (!response.ok) {
                 let errorMessage = "Failed to update payment.";
                 try {
@@ -270,11 +239,9 @@ const PaymentPage = () => {
                 }
                 throw new Error(errorMessage);
             }
-           
-   
+
             const result = await response.json();
             console.log("Payment updated successfully:", result);
-
 
             // Trigger stock-out using the stock_out_payment API
             // const stockOutResponse = await fetch(`/api/stock_out_payment`, {
@@ -282,7 +249,6 @@ const PaymentPage = () => {
             //     headers: { "Content-Type": "application/json" },
             //     body: JSON.stringify({ payment_id: result.payment_id }),
             // });
-
 
             // if (!stockOutResponse.ok) {
             //     const stockOutError = await stockOutResponse.json();
@@ -293,7 +259,6 @@ const PaymentPage = () => {
             //     console.log("Stock-out processed successfully:", stockOutResult);
             //     toast.success("Payment and stock-out processed successfully!");
             // }
-   
             toast.success("Payment successfully processed!");
             router.push(`/kopi82-app/menu/payment/generatecode/${generatedCode}`);
             setConfirmationCode(generatedCode);
@@ -302,47 +267,6 @@ const PaymentPage = () => {
             toast.error(error.message || "An error occurred during payment.");
         }
     };
-   
-    const renderPaymentForm = () => {
-        switch (paymentMethod) {
-            case "card":
-                return <CardForm payment={payment} handleChange={handleChange} />;
-            case "gcash":
-                return (
-                    <div className="payment-method-gcash">
-                        <h3 className="payment-method-title">GCash Payment</h3>
-                        <input
-                            type="text"
-                            name="reference_no"
-                            value={payment.reference_no}
-                            onChange={handleChange}
-                            placeholder="GCash Reference Number"
-                            className="payment-method-input"
-                        />
-                    </div>
-                );
-            case "paymaya":
-                return (
-                    <div className="payment-method-paymaya">
-                        <h3 className="payment-method-title">PayMaya Payment</h3>
-                        <input
-                            type="text"
-                            name="reference_no"
-                            value={payment.reference_no}
-                            onChange={handleChange}
-                            placeholder="PayMaya Reference Number"
-                            className="payment-method-input"
-                        />
-                    </div>
-                );
-            default:
-                return null;
-        }
-    };
-
-
-   
-
 
     return (
         <div className="page-wrapper">
@@ -373,21 +297,20 @@ const PaymentPage = () => {
                                 else if (item.frappePrice === item.price) drinkPreference = "Frappe";
                                 else if (item.singlePrice === item.price) drinkPreference = "Single";
 
-
                                 return (
                                     <tr key={index}>
                                         <td className="table-cell">
                                             <div className="product-info">
-                                            <Image
-                                                src={item.image_url || "/placeholder.png"}
-                                                alt={item.product_name || "Product image"}
-                                                width={50}
-                                                height={50}
-                                                className="rounded"
-                                            />
-                                            <span>{item.product_name}</span>
+                                                <Image
+                                                    src={item.image_url || "/placeholder.png"}
+                                                    alt={item.product_name || "Product image"}
+                                                    width={50}
+                                                    height={50}
+                                                    className="rounded"
+                                                />
+                                                <span>{item.product_name}</span>
                                             </div>
- 
+
                                         </td>
                                         <td className="table-cell">
                                             {drinkPreference}
@@ -407,10 +330,9 @@ const PaymentPage = () => {
                         </tbody>
                     </table>
 
-
                     <div className="discount-section">
-                        <p className="text-lg font-bold">Subtotal: ₱{calculateSubtotal()}</p>
-                         
+                        <p className="subtotal">Subtotal: ₱{calculateSubtotal()}</p>
+
                         <h2 className="discount-title">Discount</h2>
                         <select
                             className="discount-dropdown"
@@ -441,11 +363,9 @@ const PaymentPage = () => {
                         </select>
                     </div>
 
-
                     <div className="totals">
                         <p className="subtotal">Total: ₱{calculateTotal()}</p>
                     </div>
-
 
                     <form onSubmit={handleSubmit} className="payment-form">
                         <div className="mt-6">
@@ -464,12 +384,10 @@ const PaymentPage = () => {
                         </div>
 
 
-                       
-                        {renderPaymentForm()}
+                        {/* {renderPaymentForm()} */}
                         <button
                             type="submit"
                             className="submit-button"
-
 
                         >
                             Confirm Payment
@@ -477,10 +395,12 @@ const PaymentPage = () => {
                     </form>
                 </div>
             )}
+            <ToastContainer
+                position="top-center"
+            />
+
         </div>
     );
 };
 
-
 export default PaymentPage;
-
