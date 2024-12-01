@@ -28,7 +28,10 @@ export async function GET(
 ) {
   const id = params.id;
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
   try {
     const orderDetails = await prisma.order_details.findMany({
       where: {
@@ -55,7 +58,10 @@ export async function GET(
       },
     });
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
     // Transform the response for easier frontend consumption
     const transformedDetails = orderDetails.map((detail) => ({
       product_id: detail.product.product_id,
@@ -71,7 +77,10 @@ export async function GET(
       service_type: detail.order?.service_type || "Unknown",
     }));
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
     return NextResponse.json(transformedDetails);
   } catch (error) {
     console.error("Error fetching order details:", error);

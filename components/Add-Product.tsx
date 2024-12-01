@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, ChangeEvent, FormEvent } from "react";
+import React, { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ImageIcon } from "lucide-react";
+import Select, { MultiValue } from "react-select";
 import {
-  Select,
+  Select as UISelect,
   SelectContent,
   SelectItem,
   SelectTrigger,
@@ -23,6 +24,15 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "../lib/initSupabase";
 import { toast } from "react-toastify";
+
+interface SelectedItem {
+  item_id: number;
+  item_name: string;
+  description: string;
+  required_quantity: number;
+  status: string;
+}
+
 
 export default function AddProduct() {
   const router = useRouter();
@@ -39,9 +49,58 @@ export default function AddProduct() {
     description: "",
   });
 
+  const [inventoryItems, setInventoryItems] = useState<SelectedItem[]>([]);
+  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
+
+  const [item, setItem] = useState<SelectedItem[]>([]);
+
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  const fetchItem = async () => {
+    try {
+        const response = await fetch('/api/item', { method: 'GET' });
+        const data = await response.json();
+        setItem(data);
+    } catch (error) {
+        console.error('Failed to fetch items', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchItem();
+  }, []);
+
+  const handleSelectItem = (
+    newValue: MultiValue<{
+      value: number;
+      label: string;
+      description: string;
+      required_quantity: number;
+      status: string;
+    }>
+  ) => {
+    const selected = newValue.map((option) => ({
+      item_id: option.value,
+      item_name: option.label,
+      description: option.description,
+      required_quantity: option.required_quantity || 1,
+      status: option.status,
+    }));
+    setSelectedItems(selected);
+    console.log("Selected Items:", selected); 
+  };
+  
+  const handleQuantityChange = (item_id: number, quantity: string) => {
+    const updatedItems = selectedItems.map((item) =>
+      item.item_id === item_id
+        ? { ...item, required_quantity: parseInt(quantity, 10) }
+        : item
+    );
+    setSelectedItems(updatedItems);
+    console.log("Updated Items:", updatedItems);
+  };
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -71,66 +130,74 @@ export default function AddProduct() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setUploading(true);
-
+  
     let imageUrl = "";
-
+  
     try {
       if (imageFile) {
         const { data, error } = await supabase.storage
           .from("ProductImages")
           .upload(`uploads/${Date.now()}_${imageFile.name}`, imageFile);
-
+  
         if (error) {
-          throw new Error("Error uploading image: " + error.message);
+          console.error("Error uploading image:", error);
+          throw new Error("Failed to upload image");
         }
-
+  
         const { data: publicUrlData } = supabase
           .storage
           .from("ProductImages")
           .getPublicUrl(data.path);
-
+  
         imageUrl = publicUrlData.publicUrl;
       }
-
+  
+      const payload = {
+        image_url: imageUrl,
+        category: formData.category,
+        product_name: formData.product_name,
+        type: formData.type,
+        hotPrice: Number(formData.hotPrice),
+        icedPrice: Number(formData.icedPrice),
+        frappePrice: Number(formData.frappePrice),
+        singlePrice: Number(formData.singlePrice),
+        status: "Widely Available",
+        description: formData.description,
+        selectedItems,
+      };
+  
+      console.log("Payload being sent:", payload);
+  
       const response = await fetch("/api/product", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          image_url: imageUrl,
-          category: formData.category,
-          product_name: formData.product_name,
-          type: formData.type,
-          hotPrice: Number(formData.hotPrice),
-          icedPrice: Number(formData.icedPrice),
-          frappePrice: Number(formData.frappePrice),
-          singlePrice: Number(formData.singlePrice),
-          status: formData.status,
-          description: formData.description,
-        }),
+        body: JSON.stringify(payload),
       });
-
-      if (response.ok) {
-        // Redirect to the existing Products page
-        toast.success("Product added successfully");
-        setTimeout(() => {
-          router.push('/Menu');
-      }, 1500);
-      } else {
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Error from server:", errorData);
         toast.error("Failed to add product");
+        return;
       }
+  
+      toast.success("Product added successfully");
+      setTimeout(() => {
+        router.push("/Menu");
+      }, 1500);
     } catch (error) {
       console.error("Error submitting form:", error);
     } finally {
       setUploading(false);
     }
-  };
+  };  
 
   const renderPriceInputs = () => {
     switch (formData.category) {
-      case "klassic-kopi":
-      case "non-kopi":
+      case "Klassic Kopi":
+      case "Non Kopi":
         return (
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
@@ -177,7 +244,7 @@ export default function AddProduct() {
             </div>
           </div>
         );
-      case "fusion-teas":
+      case "Fusion Teas":
         return (
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -295,7 +362,7 @@ export default function AddProduct() {
                 <Label htmlFor="category" className="text-white">
                   Category
                 </Label>
-                <Select
+                <UISelect
                   value={formData.category}
                   onValueChange={(value) => handleSelectChange("category", value)}
                 >
@@ -303,41 +370,48 @@ export default function AddProduct() {
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="klassic-kopi">Klassic Kopi</SelectItem>
-                    <SelectItem value="kold-brew">Kold Brew</SelectItem>
-                    <SelectItem value="non-kopi">Non Kopi</SelectItem>
-                    <SelectItem value="fusion-teas">Fusion Teas</SelectItem>
-                    <SelectItem value="beer">Beer</SelectItem>
-                    <SelectItem value="all-day-breakfast">
-                      All-Day Breakfast
-                    </SelectItem>
-                    <SelectItem value="rice-meals">Rice Meals</SelectItem>
-                    <SelectItem value="pasta">Pasta</SelectItem>
-                    <SelectItem value="pizza">Pizza</SelectItem>
-                    <SelectItem value="pica-pica">Pica Pica</SelectItem>
-                    <SelectItem value="sandwiches">Sandwiches</SelectItem>
+                    <SelectItem value="Klassic Kopi">Klassic Kopi</SelectItem>
+                    <SelectItem value="Kold-Brew">Kold Brew</SelectItem>
+                    <SelectItem value="Non Kopi">Non Kopi</SelectItem>
+                    <SelectItem value="Fusion Teas">Fusion Teas</SelectItem>
+                    <SelectItem value="Beer">Beer</SelectItem>
+                    <SelectItem value="All-Day-Breakfast">All-Day Breakfast</SelectItem>
+                    <SelectItem value="Rice-Meals">Rice Meals</SelectItem>
+                    <SelectItem value="Pasta">Pasta</SelectItem>
+                    <SelectItem value="Pizza">Pizza</SelectItem>
+                    <SelectItem value="Pica-Pica">Pica Pica</SelectItem>
+                    <SelectItem value="Sandwiches">Sandwiches</SelectItem>
                   </SelectContent>
-                </Select>
+                </UISelect>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="status" className="text-white">
-                  Status
-                </Label>
+
+              {/* Multi-Select for Items */}
+              <div>
+                <Label className="text-white">Select Items</Label>
                 <Select
-                  value={formData.status}
-                  onValueChange={(value) => handleSelectChange("status", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select availability" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="widely-available">
-                      Widely Available
-                    </SelectItem>
-                    <SelectItem value="low-in-stock">Low in Stock</SelectItem>
-                    <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-                  </SelectContent>
-                </Select>
+                  isMulti
+                  options={item.map((item) => ({
+                    value: item.item_id,
+                    label: `${item.item_name}`,
+                    description: item.description,
+                    required_quantity: item.required_quantity,
+                    status: item.status,
+                  }))}
+                  onChange={handleSelectItem}
+                />
+                {selectedItems.map((item) => (
+                  <div key={item.item_id} className="flex items-center gap-4 mt-2">
+                    <Label className="text-white">{item.item_name}</Label>
+                    <Input
+                      type="number"
+                      value={item.required_quantity}
+                      onChange={(e) =>
+                        handleQuantityChange(item.item_id, e.target.value)
+                      }
+                      placeholder="Required Quantity"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           </div>

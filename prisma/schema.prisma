@@ -142,7 +142,7 @@ model inventory_shelf {
   @@unique([bd_id, sl_id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  ProductInventory ProductInventory[]
+  // ProductInventory ProductInventory[]
 }
 
 
@@ -156,6 +156,7 @@ model item {
   category         category           @relation(fields: [category_id], references: [category_id])
   purchased_detail purchased_detail[]
   createdAt        DateTime           @default(now())
+  ProductInventory ProductInventory[]
 }
 
 
@@ -175,11 +176,13 @@ model inventory_tracking {
   source_shelf_id      Int?
   destination_shelf_id Int?
   unit_id              Int
+  payment_id           Int?
   date_moved           DateTime          @default(now())
   action               String
   back_inventory       back_inventory    @relation(fields: [bd_id], references: [bd_id])
   source_shelf         shelf_location?    @relation("SourceShelf", fields: [source_shelf_id], references: [sl_id])
   destination_shelf    shelf_location ?   @relation("DestinationShelf", fields: [destination_shelf_id], references: [sl_id])
+  payment              payment?           @relation(fields:[payment_id], references: [payment_id])
   unit                 unit              @relation(fields: [unit_id], references: [unit_id])
 }
 
@@ -212,13 +215,20 @@ model product {
 model ProductInventory {
   id              Int              @id @default(autoincrement())
   product_id      Int
-  inventory_shelf_id Int
+  item_id         Int
+  // inventory_shelf_id Int
   required_quantity Int              // Quantity needed for product
   product         product           @relation(fields: [product_id], references: [product_id])
-  inventory_shelf inventory_shelf   @relation(fields: [inventory_shelf_id], references: [is_id])
+  item            item              @relation(fields: [item_id], references: [item_id])
+  // inventory_shelf inventory_shelf   @relation(fields: [inventory_shelf_id], references: [is_id])
 
+<<<<<<< HEAD
 
   @@unique([product_id, inventory_shelf_id])
+=======
+  // @@unique([product_id, item_id, inventory_shelf_id])
+  @@unique([product_id, item_id])
+>>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
 }
 
 
@@ -268,7 +278,11 @@ model payment {
   payment_id      Int       @id @default(autoincrement())
   payment_method  String
   payment_status  String    // e.g., pending, succeeded, failed
+<<<<<<< HEAD
  
+=======
+  
+>>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
   //e-wallet
   reference_no    String?
   //card
@@ -280,20 +294,30 @@ model payment {
   amount          Float?
   change          Float?
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
   discount_id     Int?      // Relation to the associated discount
   order_id        Int?      @unique // Make order_id unique to satisfy one-to-one relation
   generated_code  String
   createdAt       DateTime  @default(now())
 
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
   // pm_eWallet_id   Int?      @unique
   // pm_otc_id       Int?      @unique
   // pm_card_id      Int?      @unique
   order           order?    @relation(fields: [order_id], references: [order_id])
   discount        discount? @relation(fields: [discount_id], references: [discount_id])
+<<<<<<< HEAD
+=======
+  inventory_tracking  inventory_tracking[]
+>>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
   // eWallet payment_method_eWallet? @relation(fields: [pm_eWallet_id], references: [p_method_id])
   // otc payment_method_otc?     @relation(fields: [pm_otc_id], references: [p_method_id])
   // card payment_method_card? @relation(fields: [pm_card_id], references: [p_method_id])
@@ -313,7 +337,7 @@ model discount {
 //   p_method_id  Int      @id @default(autoincrement())
 //   mode         String
 //   reference_no String
-//   payment      payment?
+//   payment      payment? 
 // }
 
 
@@ -325,7 +349,10 @@ model discount {
 //   payment     payment?
 // }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
 // model payment_method_card {
 //   p_method_id Int      @id @default(autoincrement())
 //   account_number String
@@ -335,7 +362,10 @@ model discount {
 //   payment     payment?
 // }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
 //SALES
 
 

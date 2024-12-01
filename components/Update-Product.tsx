@@ -8,9 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageIcon, X } from "lucide-react"; // X icon for close button
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select as UISelect, SelectContent, SelectItem, SelectTrigger, SelectValue, Select } from "@/components/ui/select";
 import { supabase } from "../lib/initSupabase";
 import Image from "next/image";
+import ReactSelect, { MultiValue } from "react-select";
 
 interface Product {
   product_id: number;
@@ -24,6 +25,15 @@ interface Product {
   status: string;
   description: string;
   image_url: string;
+  selectedItems: SelectedItem[];
+}
+
+interface SelectedItem {
+  item_id: number;
+  item_name: string;
+  description: string;
+  required_quantity: number;
+  status: string;
 }
 
 interface EditProductModalProps {
@@ -49,6 +59,51 @@ export default function EditProduct({ product, onClose, onUpdate }: EditProductM
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  const [inventoryItems, setInventoryItems] = useState<SelectedItem[]>([]);
+  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>(product?.selectedItems || []);
+
+  useEffect(() => {
+    fetchInventoryItems();
+  }, []);
+
+  const fetchInventoryItems = async () => {
+    try {
+      const response = await fetch('/api/item', { method: 'GET' });
+      const data = await response.json();
+      setInventoryItems(data);
+    } catch (error) {
+      console.error('Failed to fetch inventory items:', error);
+    }
+  };
+
+  const handleSelectItem = (
+    newValue: MultiValue<{
+      value: number;
+      label: string;
+      description: string;
+      required_quantity: number;
+      status: string;
+    }>
+  ) => {
+    const selected = newValue.map((option) => ({
+      item_id: option.value,
+      item_name: option.label,
+      description: option.description,
+      required_quantity: option.required_quantity || 1,
+      status: option.status,
+    }));
+    setSelectedItems(selected);
+  };
+
+  const handleQuantityChange = (item_id: number, quantity: string) => {
+    const updatedItems = selectedItems.map((item) =>
+      item.item_id === item_id
+        ? { ...item, required_quantity: parseInt(quantity, 10) }
+        : item
+    );
+    setSelectedItems(updatedItems);
+  };
 
   useEffect(() => {
     if (product) {
@@ -84,7 +139,7 @@ export default function EditProduct({ product, onClose, onUpdate }: EditProductM
       [name]: value,
     });
   };
-
+  
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -133,6 +188,7 @@ export default function EditProduct({ product, onClose, onUpdate }: EditProductM
           singlePrice: Number(formData.singlePrice),
           status: formData.status,
           description: formData.description,
+          selectedItems,
         }),
       });
 
@@ -154,8 +210,8 @@ export default function EditProduct({ product, onClose, onUpdate }: EditProductM
 
   const renderPriceInputs = () => {
     switch (formData.category) {
-      case "klassic-kopi":
-      case "non-kopi":
+      case "Klassic Kopi":
+      case "Non Kopi":
         return (
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
@@ -202,7 +258,7 @@ export default function EditProduct({ product, onClose, onUpdate }: EditProductM
             </div>
           </div>
         );
-      case "fusion-teas":
+      case "Fusion Teas":
         return (
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -324,7 +380,7 @@ export default function EditProduct({ product, onClose, onUpdate }: EditProductM
                   <Label htmlFor="category" className="text-white">
                     Category
                   </Label>
-                  <Select
+                  <UISelect
                     value={formData.category}
                     onValueChange={(value) => handleSelectChange("category", value)}
                   >
@@ -332,22 +388,57 @@ export default function EditProduct({ product, onClose, onUpdate }: EditProductM
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
                     <SelectContent className="z-[10000]">
-                      <SelectItem value="klassic-kopi">Klassic Kopi</SelectItem>
-                      <SelectItem value="kold-brew">Kold Brew</SelectItem>
-                      <SelectItem value="non-kopi">Non Kopi</SelectItem>
-                      <SelectItem value="fusion-teas">Fusion Teas</SelectItem>
-                      <SelectItem value="beer">Beer</SelectItem>
-                      <SelectItem value="all-day-breakfast">All-Day Breakfast</SelectItem>
-                      <SelectItem value="rice-meals">Rice Meals</SelectItem>
-                      <SelectItem value="pasta">Pasta</SelectItem>
-                      <SelectItem value="pizza">Pizza</SelectItem>
-                      <SelectItem value="pica-pica">Pica Pica</SelectItem>
-                      <SelectItem value="sandwiches">Sandwiches</SelectItem>
+                      <SelectItem value="Klassic Kopi">Klassic Kopi</SelectItem>
+                      <SelectItem value="Kold-Brew">Kold Brew</SelectItem>
+                      <SelectItem value="Non Kopi">Non Kopi</SelectItem>
+                      <SelectItem value="Fusion Teas">Fusion Teas</SelectItem>
+                      <SelectItem value="Beer">Beer</SelectItem>
+                      <SelectItem value="All-Day-Breakfast">All-Day Breakfast</SelectItem>
+                      <SelectItem value="Rice Meals">Rice Meals</SelectItem>
+                      <SelectItem value="Pasta">Pasta</SelectItem>
+                      <SelectItem value="Pizza">Pizza</SelectItem>
+                      <SelectItem value="Pica-Pica">Pica Pica</SelectItem>
+                      <SelectItem value="Sandwiches">Sandwiches</SelectItem>
                     </SelectContent>
-                  </Select>
+                  </UISelect>
                 </div>
 
-                <div className="space-y-2">
+                {/* Multi-Select for Items */}
+                <div>
+                  <Label className="text-white">Select Items</Label>
+                  <ReactSelect
+                    isMulti
+                    value={selectedItems.map(item => ({
+                      value: item.item_id,
+                      label: item.item_name,
+                      description: item.description,
+                      required_quantity: item.required_quantity,
+                      status: item.status,
+                    }))}
+                    options={inventoryItems.map((item) => ({
+                      value: item.item_id,
+                      label: item.item_name,
+                      description: item.description,
+                      required_quantity: item.required_quantity,
+                      status: item.status,
+                    }))}
+                    onChange={handleSelectItem}
+                  />
+                  {selectedItems.map((item) => (
+                    <div key={item.item_id} className="flex items-center gap-4 mt-2">
+                      <Label className="text-white">{item.item_name}</Label>
+                      <Input
+                        type="number"
+                        value={item.required_quantity}
+                        onChange={(e) => handleQuantityChange(item.item_id, e.target.value)}
+                        placeholder="Required Quantity"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+                {/* <div className="space-y-2">
                   <Label htmlFor="status" className="text-white">
                     Status
                   </Label>
@@ -364,8 +455,7 @@ export default function EditProduct({ product, onClose, onUpdate }: EditProductM
                       <SelectItem value="out-of-stock">Out of Stock</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-              </div>
+                </div> */}
             </div>
 
             {formData.category && renderPriceInputs()}

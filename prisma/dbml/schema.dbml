@@ -102,7 +102,6 @@ Table inventory_shelf {
   back_inventory back_inventory [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
-  ProductInventory ProductInventory [not null]
 
   indexes {
     (bd_id, sl_id) [unique]
@@ -119,6 +118,7 @@ Table item {
   category category [not null]
   purchased_detail purchased_detail [not null]
   createdAt DateTime [default: `now()`, not null]
+  ProductInventory ProductInventory [not null]
 }
 
 Table supplier {
@@ -136,11 +136,13 @@ Table inventory_tracking {
   source_shelf_id Int
   destination_shelf_id Int
   unit_id Int [not null]
+  payment_id Int
   date_moved DateTime [default: `now()`, not null]
   action String [not null]
   back_inventory back_inventory [not null]
   source_shelf shelf_location
   destination_shelf shelf_location
+  payment payment
   unit unit [not null]
 }
 
@@ -165,13 +167,13 @@ Table product {
 Table ProductInventory {
   id Int [pk, increment]
   product_id Int [not null]
-  inventory_shelf_id Int [not null]
+  item_id Int [not null]
   required_quantity Int [not null]
   product product [not null]
-  inventory_shelf inventory_shelf [not null]
+  item item [not null]
 
   indexes {
-    (product_id, inventory_shelf_id) [unique]
+    (product_id, item_id) [unique]
   }
 }
 
@@ -212,6 +214,10 @@ Table payment {
   createdAt DateTime [default: `now()`, not null]
   order order
   discount discount
+<<<<<<< HEAD
+=======
+  inventory_tracking inventory_tracking [not null]
+>>>>>>> 6c2cd4f6c4b8d97180acf025cfb0e637ee0f3a1f
 }
 
 Table discount {
@@ -262,11 +268,13 @@ Ref: inventory_tracking.source_shelf_id > shelf_location.sl_id
 
 Ref: inventory_tracking.destination_shelf_id > shelf_location.sl_id
 
+Ref: inventory_tracking.payment_id > payment.payment_id
+
 Ref: inventory_tracking.unit_id > unit.unit_id
 
 Ref: ProductInventory.product_id > product.product_id
 
-Ref: ProductInventory.inventory_shelf_id > inventory_shelf.is_id
+Ref: ProductInventory.item_id > item.item_id
 
 Ref: order_details.order_id > order.order_id
 
