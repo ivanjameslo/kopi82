@@ -12,6 +12,7 @@ interface PaymentData {
     payment_method: string;
     payment_status: string;
     amount: number;
+    subtotal: number;
     transaction_id: number;
     discount: {
         discount_id: number;
@@ -50,7 +51,6 @@ const PaymentAndVerifyWithSidebar = () => {
     const itemsPerPage = 10;
     const [discounts, setDiscounts] = useState<DiscountData[]>([]);
     const [discountPercentage, setDiscountPercentage] = useState<number>(0);
-
 
     const fetchPayment = async () => {
         try {
@@ -174,31 +174,22 @@ const PaymentAndVerifyWithSidebar = () => {
     const applyDiscountWithValidation = (paymentId: number, isLegitimate: boolean) => {
         const updatedData = data.map((payment) => {
             if (payment.payment_id === paymentId) {
-                if (
-                    payment.discount?.discount_name === "PWD" ||
-                    payment.discount?.discount_name === "Senior Citizen"
-                ) {
-                    if (!isLegitimate) {
-                        // Deduct 20% from the most expensive product
-                        const mostExpensiveProduct = payment.order?.details?.reduce(
-                            (max, item) => (item.price > max.price ? item : max),
-                            { price: 0 }
-                        );
-   
-                        if (mostExpensiveProduct && mostExpensiveProduct.price > 0) {
-                            const discountAmount =
-                                mostExpensiveProduct.price * 0.2; // 20% discount
-                            return {
-                                ...payment,
-                                amount: payment.amount - discountAmount,
-                            };
-                        }
+                if (payment.discount?.discount_name === "PWD" || payment.discount?.discount_name === "Senior Citizen") {
+                    if (isLegitimate) {
+                        setVerifiedDetails({
+                            ...verifiedDetails,
+                            amount: payment.amount // Keep original amount
+                        });
+                    } else {
+                        setVerifiedDetails({
+                            ...verifiedDetails,
+                            amount: payment.subtotal // Set to subtotal
+                        });
                     }
                 }
             }
             return payment;
         });
-   
         setData(updatedData);
     };
    
@@ -221,7 +212,7 @@ const PaymentAndVerifyWithSidebar = () => {
                             <TableRow key={payment.payment_id}>
                                 <TableCell>{payment.order?.order_id ?? "N/A"}</TableCell>
                                 <TableCell>{payment.payment_method}</TableCell>
-                                <TableCell>
+                                <TableCell className="text-right">
                                     {payment.amount != null ? `₱${payment.amount.toFixed(2)}` : "N/A"}
                                 </TableCell>
                                 <TableCell>{payment.discount?.discount_name || "No Discount"}</TableCell>
@@ -283,6 +274,10 @@ const PaymentAndVerifyWithSidebar = () => {
                     className={`fixed top-0 right-0 w-[30%] bg-gray-100 h-full shadow-lg transition-transform transform ${
                         isSidebarVisible ? "translate-x-0" : "translate-x-full"
                     }`}
+                    style={{
+                        height: '100vh', // Make sure it takes the full height of the viewport
+                        overflowY: 'auto', // Enable vertical scrolling when content overflows
+                    }}
                 >
                     <div className="p-6">
                         <h2 className="text-xl text-center font-semibold mb-4">Enter Verification Code</h2>
@@ -306,7 +301,7 @@ const PaymentAndVerifyWithSidebar = () => {
                                 <p><strong>Order ID:</strong> {verifiedDetails.order?.order_id || "N/A"}</p>
                                 <p><strong>Customer Name:</strong> {verifiedDetails.order?.customer_name || "N/A"}</p>
                                 <p><strong>Service Type:</strong> {verifiedDetails.order?.service_type || "N/A"}</p>
-                                <p><strong>Date:</strong> {verifiedDetails.order?.date || "N/A"}</p>
+                                <p><strong>Date:</strong> {verifiedDetails.order?.date ? new Date(verifiedDetails.order?.date).toLocaleDateString() : "N/A"}</p> {/* Format the date */}
                                 <p><strong>Payment Method:</strong> {verifiedDetails.payment_method}</p>
                                 <p><strong>Total Amount:</strong> ₱{verifiedDetails.amount?.toFixed(2)}</p>
                                 <p><strong>Status:</strong> {verifiedDetails.payment_status}</p>
@@ -314,7 +309,7 @@ const PaymentAndVerifyWithSidebar = () => {
                             
                                 {verifiedDetails.discount?.discount_name === "PWD" ||
                                 verifiedDetails.discount?.discount_name === "Senior Citizen" ? (
-                                    <div className="mt-4 space-y-2">
+                                    <div className="mt-4 flex space-x-2">
                                         <Button
                                             variant="default"
                                             onClick={() => {
@@ -322,29 +317,29 @@ const PaymentAndVerifyWithSidebar = () => {
                                                     verifiedDetails.payment_id,
                                                     true // Legitimate
                                                 );
-                                                toast.success("Legitimacy confirmed. No discount applied.");
+                                                toast.success("Legitimacy confirmed.");
                                             }}
-                                            className="w-full"
+                                            className="w-full bg-green-700"
                                         >
                                             Confirm Legitimate
                                         </Button>
                                         <Button
-                                            variant="outline"
+                                            variant="default"
                                             onClick={() => {
                                                 applyDiscountWithValidation(
                                                     verifiedDetails.payment_id,
                                                     false // Not legitimate
                                                 );
-                                                toast.warn("Not legitimate. 20% discount applied.");
+                                                toast.warn("Not legitimate. Discount will be removed.");
                                                 const updatedPayment = data.find(payment => payment.payment_id === verifiedDetails.payment_id);
                                                 if (updatedPayment) {
                                                     setVerifiedDetails({
                                                         ...verifiedDetails,
-                                                        amount: updatedPayment.amount
+                                                        amount: updatedPayment.subtotal
                                                     });
                                                 }
                                             }}
-                                            className="w-full"
+                                            className="w-full bg-red-700 text-white"
                                         >
                                             Deny Legitimate
                                         </Button>
@@ -364,7 +359,7 @@ const PaymentAndVerifyWithSidebar = () => {
                                             <Button
                                                     variant="default"
                                                     onClick={handleSubmit}
-                                                    className="w-full"
+                                                    className="w-full mt-4"
                                             >
                                                 Submit
                                             </Button> 
@@ -386,7 +381,7 @@ const PaymentAndVerifyWithSidebar = () => {
                                             <Button
                                                     variant="default"
                                                     onClick={handleSubmit}
-                                                    className="w-full"
+                                                    className="w-full mt-4"
                                             >
                                                 Submit
                                             </Button> 
@@ -422,7 +417,7 @@ const PaymentAndVerifyWithSidebar = () => {
                                         <Button
                                                 variant="default"
                                                 onClick={handleSubmit}
-                                                className="w-full"
+                                                className="w-full mt-4"
                                         >
                                             Submit
                                         </Button> 
