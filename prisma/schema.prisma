@@ -247,6 +247,11 @@ model payment {
   amount          Float?
   change          Float?
 
+  amount_paid     Float?
+
+  subtotal        Float?
+  finalAmount     Float?
+
   discount_id     Int?      // Relation to the associated discount
   order_id        Int?      @unique // Make order_id unique to satisfy one-to-one relation
   generated_code  String

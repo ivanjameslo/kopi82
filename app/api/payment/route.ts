@@ -15,6 +15,9 @@ export async function GET(request: NextRequest) {
               //otc
               amount: true,
               change: true,
+              amount_paid: true,
+              subtotal: true,
+              finalAmount: true,
               discount: {
                   select: {
                       discount_id: true,
@@ -113,6 +116,9 @@ export async function POST(request: NextRequest){
             reference_no,
             amount,
             change,
+            amount_paid,
+            subtotal,
+            finalAmount,
             generated_code,
             createdAt,
             order_id,
@@ -124,16 +130,19 @@ export async function POST(request: NextRequest){
                 payment_method,
                 payment_status,
                 reference_no,
-                amount,
-                change,
+                amount: parseFloat(amount),
+                change: parseFloat(change),
+                amount_paid: parseFloat(amount_paid),
+                subtotal: parseFloat(subtotal),
+                finalAmount: parseFloat(finalAmount),
                 generated_code,
                 createdAt: new Date(createdAt),
                 order: {
                     connect: { order_id: parseInt(order_id) },
                 },
-                discount: {
-                    connect: { discount_id: parseInt(discount_id) },
-                }
+                discount: discount_id
+                    ? { connect: { discount_id: parseInt(discount_id) } }
+                    : undefined,
             },
             include: {
                 order: {

@@ -14,10 +14,6 @@ interface PaymentData {
     payment_method: string;
     payment_status: string;
     reference_no: string;
-    account_number: string;
-    account_name: string;
-    cvv: string;
-    expiry_date: string;
     generated_code: string;
     discount_id: number;
     createdAt: string;
@@ -53,10 +49,6 @@ const PaymentPage = () => {
         payment_method: "",
         payment_status: "",
         reference_no: "",
-        account_number: "",
-        account_name: "",
-        cvv: "",
-        expiry_date: "",
         generated_code: "",
         discount_id: 0,
         createdAt: "",
@@ -209,7 +201,8 @@ const PaymentPage = () => {
                 discount_id: discountId,
                 generated_code: generatedCode,
                 createdAt: new Date(),
-                amount: totalAmount,
+                amount: parseFloat(totalAmount),
+                subtotal: parseFloat(calculateSubtotal()), 
             };
 
             paymentData.payment_method = paymentMethod;

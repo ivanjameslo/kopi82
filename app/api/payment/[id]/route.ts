@@ -1,50 +1,49 @@
 import prisma from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/initSupabase";
 
-//GET function for fetching a single product
+//GET function for fetching a single payment
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id
-  const payment = await prisma.payment.findMany({
-    where: {
-      payment_id: Number(id),
-    }, include: {
-      order: true,
-      discount: true,
-    }
-      
-  });
-  return NextResponse.json(payment);
-}
-
-export async function PATCH(request: Request, {params}: { params: {id: string}}){
-  const id = params.id;
-  const json = await request.json();
-  const {order_id, product_id,quantity} = json;
-
+  const generatedCode = params.id;
   try {
-    if(!order_id || !product_id || !quantity) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
-
-    const updatedOrder = await prisma.order_details.update({
+    const payment = await prisma.payment.findFirst({
       where: {
-        orderDetails_id: Number(id),
-      },
-      data:{
-        order_id: order_id,
-        product_id: product_id,
-        quantity: quantity
-
+        generated_code: generatedCode,
       },
       include: {
-        product: true,
-        order: true,
+        order: {
+          include: {
+            order_details: true,
+          }
+        },
+        discount: true,
       },
     });
-    return NextResponse.json(updatedOrder);
+
+    if (!payment) {
+      return NextResponse.json({ message: "Payment not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(payment);
   } catch (error) {
-    console.error('Error updating item:', error);
-    return NextResponse.json({ error: 'Failed to update order' }, { status: 500 });
+    console.error('Error fetching payment:', error);
+    return NextResponse.json({ error: 'Failed to fetch payment' }, { status: 500 });
+  }
 }
+
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+  const id = params.id;
+  const json = await request.json();
+
+  try {
+    const updatedPayment = await prisma.payment.update({
+      where: {
+        payment_id: Number(id),
+      },
+      data: json,
+    });
+    return NextResponse.json(updatedPayment);
+  } catch (error) {
+    console.error('Error updating payment:', error);
+    return NextResponse.json({ error: 'Failed to update payment' }, { status: 500 });
+  }
 }

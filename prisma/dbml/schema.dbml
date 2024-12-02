@@ -204,6 +204,9 @@ Table payment {
   reference_no String
   amount Float
   change Float
+  amount_paid Float
+  subtotal Float
+  finalAmount Float
   discount_id Int
   order_id Int [unique]
   generated_code String [not null]
