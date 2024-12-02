@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
                         },
                     },
                 });
-            } else if (action === "damaged") {
+            } else if (action === "damaged" || action === "expired") {
                 await prisma.back_inventory.update({
                     where: { bd_id },
                     data: {

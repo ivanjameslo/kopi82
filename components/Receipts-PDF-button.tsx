@@ -20,41 +20,44 @@ interface ReceiptPDFButtonProps {
 
 export default function ReceiptPDFButton({ receipt }: ReceiptPDFButtonProps) {
     const [generatingPDF, setGeneratingPDF] = useState(false)
-    const [jpgDataUrl, setJpgDataUrl] = useState<string | null>(null)
+    // const [jpgDataUrl, setJpgDataUrl] = useState<string | null>(null)
     const canvasRef = useRef<HTMLCanvasElement>(null)
 
-    useEffect(() => {
-        const convertSvgToJpg = async () => {
-            const svgUrl = '/logo.svg'
-            const response = await fetch(svgUrl)
-            const svgText = await response.text()
+    // useEffect(() => {
+    //     const loadImage = async () => {
+    //         try {
+    //             const img = new Image()
+    //             img.onload = () => {
+    //                 if (canvasRef.current) {
+    //                     const canvas = canvasRef.current
+    //                     canvas.width = img.width
+    //                     canvas.height = img.height
+    //                     const ctx = canvas.getContext('2d')
+    //                     if (ctx) {
+    //                         ctx.fillStyle = 'white'
+    //                         ctx.fillRect(0, 0, canvas.width, canvas.height)
+    //                         ctx.drawImage(img, 0, 0)
+    //                         setJpgDataUrl(canvas.toDataURL('image/jpeg'))
+    //                     }
+    //                 }
+    //             }
+    //             img.onerror = (e) => {
+    //                 console.error('Error loading image:', e)
+    //             }
+    //             img.src = '/kopi.png' // Use your PNG logo directly
+    //         } catch (error) {
+    //             console.error('Failed to load image:', error)
+    //         }
+    //     }
 
-            const img = new Image()
-            img.onload = () => {
-                if (canvasRef.current) {
-                    const canvas = canvasRef.current
-                    canvas.width = img.width
-                    canvas.height = img.height
-                    const ctx = canvas.getContext('2d')
-                    if (ctx) {
-                        ctx.fillStyle = 'white'
-                        ctx.fillRect(0, 0, canvas.width, canvas.height)
-                        ctx.drawImage(img, 0, 0)
-                        setJpgDataUrl(canvas.toDataURL('image/jpeg'))
-                    }
-                }
-            }
-            img.src = 'data:image/svg+xml;base64,' + btoa(svgText)
-        }
-
-        convertSvgToJpg()
-    }, [])
+    //     loadImage()
+    // }, [])
 
     const generatePDF = () => {
-        if (!jpgDataUrl) {
-            console.error('JPG not ready yet')
-            return
-        }
+        // if (!jpgDataUrl) {
+        //     console.error('JPG not ready yet')
+        //     return
+        // }
 
         setGeneratingPDF(true)
 
@@ -72,22 +75,22 @@ export default function ReceiptPDFButton({ receipt }: ReceiptPDFButtonProps) {
         doc.rect(0, 0, doc.internal.pageSize.width, doc.internal.pageSize.height, 'F')
 
         // Add logo
-        doc.addImage(jpgDataUrl!, 'JPG', 14, 10, 50, 20)
+        // doc.addImage(jpgDataUrl!, 'JPG', 14, 10, 50, 20)
 
         // Add company name and details
         doc.setFontSize(18)
-        doc.setTextColor(66, 44, 141)
+        doc.setTextColor(139, 69, 19) // Updated line
         doc.setFont('helvetica', 'bold')
         doc.text('Kopi 82', 14, 40)
         doc.setFontSize(10)
         doc.setTextColor(52, 73, 94)
-        doc.text('123 Coffee Street, Brew City', 14, 46)
-        doc.text('Phone: 555-KOPI', 14, 51)
-        doc.text("Email: info@kopi82.com", 14, 56)
+        doc.text('Wheels N’ More Drive, Jose P. Laurel Bajada, Brgy. 13-B, Davao City', 14, 46)
+        doc.text('Phone: (082) 308 2961', 14, 51)
+        doc.text("Email: Kopi82abklmp@gmail.com", 14, 56)
 
         // Add RECEIPT title
         doc.setFontSize(24)
-        doc.setTextColor(66, 44, 141)
+        doc.setTextColor(139, 69, 19) // Change this 
         doc.text('RECEIPT', doc.internal.pageSize.width - 16, 18, { align: 'right' })
 
         // Add customer info
@@ -114,8 +117,8 @@ export default function ReceiptPDFButton({ receipt }: ReceiptPDFButtonProps) {
         const orderDetailsBody = receipt.payment.order?.order_details.map(detail => [
             detail.product.product_name,
             detail.quantity.toString(),
-            `₱${detail.price.toFixed(2)}`,
-            `₱${(detail.price * detail.quantity).toFixed(2)}`
+            `PHP${detail.price.toFixed(2)}`,
+            `PHP${(detail.price * detail.quantity).toFixed(2)}`
         ]) || []
 
         doc.autoTable({
@@ -123,7 +126,7 @@ export default function ReceiptPDFButton({ receipt }: ReceiptPDFButtonProps) {
             head: [['Item', 'Quantity', 'Unit Price', 'Total']],
             body: orderDetailsBody,
             styles: { fontSize: 9, cellPadding: 2 },
-            headStyles: { fillColor: [66, 44, 141], textColor: 255 },
+            headStyles: { fillColor: [139, 69, 19], textColor: 255 }, // Change this line
             columnStyles: {
                 0: { cellWidth: 70, halign: 'left' },
                 1: { cellWidth: 30, halign: 'right' },
@@ -145,8 +148,9 @@ export default function ReceiptPDFButton({ receipt }: ReceiptPDFButtonProps) {
             0
         ) || 0
 
+
         const discountAmount = receipt.payment.discount
-            ? subtotal * receipt.payment.discount.discount_rate
+            ? subtotal * (receipt.payment.discount.discount_rate / 100)
             : 0
 
         const total = subtotal - discountAmount
@@ -155,25 +159,25 @@ export default function ReceiptPDFButton({ receipt }: ReceiptPDFButtonProps) {
         doc.setFontSize(10)
         doc.setFont('helvetica', 'bold')
         doc.text('Subtotal:', 130, finalY + 10)
-        doc.text(`₱${subtotal.toFixed(2)}`, 180, finalY + 10, { align: 'right' })
+        doc.text(`PHP${subtotal.toFixed(2)}`, 180, finalY + 10, { align: 'right' })
 
         if (receipt.payment.discount) {
             doc.text('Discount:', 130, finalY + 16)
-            doc.text(`₱${discountAmount.toFixed(2)}`, 180, finalY + 16, { align: 'right' })
+            doc.text(`PHP${discountAmount.toFixed(2)}`, 180, finalY + 16, { align: 'right' })
         }
 
         doc.setFontSize(12)
         doc.text('Total:', 130, finalY + 22)
-        doc.text(`₱${total.toFixed(2)}`, 180, finalY + 22, { align: 'right' })
+        doc.text(`PHP${total.toFixed(2)}`, 180, finalY + 22, { align: 'right' })
 
         if (receipt.payment.amount) {
             doc.text('Amount Paid:', 130, finalY + 28)
-            doc.text(`₱${receipt.payment.amount.toFixed(2)}`, 180, finalY + 28, { align: 'right' })
+            doc.text(`PHP${receipt.payment.amount.toFixed(2)}`, 180, finalY + 28, { align: 'right' })
         }
 
         if (receipt.payment.change) {
             doc.text('Change:', 130, finalY + 34)
-            doc.text(`₱${receipt.payment.change.toFixed(2)}`, 180, finalY + 34, { align: 'right' })
+            doc.text(`PHP${receipt.payment.change.toFixed(2)}`, 180, finalY + 34, { align: 'right' })
         }
 
         // Add footer
@@ -188,7 +192,7 @@ export default function ReceiptPDFButton({ receipt }: ReceiptPDFButtonProps) {
             <canvas ref={canvasRef} style={{ display: 'none' }} />
             <Button
                 onClick={generatePDF}
-                disabled={generatingPDF || !jpgDataUrl}
+                disabled={generatingPDF}
                 size="sm"
                 variant="outline"
             >
