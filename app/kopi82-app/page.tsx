@@ -47,13 +47,11 @@ const Kopi82app = () => {
             }
         }
 
-
         setFormData({
             ...formData,
             [name]: value,
         });
     };
-
 
     const validateCustomerNameFinal = (name: string): boolean => {
         if (!name.trim()) {
@@ -61,46 +59,37 @@ const Kopi82app = () => {
             return false;
         }
 
-
         if (name.length > 20) {
             toast.error("Customer name cannot exceed 20 characters!");
             return false;
         }
-
 
         if (/\d/.test(name)) {
             toast.error("Customer name cannot contain numbers!");
             return false;
         }
 
-
         if (/[^a-zA-Z\s]/.test(name)) {
             toast.error("Customer name cannot contain special characters!");
             return false;
         }
 
-
         return true;
     };
-
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-
         if (!validateCustomerNameFinal(formData.customer_name)) {
             return; // Do not proceed if validation fails
         }
-
 
         if (!formData.service_type) {
             toast.error("Please select a service type!");
             return;
         }
 
-
         setUploading(true);
-
 
         try {
             const response = await fetch("/api/order", {

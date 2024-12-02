@@ -7,7 +7,7 @@ import Kopi822App from "@/app/kopi82-app/page";
 const page = () => {
   return (
     <>
-    <Kopi822App />
+    <Login />
     {/* <Login /> */}
     <ToastContainer 
           position="bottom-right" 
