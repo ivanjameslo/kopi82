@@ -3,13 +3,14 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, Home, User, Box, ShoppingCart, TicketMinus, Wallet, HandCoins, LogOut, Coffee } from "lucide-react";
+import { Menu, Home, User, Box, ShoppingCart, TicketMinus, Wallet, HandCoins, LogOut, Coffee, StretchHorizontal } from "lucide-react";
 import { supabase } from "@/lib/initSupabase";
 import { NAVBAR_LINKS } from "@/lib/links";
 import { usePathname, useRouter } from "next/navigation";
 import { destroyCookie } from "nookies";
-import { MdOutlineMoney } from "react-icons/md";
-import { IoBagOutline } from "react-icons/io5";
+import { ClipboardList } from "lucide-react";
+import { Percent } from "lucide-react";
+import { ChartSpline } from "lucide-react";
 
 export default function Sidebar() {
     const router = useRouter();
@@ -64,11 +65,11 @@ export default function Sidebar() {
                             {link.label === "Employee" && <User className="h-6 w-6 flex-shrink-0" />}
                             {link.label === "Menu" && <ShoppingCart className="h-6 w-6 flex-shrink-0" />}
                             {link.label === "Inventory" && <Box className="h-6 w-6 flex-shrink-0" />}
-                            {link.label === "Purchased Item" && <MdOutlineMoney className="h-6 w-6 flex-shrink-0" />}
-                            {link.label === "Item" && <IoBagOutline className="h-6 w-6 flex-shrink-0" />}
+                            {link.label === "Purchased Item" && <ClipboardList className="h-6 w-6 flex-shrink-0" />}
+                            {link.label === "Item" && <StretchHorizontal className="h-6 w-6 flex-shrink-0" />}
                             {link.label === "Payment" && <HandCoins className="h-6 w-6 flex-shrink-0" />}
-                            {link.label === "Discount" && <TicketMinus className="h-6 w-6 flex-shrink-0" />}
-                            {link.label === "Sales" && <Wallet className="h-6 w-6 flex-shrink-0" />}
+                            {link.label === "Discount" && <Percent className="h-6 w-6 flex-shrink-0" />}
+                            {link.label === "Sales" && <ChartSpline className="h-6 w-6 flex-shrink-0" />}
                             {isOpen && (
                                 <span
                                     className={`transition-opacity duration-500 ${isOpen ? 'opacity-100 delay-1000' : 'opacity-0 delay-0'
