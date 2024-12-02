@@ -2,11 +2,13 @@ import Login from "@/components/Login"
 import React from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Kopi822App from "@/app/kopi82-app/page";
 
 const page = () => {
   return (
     <>
-    <Login />
+    <Kopi822App />
+    {/* <Login /> */}
     <ToastContainer 
           position="bottom-right" 
           autoClose={1500} 
