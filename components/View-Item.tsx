@@ -42,7 +42,7 @@ const ViewItem = () => {
     const [selectedItem, setSelectedItem] = useState<ItemData | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
+    const itemsPerPage = 10;
 
     // Fetch Units
     const fetchUnit = async () => {
@@ -106,15 +106,15 @@ const ViewItem = () => {
                 fetch('/api/unit'), // Fetch the updated unit list
                 fetch('/api/category'), // Fetch the updated category list
             ]);
-    
+
             if (updateResponse.ok) {
                 const updatedItemFromServer = await updateResponse.json();
-    
+
                 // Update local data
                 setData(prevData =>
                     prevData.map(item => (item.item_id === updatedItemFromServer.item_id ? updatedItemFromServer : item))
                 );
-    
+
                 // Optionally update units and categories if necessary
                 setUnit(await updatedUnits.json());
                 setCategory(await updatedCategories.json());
@@ -204,7 +204,7 @@ const ViewItem = () => {
                         ) : (
                             <TableRow>
                                 <TableCell colSpan={6} className="text-center">
-                                No data available
+                                    No data available
                                 </TableCell>
                             </TableRow>
                         )}
@@ -215,40 +215,40 @@ const ViewItem = () => {
             {/* Pagination Controls */}
             <div className="flex justify-center mt-4">
                 <Pagination>
-                <PaginationContent>
-                    <PaginationItem>
-                    <PaginationPrevious
-                        href="#"
-                        onClick={currentPage === 1 ? undefined : () => currentPage > 1 && goToPage(currentPage - 1)}
-                        style={{ pointerEvents: currentPage === 1 ? 'none' : 'auto', opacity: currentPage === 1 ? 0.5 : 1 }}
-                    />
-                    </PaginationItem>
-                    {[...Array(totalPages)].map((_, index) => {
-                    const page = index + 1;
-                    return (
-                        <PaginationItem key={page}>
-                        <PaginationLink
-                            href="#"
-                            onClick={(e) => {
-                            e.preventDefault();
-                            goToPage(page);
-                            }}
-                            isActive={page === currentPage}
-                        >
-                            {page}
-                        </PaginationLink>
+                    <PaginationContent>
+                        <PaginationItem>
+                            <PaginationPrevious
+                                href="#"
+                                onClick={currentPage === 1 ? undefined : () => currentPage > 1 && goToPage(currentPage - 1)}
+                                style={{ pointerEvents: currentPage === 1 ? 'none' : 'auto', opacity: currentPage === 1 ? 0.5 : 1 }}
+                            />
                         </PaginationItem>
-                    );
-                    })}
-                    {totalPages > 5 && <PaginationEllipsis />}
-                    <PaginationItem>
-                    <PaginationNext
-                        href="#"
-                        onClick={() => currentPage < totalPages && goToPage(currentPage + 1)}
-                        style={{ pointerEvents: currentPage === totalPages ? 'none' : 'auto', opacity: currentPage === totalPages ? 0.5 : 1 }}
-                    />
-                    </PaginationItem>
-                </PaginationContent>
+                        {[...Array(totalPages)].map((_, index) => {
+                            const page = index + 1;
+                            return (
+                                <PaginationItem key={page}>
+                                    <PaginationLink
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            goToPage(page);
+                                        }}
+                                        isActive={page === currentPage}
+                                    >
+                                        {page}
+                                    </PaginationLink>
+                                </PaginationItem>
+                            );
+                        })}
+                        {totalPages > 5 && <PaginationEllipsis />}
+                        <PaginationItem>
+                            <PaginationNext
+                                href="#"
+                                onClick={() => currentPage < totalPages && goToPage(currentPage + 1)}
+                                style={{ pointerEvents: currentPage === totalPages ? 'none' : 'auto', opacity: currentPage === totalPages ? 0.5 : 1 }}
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
                 </Pagination>
             </div>
 

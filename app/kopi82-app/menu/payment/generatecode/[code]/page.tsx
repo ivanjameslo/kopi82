@@ -14,7 +14,7 @@ const GenerateCodePage = () => {
             <div className="code-card">
                 <h1 className="code-title">Generated Code</h1>
                 <p className="code-description">
-                    Please Show it to the Cashier</p>
+                    Please proceed to the Cashier.</p>
                 <p className="code-display">{code}</p>
                 {/* <button
                     onClick={() => window.location.href = "/kopi82-app"}
