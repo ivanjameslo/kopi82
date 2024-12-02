@@ -42,7 +42,7 @@ const ViewItem = () => {
     const [selectedItem, setSelectedItem] = useState<ItemData | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
+    const itemsPerPage = 10;
 
     // Fetch Units
     const fetchUnit = async () => {
