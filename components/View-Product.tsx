@@ -181,10 +181,10 @@ const ViewProduct = () => {
                           className="flex flex-col justify-evenly items-center h-1/3 w-full cursor-pointer"
                           onClick={() => handleViewProduct(product.product_id)} // Handle name click
                         >
-                          <span className="text-2xl font-bold">
+                          <span className="text-lg font-bold text-center">
                             {product.product_name}
                           </span>
-                          <div className="flex flex-col items-center text-md font-normal text-center mt-2 space-y-1">
+                          <div className="flex flex-col items-center text-sm font-normal text-center mt-2 space-y-1">
                             {product.hotPrice > 0 && (
                               <span>Hot: {formatPrice(product.hotPrice)}</span>
                             )}

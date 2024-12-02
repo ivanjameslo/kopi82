@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { MdEdit, MdDelete } from "react-icons/md";
 import UpdateItemModal from '@/components/Update-Item'; // New component for the modal
@@ -71,9 +71,16 @@ const ViewItem = () => {
         try {
             const response = await fetch('/api/item', { method: 'GET' });
             const data = await response.json();
-            setData(data);
+            // Ensure that data is an array
+            if (Array.isArray(data)) {
+                setData(data);
+            } else {
+                setData([]); // Fallback to an empty array
+                console.error('Fetched data is not an array:', data);
+            }
         } catch (error) {
             console.error('Failed to fetch items', error);
+            setData([]); // Fallback to an empty array on error
         }
     };
 
@@ -127,7 +134,6 @@ const ViewItem = () => {
         setIsEditModalOpen(false); // Close the modal
     };
 
-
     // Handle Delete
     const handleDelete = async (item_id: number) => {
         const isConfirmed = window.confirm("Are you sure you want to delete this item?");
@@ -149,10 +155,10 @@ const ViewItem = () => {
     const totalPages = Math.ceil(data.length / itemsPerPage);
 
     // Slice data to show only the items for the current page
-    const paginatedData = data.slice(
+    const paginatedData = Array.isArray(data) ? data.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
-    );
+    ) : [];
 
     const goToPage = (page: number) => {
         setCurrentPage(page);
@@ -174,7 +180,6 @@ const ViewItem = () => {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            {/* <TableHead className="text-center">ID</TableHead> */}
                             <TableHead>Item Name</TableHead>
                             <TableHead>Description</TableHead>
                             <TableHead>Unit</TableHead>
@@ -183,10 +188,9 @@ const ViewItem = () => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {paginatedData && paginatedData.map ? (
+                        {paginatedData.length > 0 ? (
                             paginatedData.map((items) => (
                                 <TableRow key={items.item_id}>
-                                    {/* <TableCell className="text-center">{items.item_id}</TableCell> */}
                                     <TableCell>{items.item_name}</TableCell>
                                     <TableCell>{items.description}</TableCell>
                                     <TableCell>{findUnitNameById(items.unit.unit_id, unit)}</TableCell>
@@ -237,7 +241,11 @@ const ViewItem = () => {
                                     >
                                         {page}
                                     </PaginationLink>
+<<<<<<< HEAD
                                 </PaginationItem>
+=======
+                                    </PaginationItem>
+>>>>>>> 1ce715647a850b0acd2403b10540b3d7becec68e
                             );
                         })}
                         {totalPages > 5 && <PaginationEllipsis />}
@@ -266,3 +274,4 @@ const ViewItem = () => {
 };
 
 export default ViewItem;
+

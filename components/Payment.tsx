@@ -1,16 +1,18 @@
 "use client";
 
+
 import { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 import { IoIosArrowDropleftCircle, IoIosArrowDroprightCircle } from "react-icons/io";
-
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, } from "./ui/pagination";
 interface PaymentData {
     payment_id: number;
     payment_method: string;
     payment_status: string;
     amount: number;
+    subtotal: number;
     transaction_id: number;
     discount: {
         discount_id: number;
@@ -30,12 +32,14 @@ interface PaymentData {
     createdAt: string;
 }
 
+
 interface DiscountData {
     discount_id: number;
     discount_name: string;
     discount_rate: number;
     status: string;
 }
+
 
 const PaymentAndVerifyWithSidebar = () => {
     const [data, setData] = useState<PaymentData[]>([]);
@@ -44,7 +48,7 @@ const PaymentAndVerifyWithSidebar = () => {
     const [verifiedDetails, setVerifiedDetails] = useState<any>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
+    const itemsPerPage = 10;
     const [discounts, setDiscounts] = useState<DiscountData[]>([]);
     const [discountPercentage, setDiscountPercentage] = useState<number>(0);
 
@@ -52,7 +56,6 @@ const PaymentAndVerifyWithSidebar = () => {
         try {
             const response = await fetch('/api/payment', { method: 'GET' });
             if (!response.ok) throw new Error('Failed to fetch payment data.');
-
 
             const data = await response.json();
             console.log("Fetched Payment Data:", data); // Debugging log
@@ -62,6 +65,7 @@ const PaymentAndVerifyWithSidebar = () => {
             toast.error('Failed to load payments. Please try again later.');
         }
     };
+
 
     const fetchOrder = async () => {
         try {
@@ -84,16 +88,14 @@ const PaymentAndVerifyWithSidebar = () => {
 
         setLoading(true);
         try {
-            const response = await fetch('/api/payment', {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ code }),
+            const response = await fetch(`/api/payment/${code}`, {
+                method: "GET",
             });
 
             const result = await response.json();
 
-            if (response.ok) {
-                setVerifiedDetails(result.verifiedDetails);
+            if (response.ok && result) {
+                setVerifiedDetails(result);
                 toast.success("Code is valid");
             } else {
                 toast.error(result.message || "Invalid code");
@@ -106,15 +108,59 @@ const PaymentAndVerifyWithSidebar = () => {
         }
     };
 
+    const handleSubmit = async () => {
+        if (verifiedDetails.payment_method === "gcash" && !verifiedDetails.referenceNumber) {
+            toast.error("Please enter a reference number.");
+            return;
+        }
 
+        if (verifiedDetails.payment_method === "otc" && verifiedDetails.change === undefined) {
+            toast.error("Please enter the amount paid.");
+            return;
+        }
+
+        try {
+            const patchData = 
+                verifiedDetails.payment_method === "gcash" || verifiedDetails.payment_method === "paymaya" || verifiedDetails.payment_method === "card"
+                    ? { 
+                        reference_no: verifiedDetails.referenceNumber, 
+                        payment_status: "Verified"
+                    } 
+                    : { 
+                        amount_paid: verifiedDetails.amount_paid, 
+                        change: verifiedDetails.change,
+                        payment_status: "Verified" 
+                    };
+
+
+            const response = await fetch(`/api/payment/${verifiedDetails.payment_id}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(patchData),
+            });
+
+            if (response.ok) {
+                toast.success("Payment data updated successfully!");
+                // Refresh the payment data
+                fetchPayment();
+            } else {
+                const result = await response.json();
+                toast.error(result.message || "Failed to update payment.");
+            }
+        } catch (error) {
+            console.error("Error submitting payment:", error);
+            toast.error("Error submitting payment.");
+        }
+    };
+   
     useEffect(() => {
         fetchPayment();
         fetchOrder();
     }, []);
 
-
     const totalPages = Math.ceil(data.length / itemsPerPage);
-
 
     const paginatedData = data.slice(
         (currentPage - 1) * itemsPerPage,
@@ -124,36 +170,26 @@ const PaymentAndVerifyWithSidebar = () => {
     const goToPage = (page: number) => {
         setCurrentPage(page);
     };
-
    
     const applyDiscountWithValidation = (paymentId: number, isLegitimate: boolean) => {
         const updatedData = data.map((payment) => {
             if (payment.payment_id === paymentId) {
-                if (
-                    payment.discount?.discount_name === "PWD" ||
-                    payment.discount?.discount_name === "Senior Citizen"
-                ) {
-                    if (!isLegitimate) {
-                        // Deduct 20% from the most expensive product
-                        const mostExpensiveProduct = payment.order?.details?.reduce(
-                            (max, item) => (item.price > max.price ? item : max),
-                            { price: 0 }
-                        );
-   
-                        if (mostExpensiveProduct && mostExpensiveProduct.price > 0) {
-                            const discountAmount =
-                                mostExpensiveProduct.price * 0.2; // 20% discount
-                            return {
-                                ...payment,
-                                amount: payment.amount - discountAmount,
-                            };
-                        }
+                if (payment.discount?.discount_name === "PWD" || payment.discount?.discount_name === "Senior Citizen") {
+                    if (isLegitimate) {
+                        setVerifiedDetails({
+                            ...verifiedDetails,
+                            amount: payment.amount // Keep original amount
+                        });
+                    } else {
+                        setVerifiedDetails({
+                            ...verifiedDetails,
+                            amount: payment.subtotal // Set to subtotal
+                        });
                     }
                 }
             }
             return payment;
         });
-   
         setData(updatedData);
     };
    
@@ -176,7 +212,7 @@ const PaymentAndVerifyWithSidebar = () => {
                             <TableRow key={payment.payment_id}>
                                 <TableCell>{payment.order?.order_id ?? "N/A"}</TableCell>
                                 <TableCell>{payment.payment_method}</TableCell>
-                                <TableCell>
+                                <TableCell className="text-right">
                                     {payment.amount != null ? `₱${payment.amount.toFixed(2)}` : "N/A"}
                                 </TableCell>
                                 <TableCell>{payment.discount?.discount_name || "No Discount"}</TableCell>
@@ -193,345 +229,206 @@ const PaymentAndVerifyWithSidebar = () => {
                 </TableBody>
             </Table>
 
-
             {/* Pagination Controls */}
-            <div className="flex justify-center mt-6">
-                {currentPage > 1 && (
-                    <Button variant="outline" onClick={() => goToPage(currentPage - 1)}>
-                        Previous
-                    </Button>
-                )}
-                {Array.from({ length: totalPages }, (_, index) => (
-                    <Button
-                        key={index}
-                        variant={currentPage === index + 1 ? 'default' : 'outline'}
-                        onClick={() => goToPage(index + 1)}
-                    >
-                        {index + 1}
-                    </Button>
-                ))}
-                {currentPage < totalPages && (
-                    <Button variant="outline" onClick={() => goToPage(currentPage + 1)}>
-                        Next
-                    </Button>
-                )}
+            <div className="flex justify-center mt-4">
+                <Pagination>
+                    <PaginationContent>
+                        <PaginationItem>
+                            <PaginationPrevious
+                                href="#"
+                                onClick={currentPage === 1 ? undefined : () => currentPage > 1 && goToPage(currentPage - 1)}
+                                style={{ pointerEvents: currentPage === 1 ? 'none' : 'auto', opacity: currentPage === 1 ? 0.5 : 1 }}
+                            />
+                        </PaginationItem>
+                        {[...Array(totalPages)].map((_, index) => {
+                            const page = index + 1;
+                            return (
+                                <PaginationItem key={page}>
+                                    <PaginationLink
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            goToPage(page);
+                                        }}
+                                        isActive={page === currentPage}
+                                    >
+                                        {page}
+                                    </PaginationLink>
+                                    </PaginationItem>
+                            );
+                        })}
+                        {totalPages > 5 && <PaginationEllipsis />}
+                        <PaginationItem>
+                            <PaginationNext
+                                href="#"
+                                onClick={() => currentPage < totalPages && goToPage(currentPage + 1)}
+                                style={{ pointerEvents: currentPage === totalPages ? 'none' : 'auto', opacity: currentPage === totalPages ? 0.5 : 1 }}
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
             </div>
-
 
             {isSidebarVisible && (
-    <div
-        className={`fixed top-0 right-0 w-[30%] bg-gray-100 h-full shadow-lg transition-transform transform ${
-            isSidebarVisible ? "translate-x-0" : "translate-x-full"
-        }`}
-    >
-        <div className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Enter Verification Code</h2>
-            <input
-                type="text"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                className="w-full px-4 py-2 border rounded text-black mb-4"
-                placeholder="Enter code"
-            />
-            <Button
-                variant="default"
-                onClick={handleVerify}
-                disabled={loading}
-                className="w-full"
-            >
-                {loading ? "Verifying..." : "Verify Code"}
-            </Button>
-            {verifiedDetails && (
-                <div className="mt-6 space-y-4">
-                    <p><strong>Order ID:</strong> {verifiedDetails.order?.order_id || "N/A"}</p>
-                    <p><strong>Customer Name:</strong> {verifiedDetails.order?.customer_name || "N/A"}</p>
-                    <p><strong>Service Type:</strong> {verifiedDetails.order?.service_type || "N/A"}</p>
-                    <p><strong>Date:</strong> {verifiedDetails.order?.date || "N/A"}</p>
-                    <p><strong>Payment Method:</strong> {verifiedDetails.payment_method}</p>
-                    <p><strong>Total Amount:</strong> ₱{verifiedDetails.amount?.toFixed(2)}</p>
-                    <p><strong>Status:</strong> {verifiedDetails.payment_status}</p>
-                    <p><strong>Discount:</strong> {verifiedDetails.discount?.discount_name || "No Discount"}</p>
-                   
-                    {verifiedDetails.discount?.discount_name === "PWD" ||
-                    verifiedDetails.discount?.discount_name === "Senior Citizen" ? (
-                        <div className="mt-4 space-y-2">
-                            <Button
-                                variant="default"
-                                onClick={() => {
-                                    applyDiscountWithValidation(
-                                        verifiedDetails.payment_id,
-                                        true // Legitimate
-                                    );
-                                    toast.success("Legitimacy confirmed. No discount applied.");
-                                }}
-                                className="w-full"
-                            >
-                                Confirm Legitimate
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={() => {
-                                    applyDiscountWithValidation(
-                                        verifiedDetails.payment_id,
-                                        false // Not legitimate
-                                    );
-                                    toast.warn("Not legitimate. 20% discount applied.");
-                                    const updatedPayment = data.find(payment => payment.payment_id === verifiedDetails.payment_id);
-                                    if (updatedPayment) {
-                                        setVerifiedDetails({
-                                            ...verifiedDetails,
-                                            amount: updatedPayment.amount
-                                        });
-                                    }
-                                }}
-                                className="w-full"
-                            >
-                                Deny Legitimate
-                            </Button>
-                        </div>
-                    ) : null}
-
-
-                    {verifiedDetails.payment_method === "card" && (
-                        <div>
-                            <label className="block font-medium mb-2">Reference Number</label>
-                            <input
-                                type="text"
-                                className="w-full px-4 py-2 border rounded text-black"
-                                placeholder="Enter reference number"
-                            />
-                        </div>
-                    )}
-
-
-                    {(verifiedDetails.payment_method === "gcash" ||
-                        verifiedDetails.payment_method === "paymaya") && (
-                        <div>
-                            <label className="block font-medium mb-2">Reference Number</label>
-                            <input
-                                type="text"
-                                className="w-full px-4 py-2 border rounded text-black"
-                                placeholder="Enter reference number"
-                            />
-                        </div>
-                    )}
-
-
-                    {verifiedDetails.payment_method === "otc" && (
-                        <div>
-                            <label className="block font-medium mb-2">Amount Paid</label>
-                            <input
-                                type="number"
-                                className="w-full px-4 py-2 border rounded text-black"
-                                placeholder="Enter amount paid"
-                                onChange={(e) => {
-                                    const change =
-                                        parseFloat(e.target.value) -
-                                        (verifiedDetails.amount || 0);
-                                    setVerifiedDetails({
-                                        ...verifiedDetails,
-                                        change: change >= 0 ? change : 0,
-                                    });
-                                }}
-                            />
-                            <p className="mt-2">
-                                <strong>Change:</strong> ₱
-                                {verifiedDetails.change?.toFixed(2) || "0.00"}
-                            </p>
-                        </div>
-                    )}
-                </div>
-            )}
-            <Button
-                variant="outline"
-                onClick={() => setIsSidebarVisible(false)}
-                className="mt-4 w-full"
-            >
-                Close
-            </Button>
-        </div>
-    </div>
-)}
-
-
-{isSidebarVisible && (
-    <div
-        className={`fixed top-0 right-0 w-[30%] bg-white h-full shadow-lg transition-transform transform ${
-            isSidebarVisible ? "translate-x-0" : "translate-x-full"
-        }`}
-    >
-        <div className="p-6 space-y-6">
-            {/* Header */}
-            <h2 className="text-xl font-semibold text-center border-b pb-4">
-                Payment Verification
-            </h2>
-
-
-            {/* Verification Code Section */}
-            <div>
-                <h3 className="text-lg font-medium">Enter Verification Code</h3>
-                <input
-                    type="text"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md text-black"
-                    placeholder="Verification code"
-                />
-                <Button
-                    variant="default"
-                    onClick={handleVerify}
-                    disabled={loading}
-                    className="w-full mt-2"
+                <div
+                    className={`fixed top-0 right-0 w-[30%] bg-gray-100 h-full shadow-lg transition-transform transform ${
+                        isSidebarVisible ? "translate-x-0" : "translate-x-full"
+                    }`}
+                    style={{
+                        height: '100vh', // Make sure it takes the full height of the viewport
+                        overflowY: 'auto', // Enable vertical scrolling when content overflows
+                    }}
                 >
-                    {loading ? "Verifying..." : "Verify"}
-                </Button>
-            </div>
-
-
-            {/* Verified Details */}
-            {verifiedDetails && (
-                <div className="space-y-6">
-                    {/* Collapsible: Order Information */}
-                    <div className="space-y-2">
-                        <details open>
-                            <summary className="text-lg font-medium cursor-pointer">
-                                Order Information
-                            </summary>
-                            <div className="pl-4 mt-2 text-sm space-y-1">
-                                <p><strong>Order ID:</strong> {verifiedDetails?.order?.order_id || "N/A"}</p>
-                                <p><strong>Customer:</strong> {verifiedDetails?.order?.customer_name || "N/A"}</p>
-                                <p><strong>Date:</strong> {verifiedDetails?.order?.date || "N/A"}</p>
-                            </div>
-                        </details>
-                    </div>
-
-
-                    {/* Collapsible: Payment Information */}
-                    <div className="space-y-2">
-                        <details open>
-                            <summary className="text-lg font-medium cursor-pointer">
-                                Payment Information
-                            </summary>
-                            <div className="pl-4 mt-2 text-sm space-y-1">
-                                <p>
-                                    <strong>Method:</strong> {verifiedDetails?.payment_method}
-                                </p>
-                                <p>
-                                    <strong>Amount:</strong>{" "}
-                                    <span className="text-lg font-semibold text-green-600">
-                                        ₱{verifiedDetails?.amount?.toFixed(2) || "0.00"}
-                                    </span>
-                                </p>
-                                <p>
-                                    <strong>Discount:</strong>{" "}
-                                    {verifiedDetails?.discount?.discount_name || "No Discount"}
-                                </p>
-                                <p>
-                                    <strong>Status:</strong>{" "}
-                                    <span
-                                        className={`font-bold ${
-                                            verifiedDetails?.payment_status === "Successful"
-                                                ? "text-green-600"
-                                                : "text-gray-600"
-                                        }`}
-                                    >
-                                        {verifiedDetails?.payment_status || "Pending"}
-                                    </span>
-                                </p>
-                            </div>
-                        </details>
-                    </div>
-
-
-                    {/* Discount Validation (if applicable) */}
-                    {(verifiedDetails?.discount?.discount_name === "PWD" ||
-                        verifiedDetails?.discount?.discount_name === "Senior Citizen") &&
-                        verifiedDetails?.payment_status !== "Successful" && (
-                            <div>
-                                <h3 className="text-lg font-medium">Discount Validation</h3>
-                                <div className="flex justify-between mt-2 space-x-4">
-                                    <Button
-                                        variant="default"
-                                        onClick={() => {
-                                            applyDiscountWithValidation(
-                                                verifiedDetails.payment_id,
-                                                true // Legitimate
-                                            );
-                                            toast.success("Legitimacy confirmed. No discount applied.");
-                                        }}
-                                        className="flex-1"
-                                    >
-                                        Confirm Legitimate
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => {
-                                            applyDiscountWithValidation(
-                                                verifiedDetails.payment_id,
-                                                false // Not legitimate
-                                            );
-                                            toast.warn("Not legitimate. 20% discount applied.");
-                                            const updatedPayment = data.find(
-                                                payment =>
-                                                    payment.payment_id === verifiedDetails.payment_id
-                                            );
-                                            if (updatedPayment) {
-                                                setVerifiedDetails({
-                                                    ...verifiedDetails,
-                                                    amount: updatedPayment.amount,
-                                                });
-                                            }
-                                        }}
-                                        className="flex-1"
-                                    >
-                                        Deny Legitimate
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-
-
-                    {/* Finalize Payment */}
-                    {verifiedDetails?.payment_status !== "Successful" && (
+                    <div className="p-6">
+                        <h2 className="text-xl text-center font-semibold mb-4">Enter Verification Code</h2>
+                        <input
+                            type="text"
+                            value={code}
+                            onChange={(e) => setCode(e.target.value)}
+                            className="w-full px-4 py-2 border rounded text-black mb-4"
+                            placeholder="Enter code"
+                        />
                         <Button
                             variant="default"
-                            onClick={() => {
-                                if (window.confirm("Are you sure? This cannot be undone.")) {
-                                    setData((prevData) =>
-                                        prevData.map((payment) =>
-                                            payment.payment_id === verifiedDetails.payment_id
-                                                ? { ...payment, payment_status: "Successful" }
-                                                : payment
-                                        )
-                                    );
-                                    setVerifiedDetails({
-                                        ...verifiedDetails,
-                                        payment_status: "Successful",
-                                    });
-                                    toast.success("Payment marked as successful.");
-                                }
-                            }}
+                            onClick={handleVerify}
+                            disabled={loading}
                             className="w-full"
                         >
-                            Finalize Payment
+                            {loading ? "Verifying..." : "Verify Code"}
                         </Button>
-                    )}
+                        {verifiedDetails && (
+                            <div className="mt-6 space-y-4">
+                                <p><strong>Order ID:</strong> {verifiedDetails.order?.order_id || "N/A"}</p>
+                                <p><strong>Customer Name:</strong> {verifiedDetails.order?.customer_name || "N/A"}</p>
+                                <p><strong>Service Type:</strong> {verifiedDetails.order?.service_type || "N/A"}</p>
+                                <p><strong>Date:</strong> {verifiedDetails.order?.date ? new Date(verifiedDetails.order?.date).toLocaleDateString() : "N/A"}</p> {/* Format the date */}
+                                <p><strong>Payment Method:</strong> {verifiedDetails.payment_method}</p>
+                                <p><strong>Total Amount:</strong> ₱{verifiedDetails.amount?.toFixed(2)}</p>
+                                <p><strong>Status:</strong> {verifiedDetails.payment_status}</p>
+                                <p><strong>Discount:</strong> {verifiedDetails.discount?.discount_name || "No Discount"}</p>
+                            
+                                {verifiedDetails.discount?.discount_name === "PWD" ||
+                                verifiedDetails.discount?.discount_name === "Senior Citizen" ? (
+                                    <div className="mt-4 flex space-x-2">
+                                        <Button
+                                            variant="default"
+                                            onClick={() => {
+                                                applyDiscountWithValidation(
+                                                    verifiedDetails.payment_id,
+                                                    true // Legitimate
+                                                );
+                                                toast.success("Legitimacy confirmed.");
+                                            }}
+                                            className="w-full bg-green-700"
+                                        >
+                                            Confirm Legitimate
+                                        </Button>
+                                        <Button
+                                            variant="default"
+                                            onClick={() => {
+                                                applyDiscountWithValidation(
+                                                    verifiedDetails.payment_id,
+                                                    false // Not legitimate
+                                                );
+                                                toast.warn("Not legitimate. Discount will be removed.");
+                                                const updatedPayment = data.find(payment => payment.payment_id === verifiedDetails.payment_id);
+                                                if (updatedPayment) {
+                                                    setVerifiedDetails({
+                                                        ...verifiedDetails,
+                                                        amount: updatedPayment.subtotal
+                                                    });
+                                                }
+                                            }}
+                                            className="w-full bg-red-700 text-white"
+                                        >
+                                            Deny Legitimate
+                                        </Button>
+                                    </div>
+                                ) : null}
+
+                                {verifiedDetails.payment_method === "card" && (
+                                    <div>
+                                        <label className="block font-medium mb-2">Reference Number</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-4 py-2 border rounded text-black"
+                                            placeholder="Enter reference number"
+                                            onChange={(e) => setVerifiedDetails({ ...verifiedDetails, referenceNumber: e.target.value })}
+                                        />
+                                        <div>
+                                            <Button
+                                                    variant="default"
+                                                    onClick={handleSubmit}
+                                                    className="w-full mt-4"
+                                            >
+                                                Submit
+                                            </Button> 
+                                        </div>
+                                    </div>
+                                )}
+
+                                {(verifiedDetails.payment_method === "gcash" ||
+                                    verifiedDetails.payment_method === "paymaya") && (
+                                    <div>
+                                        <label className="block font-medium mb-2">Reference Number</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-4 py-2 border rounded text-black"
+                                            placeholder="Enter reference number"
+                                            onChange={(e) => setVerifiedDetails({ ...verifiedDetails, referenceNumber: e.target.value })}
+                                        />
+                                        <div>
+                                            <Button
+                                                    variant="default"
+                                                    onClick={handleSubmit}
+                                                    className="w-full mt-4"
+                                            >
+                                                Submit
+                                            </Button> 
+                                        </div>
+                                    </div>
+                                )}
+
+                                {verifiedDetails.payment_method === "otc" && (
+                                    <div>
+                                        <label className="block font-medium mb-2">Amount Paid</label>
+                                        <input
+                                            type="number"
+                                            className="w-full px-4 py-2 border rounded text-black"
+                                            placeholder="Enter amount paid"
+                                            onChange={(e) => {
+                                                const newAmount = parseFloat(e.target.value);
+                                                
+                                                if (!isNaN(newAmount)) {
+                                                    const change = newAmount - (verifiedDetails.amount || 0);
+                                                    setVerifiedDetails({
+                                                        ...verifiedDetails,
+                                                        amount_paid: newAmount >= 0 ? newAmount : 0, // Ensure non-negative value
+                                                        change: change >= 0 ? change : 0, // Ensure non-negative change
+                                                    });
+                                                }
+                                            }}
+                                        />
+                                        <p className="mt-2">
+                                            <strong>Change:</strong> ₱
+                                            {verifiedDetails.change?.toFixed(2) || "0.00"}
+                                        </p>
+                                        <div>
+                                        <Button
+                                                variant="default"
+                                                onClick={handleSubmit}
+                                                className="w-full mt-4"
+                                        >
+                                            Submit
+                                        </Button> 
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
-
-
-            {/* Close Sidebar */}
-            <Button
-                variant="outline"
-                onClick={() => setIsSidebarVisible(false)}
-                className="w-full"
-            >
-                Close
-            </Button>
-        </div>
-    </div>
-)}
-
 
             <div
                 className={`fixed top-1/2 transform -translate-y-1/2 z-10 ${
@@ -555,6 +452,5 @@ const PaymentAndVerifyWithSidebar = () => {
         </div>
     );
 };
-
 
 export default PaymentAndVerifyWithSidebar;
