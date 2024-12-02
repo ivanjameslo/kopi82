@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 import { IoIosArrowDropleftCircle, IoIosArrowDroprightCircle } from "react-icons/io";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, } from "./ui/pagination";
+import { useReceipt } from "@/lib/hooks/use-receipts";
+import ReceiptPDFButton from "./Receipts-PDF-button";
 interface PaymentData {
     payment_id: number;
     payment_method: string;
@@ -51,7 +53,8 @@ const PaymentAndVerifyWithSidebar = () => {
     const itemsPerPage = 10;
     const [discounts, setDiscounts] = useState<DiscountData[]>([]);
     const [discountPercentage, setDiscountPercentage] = useState<number>(0);
-
+    const [paymentId, setPaymentId] = useState<number | null>(null);
+    const { receiptData } = useReceipt(paymentId ?? 0); // Provide default value of 0
     const fetchPayment = async () => {
         try {
             const response = await fetch('/api/payment', { method: 'GET' });
@@ -78,7 +81,7 @@ const PaymentAndVerifyWithSidebar = () => {
             console.error('Failed to fetch items:', error);
             toast.error('Failed to load payments. Please try again later.');
         }
-    };    
+    };
 
     const handleVerify = async () => {
         if (!code) {
@@ -93,9 +96,11 @@ const PaymentAndVerifyWithSidebar = () => {
             });
 
             const result = await response.json();
+            const { payment_id, payment_method, payment_status, amount, order, discount } = result;
 
             if (response.ok && result) {
                 setVerifiedDetails(result);
+                setPaymentId(payment_id); // This will trigger useReceipt to fetch new data
                 toast.success("Code is valid");
             } else {
                 toast.error(result.message || "Invalid code");
@@ -107,6 +112,8 @@ const PaymentAndVerifyWithSidebar = () => {
             setLoading(false);
         }
     };
+
+
 
     const handleSubmit = async () => {
         if (verifiedDetails.payment_method === "gcash" && !verifiedDetails.referenceNumber) {
@@ -120,16 +127,16 @@ const PaymentAndVerifyWithSidebar = () => {
         }
 
         try {
-            const patchData = 
+            const patchData =
                 verifiedDetails.payment_method === "gcash" || verifiedDetails.payment_method === "paymaya" || verifiedDetails.payment_method === "card"
-                    ? { 
-                        reference_no: verifiedDetails.referenceNumber, 
+                    ? {
+                        reference_no: verifiedDetails.referenceNumber,
                         payment_status: "Verified"
-                    } 
-                    : { 
-                        amount_paid: verifiedDetails.amount_paid, 
+                    }
+                    : {
+                        amount_paid: verifiedDetails.amount_paid,
                         change: verifiedDetails.change,
-                        payment_status: "Verified" 
+                        payment_status: "Verified"
                     };
 
 
@@ -154,11 +161,15 @@ const PaymentAndVerifyWithSidebar = () => {
             toast.error("Error submitting payment.");
         }
     };
-   
+
     useEffect(() => {
         fetchPayment();
         fetchOrder();
     }, []);
+
+    useEffect(() => {
+        console.log("Receipt Data:", receiptData);
+    }, [receiptData]);
 
     const totalPages = Math.ceil(data.length / itemsPerPage);
 
@@ -170,7 +181,7 @@ const PaymentAndVerifyWithSidebar = () => {
     const goToPage = (page: number) => {
         setCurrentPage(page);
     };
-   
+
     const applyDiscountWithValidation = (paymentId: number, isLegitimate: boolean) => {
         const updatedData = data.map((payment) => {
             if (payment.payment_id === paymentId) {
@@ -192,7 +203,7 @@ const PaymentAndVerifyWithSidebar = () => {
         });
         setData(updatedData);
     };
-   
+
     return (
         <div className="relative mt-12 mx-auto max-w-7xl">
             <p className="text-3xl text-[#483C32] font-bold text-center mb-6">Payments & Verify Code</p>
@@ -254,7 +265,7 @@ const PaymentAndVerifyWithSidebar = () => {
                                     >
                                         {page}
                                     </PaginationLink>
-                                    </PaginationItem>
+                                </PaginationItem>
                             );
                         })}
                         {totalPages > 5 && <PaginationEllipsis />}
@@ -271,9 +282,8 @@ const PaymentAndVerifyWithSidebar = () => {
 
             {isSidebarVisible && (
                 <div
-                    className={`fixed top-0 right-0 w-[30%] bg-gray-100 h-full shadow-lg transition-transform transform ${
-                        isSidebarVisible ? "translate-x-0" : "translate-x-full"
-                    }`}
+                    className={`fixed top-0 right-0 w-[30%] bg-gray-100 h-full shadow-lg transition-transform transform ${isSidebarVisible ? "translate-x-0" : "translate-x-full"
+                        }`}
                     style={{
                         height: '100vh', // Make sure it takes the full height of the viewport
                         overflowY: 'auto', // Enable vertical scrolling when content overflows
@@ -306,9 +316,14 @@ const PaymentAndVerifyWithSidebar = () => {
                                 <p><strong>Total Amount:</strong> ₱{verifiedDetails.amount?.toFixed(2)}</p>
                                 <p><strong>Status:</strong> {verifiedDetails.payment_status}</p>
                                 <p><strong>Discount:</strong> {verifiedDetails.discount?.discount_name || "No Discount"}</p>
-                            
+
+                                {receiptData && (
+                                    <div className="mb-4">
+                                        <ReceiptPDFButton receipt={receiptData} />
+                                    </div>
+                                )}
                                 {verifiedDetails.discount?.discount_name === "PWD" ||
-                                verifiedDetails.discount?.discount_name === "Senior Citizen" ? (
+                                    verifiedDetails.discount?.discount_name === "Senior Citizen" ? (
                                     <div className="mt-4 flex space-x-2">
                                         <Button
                                             variant="default"
@@ -356,38 +371,39 @@ const PaymentAndVerifyWithSidebar = () => {
                                             onChange={(e) => setVerifiedDetails({ ...verifiedDetails, referenceNumber: e.target.value })}
                                         />
                                         <div>
+                                            {receiptData && <ReceiptPDFButton receipt={receiptData} />}
                                             <Button
-                                                    variant="default"
-                                                    onClick={handleSubmit}
-                                                    className="w-full mt-4"
+                                                variant="default"
+                                                onClick={handleSubmit}
+                                                className="w-full mt-4"
                                             >
                                                 Submit
-                                            </Button> 
+                                            </Button>
                                         </div>
                                     </div>
                                 )}
 
                                 {(verifiedDetails.payment_method === "gcash" ||
                                     verifiedDetails.payment_method === "paymaya") && (
-                                    <div>
-                                        <label className="block font-medium mb-2">Reference Number</label>
-                                        <input
-                                            type="text"
-                                            className="w-full px-4 py-2 border rounded text-black"
-                                            placeholder="Enter reference number"
-                                            onChange={(e) => setVerifiedDetails({ ...verifiedDetails, referenceNumber: e.target.value })}
-                                        />
                                         <div>
-                                            <Button
+                                            <label className="block font-medium mb-2">Reference Number</label>
+                                            <input
+                                                type="text"
+                                                className="w-full px-4 py-2 border rounded text-black"
+                                                placeholder="Enter reference number"
+                                                onChange={(e) => setVerifiedDetails({ ...verifiedDetails, referenceNumber: e.target.value })}
+                                            />
+                                            <div>
+                                                <Button
                                                     variant="default"
                                                     onClick={handleSubmit}
                                                     className="w-full mt-4"
-                                            >
-                                                Submit
-                                            </Button> 
+                                                >
+                                                    Submit
+                                                </Button>
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
 
                                 {verifiedDetails.payment_method === "otc" && (
                                     <div>
@@ -398,7 +414,7 @@ const PaymentAndVerifyWithSidebar = () => {
                                             placeholder="Enter amount paid"
                                             onChange={(e) => {
                                                 const newAmount = parseFloat(e.target.value);
-                                                
+
                                                 if (!isNaN(newAmount)) {
                                                     const change = newAmount - (verifiedDetails.amount || 0);
                                                     setVerifiedDetails({
@@ -414,13 +430,13 @@ const PaymentAndVerifyWithSidebar = () => {
                                             {verifiedDetails.change?.toFixed(2) || "0.00"}
                                         </p>
                                         <div>
-                                        <Button
+                                            <Button
                                                 variant="default"
                                                 onClick={handleSubmit}
                                                 className="w-full mt-4"
-                                        >
-                                            Submit
-                                        </Button> 
+                                            >
+                                                Submit
+                                            </Button>
                                         </div>
                                     </div>
                                 )}
@@ -431,9 +447,8 @@ const PaymentAndVerifyWithSidebar = () => {
             )}
 
             <div
-                className={`fixed top-1/2 transform -translate-y-1/2 z-10 ${
-                    isSidebarVisible ? "right-[30%]" : "right-0"
-                }`}
+                className={`fixed top-1/2 transform -translate-y-1/2 z-10 ${isSidebarVisible ? "right-[30%]" : "right-0"
+                    }`}
             >
                 {isSidebarVisible ? (
                     <IoIosArrowDroprightCircle

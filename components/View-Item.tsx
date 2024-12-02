@@ -113,15 +113,15 @@ const ViewItem = () => {
                 fetch('/api/unit'), // Fetch the updated unit list
                 fetch('/api/category'), // Fetch the updated category list
             ]);
-    
+
             if (updateResponse.ok) {
                 const updatedItemFromServer = await updateResponse.json();
-    
+
                 // Update local data
                 setData(prevData =>
                     prevData.map(item => (item.item_id === updatedItemFromServer.item_id ? updatedItemFromServer : item))
                 );
-    
+
                 // Optionally update units and categories if necessary
                 setUnit(await updatedUnits.json());
                 setCategory(await updatedCategories.json());
@@ -241,7 +241,11 @@ const ViewItem = () => {
                                     >
                                         {page}
                                     </PaginationLink>
+<<<<<<< HEAD
+                                </PaginationItem>
+=======
                                     </PaginationItem>
+>>>>>>> 1ce715647a850b0acd2403b10540b3d7becec68e
                             );
                         })}
                         {totalPages > 5 && <PaginationEllipsis />}
