@@ -2,10 +2,10 @@
 body {
     font-family: 'Poppins', sans-serif;
     background-image: url('/background.png');
-      background-position: center;
-    background-blend-mode: darken;   background-color: rgba(0, 0, 0, 0.8);
-    background-size: cover;
     background-position: center;
+    background-blend-mode: darken;
+    background-color: rgba(0, 0, 0, 0.8);
+    background-size: cover;
     color: #2D2424;
     margin: 0;
     padding: 0;
@@ -59,12 +59,13 @@ body {
 
 /* Order Table */
 .table {
+    display: block; /* Make table block level element */
     width: 100%;
     margin-top: 2rem;
     border-collapse: collapse;
     background-color: #F9F5F0;
     border-radius: 16px;
-    overflow: hidden;
+    overflow-x: auto; /* Enable horizontal scrolling */
     box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.1);
 }
 
@@ -72,10 +73,10 @@ body {
 .table-header {
     background-color: #967969;
     color: #FFFFFF;
-    padding: 1rem;
+    padding: 0.6rem; /* Reduced padding */
     text-transform: uppercase;
-    text-align: left;
-    font-size: 1rem;
+    text-align: left; /* Left-aligned */
+    font-size: 0.9rem; /* Smaller font size */
     font-weight: 600;
     letter-spacing: 1.2px;
     border-bottom: 2px solid #C4A484;
@@ -83,23 +84,24 @@ body {
 
 /* Table Rows */
 .table-row {
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    display: flex; /* Stack rows vertically */
+    flex-direction: column;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background-color: #F9F5F0;
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .table-row:nth-child(even) {
     background-color: #F5F0EC;
 }
 
-.table-row:hover {
-    background-color: #EDE3D9;
-    transform: translateX(4px);
-}
-
 /* Table Cells */
 .table-cell {
-    padding: 1rem;
-    text-align: center;
-    font-size: 1rem;
+    padding: 0.8rem; /* Smaller padding */
+    font-size: 0.9rem; /* Smaller font size */
+    text-align: left; /* Left-aligned text */
     color: #2D2424;
     border-bottom: 1px solid #C4A484;
     font-weight: 500;
@@ -108,15 +110,16 @@ body {
 /* Product Info */
 .product-info {
     display: flex;
-    align-items: center;
-    gap: 1rem;
+    flex-direction: column; /* Stack product info vertically */
+    align-items: flex-start;
+    gap: 0.5rem;
     text-align: left;
 }
 
 .product-image {
     border-radius: 12px;
-    width: 60px;
-    height: 60px;
+    width: 40px; /* Smaller image size */
+    height: 40px;
     object-fit: cover;
     box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -133,19 +136,17 @@ body {
     position: relative;
     padding: 1rem;
     border-radius: 8px;
-
-    
 }
 
 .discount-title {
-    font-size: 1.6rem;
+    font-size: 1.2rem; /* Smaller font size */
     font-weight: 700;
     color: #5C4033;
     margin-bottom: 1rem;
 }
 
 .discount-dropdown {
-    width: 100%;
+    width: 100%; /* Full width for mobile */
     padding: 0.8rem;
     border: 2px solid #C4A484;
     border-radius: 12px;
@@ -158,7 +159,6 @@ body {
     transition: all 0.3s ease;
 }
 
-/* Custom Arrow */
 .discount-dropdown::after {
     content: "▼";
     font-size: 0.9rem;
@@ -170,13 +170,11 @@ body {
     pointer-events: none;
 }
 
-/* Hover Effects */
 .discount-dropdown:hover {
     background-color: #EDE3D9;
     border-color: #967969;
 }
 
-/* Focus Effects */
 .discount-dropdown:focus {
     outline: none;
     box-shadow: 0px 0px 8px 2px rgba(150, 121, 105, 0.5);
@@ -194,11 +192,11 @@ body {
 /* Totals Section */
 .totals, .subtotal {
     margin-top: 2rem;
-    text-align: right;
+    text-align: left; /* Align totals to the left */
 }
 
 .subtotal, .total {
-    font-size: 1.4rem;
+    font-size: 1.2rem; /* Smaller font size */
     font-weight: 700;
     color: #5C4033;
     margin: 0.5rem 0;
@@ -217,8 +215,8 @@ body {
 }
 
 .payment-method-select {
-    width: 100%;
-    padding: 0.8rem;
+    width: 100%; /* Full width for mobile */
+    padding: 0.9rem;
     border: 2px solid #C4A484;
     border-radius: 12px;
     background-color: #F7F4F1;
@@ -229,7 +227,6 @@ body {
     transition: border-color 0.3s ease, background-color 0.3s ease;
 }
 
-/* Hover Effects */
 .payment-method-select:hover {
     background-color: #EDE3D9;
     border-color: #967969;
@@ -238,9 +235,10 @@ body {
 /* Buttons */
 .submit-button {
     display: inline-block;
+    width: 100%; /* Full width button */
     margin-top: 2rem;
-    padding: 0.9rem 2.5rem;
-    font-size: 1.2rem;
+    padding: 1rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: white;
     background-color: #5C4033;
@@ -258,31 +256,82 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    body {
+        padding: 10px; /* Add padding for mobile view */
+    }
+
+    .page-wrapper {
+        padding: 1rem; /* Reduce padding */
+        margin: 1rem auto; /* Less margin */
+        max-width: 100%;
+        box-shadow: none; /* Remove box-shadow */
+    }
+
     .page-header {
-        font-size: 2rem;
+        font-size: 1.8rem; /* Smaller header for mobile */
+        text-align: left; /* Left-align header */
     }
 
     .table-header {
-        font-size: 0.85rem;
-        padding: 0.8rem;
+        padding: 0.6rem; /* Reduced padding */
+        font-size: 0.9rem;
     }
 
     .table-cell {
+        padding: 0.8rem; /* Reduced padding */
         font-size: 0.9rem;
-        padding: 0.8rem;
+        text-align: left; /* Left-align text */
+    }
+
+    .table-row {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background-color: #F9F5F0;
+        border-radius: 8px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     .product-info {
+        display: flex;
         flex-direction: column;
-        align-items: flex-start;
+        gap: 0.5rem;
+        text-align: left;
     }
 
     .product-image {
-        width: 50px;
-        height: 50px;
+        width: 35px; /* Reduce image size */
+        height: 35px;
+    }
+
+    .discount-section {
+        margin-top: 2rem;
+    }
+
+    .discount-title {
+        font-size: 1.1rem;
+    }
+
+    .discount-dropdown {
+        padding: 0.8rem;
+        width: 100%;
+        font-size: 1rem;
+    }
+
+    .totals, .subtotal {
+        font-size: 1.1rem;
+    }
+
+    .payment-method-select {
+        width: 100%; /* Ensure full-width for mobile */
+        padding: 1rem;
     }
 
     .submit-button {
         width: 100%;
+        padding: 1.1rem;
+        font-size: 1.2rem;
     }
 }
+
